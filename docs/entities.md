@@ -193,5 +193,37 @@ Nullable fields are defined like this:
 
 Nullable fields should only be used when domain explicitly allows missing values (e.g. an issue may not have an assignee). Nullable fields should not be confused with uninitialized required fields, and as such should not be used for initializing fields that are not optional. For initializing required fields you must use the default value of the same type as the type of the field. For example, the User entity above has required `organizationId: string` field which is initialized with an empty string which, if unassigned, will fail validation before being saved into database.
 
+## Validation
 
+Entity is validated *synchronously* by calling `validate`.
+
+```ts
+const user = new User();
+user.validate();
+// throws EntityValidationError
+```
+
+Entities can also generate JSON schema for each of their presenters. This is useful for declaring OpenAPI response specs.
+
+```ts
+import { getValidationSchema } from '@ubio/framework';
+
+const userPublicSchema = getValidationSchema(User, 'public');
+// { type: 'object',
+//   properties:
+//    { id: { type: 'string', format: 'uuid' },
+//      createdAt: { type: 'number' },
+//      updatedAt: { type: 'number' },
+//      object: { type: 'string', const: 'user' },
+//      organizationId: { type: 'string', format: 'uuid' },
+//      username: { type: 'string', minLength: 6 } },
+//   required:
+//    [ 'id',
+//      'createdAt',
+//      'updatedAt',
+//      'object',
+//      'organizationId',
+//      'username' ],
+//   additionalProperties: false }
+```
 

@@ -1,6 +1,6 @@
 import assert from 'assert';
 import { User } from '../entities/user';
-import { getAllFields } from '../../main';
+import { getAllFields, getValidationSchema } from '../../main';
 import { Country, City } from '../entities/nested';
 
 describe('Entity', () => {
@@ -141,6 +141,59 @@ describe('Entity', () => {
             }
             const cityNames = country.cities.map(_ => _.name);
             assert.deepEqual(cityNames, ['Bern', 'Zurich', 'Geneva', 'Basel', 'Lucerne', 'Lausanne']);
+        });
+
+    });
+
+    describe('validate', () => {
+
+        it('throws if entity is invalid', () => {
+            const user = new User();
+            try {
+                user.validate();
+                throw new Error('Unexpected success');
+            } catch (err) {
+                assert.equal(err.name, 'EntityValidationError');
+                const messages: string[] = err.details.messages;
+                const paths = messages.map(_ => _.split(' ')[0]);
+                assert.deepEqual(paths, ['/organizationId', '/username', '/passwordSha256']);
+            }
+        });
+
+        it('does not throw if entity is valid', () => {
+            const user = new User();
+            user.organizationId = '00000000-0000-0000-0000-000000000000';
+            user.username = 'joejoe';
+            user.passwordSha256 = '488db9fc70392d1a92a62fa4098651f69817c3f12d78ce10a1ab16e9c8674442';
+            user.validate();
+        });
+
+    });
+
+    describe('getValidationSchema', () => {
+
+        it('returns JSON schema of presenter', () => {
+            const schema = getValidationSchema(User, 'public');
+            assert.deepEqual(schema, {
+                type: 'object',
+                properties:
+                {
+                    id: { type: 'string', format: 'uuid' },
+                    createdAt: { type: 'number' },
+                    updatedAt: { type: 'number' },
+                    object: { type: 'string', const: 'user' },
+                    organizationId: { type: 'string', format: 'uuid' },
+                    username: { type: 'string', minLength: 6 }
+                },
+                required:
+                    ['id',
+                        'createdAt',
+                        'updatedAt',
+                        'object',
+                        'organizationId',
+                        'username'],
+                additionalProperties: false
+            });
         });
 
     });
