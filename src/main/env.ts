@@ -1,6 +1,6 @@
 import assert from 'assert';
 
-export const missingEnvs: string[] = [];
+export const missingKeys: string[] = [];
 
 export function readString(key: string, defaultValue?: string): string {
     const value = process.env[key];
@@ -8,7 +8,7 @@ export function readString(key: string, defaultValue?: string): string {
         if (defaultValue != null) {
             return defaultValue;
         }
-        missingEnvs.push(key);
+        missingKeys.push(key);
         return '';
     }
     return value;
@@ -21,16 +21,16 @@ export function readNumber(key: string, defaultValue?: number): number {
         if (defaultValue != null) {
             return defaultValue;
         }
-        missingEnvs.push(key);
+        missingKeys.push(key);
         return 0;
     }
     return num;
 }
 
 export function assertEnv() {
-    assert(!missingEnvs.length, `Missing environment: ${missingEnvs.join(', ')}`);
+    assert(!missingKeys.length, `Missing environment: ${missingKeys.join(', ')}`);
 }
 
 export function resetEnv() {
-    missingEnvs.splice(0, missingEnvs.length);
+    missingKeys.splice(0, missingKeys.length);
 }
