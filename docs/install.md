@@ -4,10 +4,10 @@
 
     ```
     npm install --save @ubio/framework dotenv inversify
-    npm install --save-dev typescript tslint mocha @types/node @types/koa
+    npm install --save-dev typescript tslint mocha @types/node @types/koa @types/dotenv
     ```
 
-- Configure TypeScript and TSLint (you may copy [tsconfig.json](tsconfig.json) and [tslint.json](tslint.json) from this repo).
+- Configure TypeScript and TSLint (you may copy [tsconfig.json](../tsconfig.json) and [tslint.json](../tslint.json) from this repo).
 
 - Add development scripts to `package.json`:
 
@@ -18,8 +18,7 @@
         "check": "tslint --project ./tsconfig.json",
         "test": "NODE_ENV=test mocha --opts ./mocha.opts",
         "clean": "rm -rf out/",
-        "compile": "npm run clean && npm run compile:ts",
-        "compile:ts": "tsc"
+        "compile": "npm run clean && tsc"
     }
     ```
 
