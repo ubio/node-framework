@@ -27,18 +27,26 @@ export function Field(spec: FieldSpec) {
             description = '',
             schema,
             presenters = [],
-            subEntity,
+            entity,
+            deserializeItem,
             nullable = false,
             serialized = true,
             deprecated = false,
         } = spec;
+        const designType = Reflect.getMetadata('design:type', prototype, propertyKey);
+        if (designType === Array) {
+            if (!entity && !deserializeItem) {
+                throw new Error(`@Field ${propertyKey}: array field must specify entity or deserializeItem`);
+            }
+        }
         const field = {
             propertyKey,
             description,
             schema,
             presenters,
-            subEntity,
-            designType: Reflect.getMetadata('design:type', prototype, propertyKey),
+            entity,
+            deserializeItem,
+            designType,
             nullable,
             serialized,
             deprecated,
@@ -104,22 +112,11 @@ export class Entity {
 
     assign(object: any): this {
         for (const field of getAllFields(this.constructor as AnyConstructor)) {
-            let val = object[field.propertyKey];
+            const val = object[field.propertyKey];
             if (val === undefined) {
                 continue;
             }
-            if (val == null && field.nullable) {
-                val = null;
-            } else {
-                val = field.designType(val);
-                if (field.subEntity) {
-                    const constructor = field.subEntity();
-                    const subEntity = (new constructor()) as Entity;
-                    subEntity.assign(val);
-                    val = subEntity;
-                }
-            }
-            (this as any)[field.propertyKey] = val;
+            (this as any)[field.propertyKey] = deserializeFieldValue(field, val);
         }
         return this;
     }
@@ -157,8 +154,8 @@ export function getValidationSchema(entityClass: AnyConstructor, presenter: stri
     const required: string[] = [];
     for (const field of fields) {
         let schema = { ...field.schema };
-        if (field.subEntity) {
-            const subEntityClass = field.subEntity();
+        if (field.entity) {
+            const subEntityClass = field.entity();
             const subSchema = getValidationSchema(subEntityClass, presenter);
             schema = { ...subSchema, ...schema };
         }
@@ -213,8 +210,9 @@ export interface FieldDefinition {
     description: string;
     schema: any;
     presenters: string[];
-    subEntity?: () => AnyConstructor;
     designType: (...args: any) => any;
+    entity?: () => AnyConstructor;
+    deserializeItem?: (value: any) => any;
     nullable: boolean;
     serialized: boolean;
     deprecated: boolean;
@@ -224,8 +222,43 @@ export interface FieldSpec {
     description?: string;
     schema: any;
     presenters?: string[];
-    subEntity?: () => AnyConstructor;
+    entity?: () => AnyConstructor;
+    deserializeItem?: (value: any) => any;
     nullable?: boolean;
     serialized?: boolean;
     deprecated?: boolean;
+}
+
+function deserializeFieldValue(field: FieldDefinition, value: any): any {
+    if (value == null) {
+        if (field.nullable) {
+            return null;
+        }
+        throw util.createError('DeserializationError', {
+            message: `Cannot assign null to non-nullable field ${field.propertyKey}`,
+        });
+    }
+    if (field.designType === Array) {
+        const array = Array.isArray(value) ? value : [value];
+        return array.map(v => {
+            if (field.deserializeItem) {
+                return field.deserializeItem(v);
+            }
+            if (field.entity) {
+                return deserializeSubEntity(field.entity(), v);
+            }
+            throw util.createError('DeserializationError', {
+                message: `Cannot deserialize array field ${field.propertyKey}`,
+            });
+        });
+    } else if (field.entity) {
+        return deserializeSubEntity(field.entity(), value);
+    } else {
+        return field.designType(value);
+    }
+}
+
+function deserializeSubEntity(constructor: AnyConstructor, value: any) {
+    const subEntity = (new constructor()) as Entity;
+    return subEntity.assign(value);
 }

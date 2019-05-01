@@ -1,8 +1,9 @@
 import assert from 'assert';
 import { User } from '../entities/user';
 import { getAllFields } from '../../main';
+import { Country, City } from '../entities/nested';
 
-describe.only('Entity', () => {
+describe('Entity', () => {
 
     it('getAllFields return all entity fields, including prototype chain', () => {
         const fields = getAllFields(User);
@@ -74,8 +75,27 @@ describe.only('Entity', () => {
             ]);
         });
 
-        it('serializes nested objects');
-        it('serializes nested arrays');
+        it('serializes nested objects and arrays', () => {
+            const country = new Country();
+            country.code = 'che';
+            country.capital.name = 'Bern';
+            const city1 = new City();
+            city1.name = 'Bern';
+            const city2 = new City();
+            city2.name = 'Zurich';
+            country.cities = [city1, city2];
+            country.languages = ['de', 'fr', 'en'];
+            const json = JSON.parse(JSON.stringify(country));
+            assert.deepEqual(json, {
+                code: 'che',
+                capital: { name: 'Bern' },
+                cities: [
+                    { name: 'Bern' },
+                    { name: 'Zurich' },
+                ],
+                languages: ['de', 'fr', 'en']
+            });
+        });
 
     });
 
@@ -88,14 +108,40 @@ describe.only('Entity', () => {
                 organizationId: '00000000-0000-0000-0000-000000000000',
                 createdAt: '123123123123'
             });
-            console.log(user);
             assert.equal(user.username, 'hello');
             assert.equal(user.organizationId, '00000000-0000-0000-0000-000000000000');
             assert.equal(user.createdAt, 123123123123);
         });
 
-        it('deserializes nested objects');
-        it('deserializes nested arrays');
+        it('deserializes nested objects and arrays', () => {
+            const country = new Country().assign({
+                code: 'che',
+                capital: { name: 'Bern' },
+                cities: [
+                    { name: 'Bern' },
+                    { name: 'Zurich' },
+                    { name: 'Geneva' },
+                    { name: 'Basel' },
+                    { name: 'Lucerne' },
+                    { name: 'Lausanne' },
+                ],
+                languages: ['de', 'fr', 'en'],
+            });
+            assert.equal(country.code, 'che');
+            assert(country.capital instanceof City);
+            assert.equal(country.capital.name, 'Bern');
+            assert(country.cities instanceof Array);
+            for (const city of country.cities) {
+                assert(city instanceof City);
+                assert.equal(typeof city.name, 'string');
+            }
+            assert(country.languages instanceof Array);
+            for (const lang of country.languages) {
+                assert.equal(typeof lang, 'string');
+            }
+            const cityNames = country.cities.map(_ => _.name);
+            assert.deepEqual(cityNames, ['Bern', 'Zurich', 'Geneva', 'Basel', 'Lucerne', 'Lausanne']);
+        });
 
     });
 
