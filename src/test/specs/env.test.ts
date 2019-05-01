@@ -67,4 +67,26 @@ describe('env', () => {
 
     });
 
+    describe('assertEnv', () => {
+
+        it('does not throw if all variables present', () => {
+            env.readString('TEST_STRING');
+            env.readNumber('TEST_NUMBER');
+            env.assertEnv();
+        });
+
+        it('throws if some variables are missing', () => {
+            env.readString('TEST_MISSING');
+            env.readNumber('TEST_NOT_NUMBER');
+            try {
+                env.assertEnv();
+                throw new Error('Unexpected success');
+            } catch (err) {
+                assert(err.message.includes('TEST_MISSING'));
+                assert(err.message.includes('TEST_NOT_NUMBER'));
+            }
+        });
+
+    });
+
 });
