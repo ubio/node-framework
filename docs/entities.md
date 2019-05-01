@@ -179,3 +179,19 @@ Notice how `createdAt` was automatically coerced to a number from string, and ho
 
 This section is under development.
 
+## Nullable (optional) fields
+
+Nullable fields are defined like this:
+
+```ts
+    @Field({
+        schema: { type: ['null', 'string'] },
+        nullable: true
+    })
+    assigneeId: string | null = null;
+```
+
+Nullable fields should only be used when domain explicitly allows missing values (e.g. an issue may not have an assignee). Nullable fields should not be confused with uninitialized required fields, and as such should not be used for initializing fields that are not optional. For initializing required fields you must use the default value of the same type as the type of the field. For example, the User entity above has required `organizationId: string` field which is initialized with an empty string which, if unassigned, will fail validation before being saved into database.
+
+
+
