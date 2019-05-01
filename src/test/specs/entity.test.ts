@@ -176,8 +176,7 @@ describe('Entity', () => {
             const schema = getValidationSchema(User, 'public');
             assert.deepEqual(schema, {
                 type: 'object',
-                properties:
-                {
+                properties: {
                     id: { type: 'string', format: 'uuid' },
                     createdAt: { type: 'number' },
                     updatedAt: { type: 'number' },
@@ -185,13 +184,14 @@ describe('Entity', () => {
                     organizationId: { type: 'string', format: 'uuid' },
                     username: { type: 'string', minLength: 6 }
                 },
-                required:
-                    ['id',
-                        'createdAt',
-                        'updatedAt',
-                        'object',
-                        'organizationId',
-                        'username'],
+                required: [
+                    'id',
+                    'updatedAt',
+                    'createdAt',
+                    'object',
+                    'organizationId',
+                    'username'
+                ],
                 additionalProperties: false
             });
         });

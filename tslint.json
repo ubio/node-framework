@@ -3,14 +3,12 @@
     "extends": [
         "tslint:recommended"
     ],
-    "jsRules": {},
     "rules": {
         "interface-name": false,
         "member-access": [true, "no-public"],
         "no-empty": false,
         "quotemark": [true, "single"],
         "object-literal-sort-keys": false,
-        // "trailing-comma": [true, {"multiline": "never", "singleline": "never"}],
         "trailing-comma": false,
         "arrow-parens": false,
         "ordered-imports": false,
