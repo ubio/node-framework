@@ -1,7 +1,6 @@
 import 'reflect-metadata';
 import Ajv from 'ajv';
-import { ajvErrorToMessage, AnyConstructor } from './util';
-import { util } from '.';
+import { ajvErrorToMessage, AnyConstructor, createError } from './util';
 import uuid from 'uuid';
 
 const FIELDS_KEY = Symbol('Fields');
@@ -15,11 +14,6 @@ const ajv = new Ajv({
     jsonPointers: true,
     format: 'full',
 });
-
-export interface EntityList<T> {
-    entities: T[];
-    totalCount: number;
-}
 
 export function Field(spec: FieldSpec) {
     return (prototype: any, propertyKey: string) => {
@@ -88,7 +82,8 @@ export class Entity {
             return;
         }
         const messages = errors.map(e => ajvErrorToMessage(e));
-        throw util.createError('EntityValidationError', {
+        throw createError({
+            name: 'EntityValidationError',
             message: `${this.constructor.name} validation failed`,
             details: {
                 messages,
@@ -194,6 +189,22 @@ export class BaseEntity extends Entity {
 
 }
 
+export interface EntityList<T> {
+    entities: T[];
+    totalCount: number;
+}
+
+export function createListSchema(entityClass: AnyConstructor, presenter: string = '') {
+    return {
+        type: 'object',
+        properties: {
+            object: { type: 'string', const: 'list' },
+            count: { type: 'integer' },
+            data: getValidationSchema(entityClass, presenter)
+        }
+    };
+}
+
 export function getValidateFunction(entityClass: AnyConstructor, presenter: string = ''): Ajv.ValidateFunction {
     const schemaId = entityClass.name + ':' + presenter;
     const cached = validationFnCache.get(schemaId);
@@ -234,7 +245,8 @@ function deserializeFieldValue(field: FieldDefinition, value: any): any {
         if (field.nullable) {
             return null;
         }
-        throw util.createError('DeserializationError', {
+        throw createError({
+            name: 'DeserializationError',
             message: `Cannot assign null to non-nullable field ${field.propertyKey}`,
         });
     }
@@ -247,7 +259,8 @@ function deserializeFieldValue(field: FieldDefinition, value: any): any {
             if (field.entity) {
                 return deserializeSubEntity(field.entity(), v);
             }
-            throw util.createError('DeserializationError', {
+            throw createError({
+                name: 'DeserializationError',
                 message: `Cannot deserialize array field ${field.propertyKey}`,
             });
         });

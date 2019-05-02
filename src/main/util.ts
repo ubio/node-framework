@@ -34,30 +34,18 @@ export function groupBy<T, K>(items: T[], fn: (item: T, index: number) => K): Ar
 export type Constructor<T> = new (...args: any[]) => T;
 export type AnyConstructor = new (...args: any[]) => {};
 
-export function createListSchema(entityClass: AnyConstructor, presenter: string = '') {
-    return {
-        type: 'object',
-        properties: {
-            object: { type: 'string', const: 'list' },
-            count: { type: 'integer' },
-            data: getValidationSchema(entityClass, presenter)
-        }
-    };
-}
-
-export function createError(name: string, fields: ErrorAuxInfo = {}): Error {
+export function createError(info: ErrorInfo): Error {
     const err = new Error();
     Object.assign(err, {
-        name,
-        message: name,
-        ...fields
+        message: info.name,
+        ...info
     });
     return err;
 }
 
-export interface ErrorAuxInfo {
+export interface ErrorInfo {
+    name: string;
     message?: string;
-    code?: string;
     status?: number;
     details?: object;
 }
@@ -65,12 +53,14 @@ export interface ErrorAuxInfo {
 export async function createErrorFromResponse(res: Response) {
     try {
         const json = await res.json();
-        throw createError(json.name || 'InternalError', {
+        throw createError({
+            name: json.name || 'InternalError',
             ...json,
             status: res.status,
         });
     } catch (err) {
-        throw createError('InternalError', {
+        throw createError({
+            name: 'InternalError',
             details: {
                 error: {
                     name: err.name,

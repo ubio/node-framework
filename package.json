@@ -49,6 +49,7 @@
     "@ubio/logger": "^1.4.1",
     "ajv": "^6.10.0",
     "dotenv": "^7.0.0",
+    "escape-string-regexp": "^2.0.0",
     "inversify": "^5.0.1",
     "koa": "^2.7.0",
     "koa-bodyparser": "^4.2.1",
