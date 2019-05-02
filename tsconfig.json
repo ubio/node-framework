@@ -1,15 +1,16 @@
 {
     "compilerOptions": {
-        "target": "es2017",
-        "module": "commonjs",
         "declaration": true,
-        "outDir": "./out",
-        "rootDir": "./src",
-        "removeComments": true,
-        "strict": true,
+        "emitDecoratorMetadata": true,
         "esModuleInterop": true,
         "experimentalDecorators": true,
-        "emitDecoratorMetadata": true,
+        "module": "commonjs",
+        "outDir": "./out",
+        "removeComments": true,
+        "rootDir": "./src",
+        "sourceMap": true,
+        "strict": true,
+        "target": "es2017"
     },
     "include": [
         "src",
