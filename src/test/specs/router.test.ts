@@ -1,5 +1,9 @@
 import assert from 'assert';
-import { tokenizePath, matchPath } from '../../main';
+import { tokenizePath, matchPath, Application } from '../../main';
+import { FooRouter } from '../routes/foo';
+import { BarRouter } from '../routes/bar';
+import supertest from 'supertest';
+import { readNumber } from '../../main/env';
 
 describe('Router', () => {
 
@@ -103,6 +107,123 @@ describe('Router', () => {
                 const m2 = matchPath('/document.pdf.', tokens);
                 assert.deepEqual(m2, null);
             });
+        });
+
+    });
+
+    describe('request dispatching', () => {
+
+        const app = new Application();
+        app.addStandardMiddleware();
+        app.bindRouter(FooRouter);
+        app.bindRouter(BarRouter);
+
+        const port = readNumber('PORT', 3000);
+
+        beforeEach(() => app.start(port));
+        afterEach(() => app.stop());
+
+        it('GET /foo', async () => {
+            const request = supertest(app.callback());
+            const res = await request.get('/foo');
+            assert.equal(res.status, 200);
+            assert.equal(res.header['foo-before-all'], 'true');
+            assert(res.header['bar-before-all'] == null);
+            assert(res.header['foo-before-get-one'] == null);
+            assert.deepEqual(res.body, ['foo1', 'foo2', 'foo3']);
+        });
+
+        it('POST /foo', async () => {
+            const request = supertest(app.callback());
+            const res = await request.post('/foo')
+                .send({ fooId: 'blah' });
+            assert.equal(res.status, 201);
+            assert.equal(res.header['foo-before-all'], 'true');
+            assert(res.header['bar-before-all'] == null);
+            assert(res.header['foo-before-get-one'] == null);
+            assert.deepEqual(res.body, { fooId: 'blah' });
+        });
+
+        it('POST /foo with missing params', async () => {
+            const request = supertest(app.callback());
+            const res = await request.post('/foo')
+                .send({});
+            assert.equal(res.status, 400);
+            assert.equal(res.header['foo-before-all'], 'true');
+            assert(res.header['bar-before-all'] == null);
+            assert(res.header['foo-before-get-one'] == null);
+            assert.deepEqual(res.body.name, 'RequestParametersValidationError');
+        });
+
+        it('POST /foo with incorrect params', async () => {
+            const request = supertest(app.callback());
+            const res = await request.post('/foo')
+                .send({ fooId: '' });
+            assert.equal(res.status, 400);
+            assert.equal(res.header['foo-before-all'], 'true');
+            assert(res.header['bar-before-all'] == null);
+            assert(res.header['foo-before-get-one'] == null);
+            assert.deepEqual(res.body.name, 'RequestParametersValidationError');
+        });
+
+        it('GET /foo/{fooId}', async () => {
+            const request = supertest(app.callback());
+            const res = await request.get('/foo/123');
+            assert.equal(res.status, 200);
+            assert.equal(res.header['foo-before-all'], 'true');
+            assert.equal(res.header['foo-before-get-one'], '123');
+            assert(res.header['bar-before-all'] == null);
+            assert.deepEqual(res.body, { fooId: 123 });
+        });
+
+        it('GET /foo/{fooId}', async () => {
+            const request = supertest(app.callback());
+            const res = await request.get('/foo/123');
+            assert.equal(res.status, 200);
+            assert.equal(res.header['foo-before-all'], 'true');
+            assert.equal(res.header['foo-before-get-one'], '123');
+            assert(res.header['bar-before-all'] == null);
+            assert.deepEqual(res.body, { fooId: 123 });
+        });
+
+        it('GET /bar with default parameters', async () => {
+            const request = supertest(app.callback());
+            const res = await request.get('/bar');
+            assert.equal(res.status, 200);
+            assert(res.header['bar-before-all'], 'true');
+            assert(res.header['foo-before-all'] == null);
+            assert(res.header['foo-before-get-one'] == null);
+            assert.deepEqual(res.body, { sort: '+name', limit: 100, offset: 0 });
+        });
+
+        it('GET /bar with parameter overrides', async () => {
+            const request = supertest(app.callback());
+            const res = await request.get('/bar?sort=-name&limit=1000&offset=50');
+            assert.equal(res.status, 200);
+            assert(res.header['bar-before-all'], 'true');
+            assert(res.header['foo-before-all'] == null);
+            assert(res.header['foo-before-get-one'] == null);
+            assert.deepEqual(res.body, { sort: '-name', limit: 1000, offset: 50 });
+        });
+
+        it('GET /bar with invalid overrides', async () => {
+            const request = supertest(app.callback());
+            const res = await request.get('/bar?limit=1001');
+            assert.equal(res.status, 400);
+            assert(res.header['bar-before-all'], 'true');
+            assert(res.header['foo-before-all'] == null);
+            assert(res.header['foo-before-get-one'] == null);
+            assert.deepEqual(res.body.name, 'RequestParametersValidationError');
+        });
+
+        it('GET /bar with extraneous parameters', async () => {
+            const request = supertest(app.callback());
+            const res = await request.get('/bar?blah=true&bleu=false');
+            assert.equal(res.status, 200);
+            assert(res.header['bar-before-all'], 'true');
+            assert(res.header['foo-before-all'] == null);
+            assert(res.header['foo-before-get-one'] == null);
+            assert.deepEqual(res.body, { sort: '+name', limit: 100, offset: 0 });
         });
 
     });

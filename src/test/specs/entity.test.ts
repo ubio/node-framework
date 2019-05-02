@@ -186,8 +186,8 @@ describe('Entity', () => {
                 },
                 required: [
                     'id',
-                    'updatedAt',
                     'createdAt',
+                    'updatedAt',
                     'object',
                     'organizationId',
                     'username'
