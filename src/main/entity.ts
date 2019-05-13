@@ -5,7 +5,7 @@ import uuid from 'uuid';
 
 const FIELDS_KEY = Symbol('Fields');
 
-const validationSchemaCache: Map<string, object> = new Map();
+const validationSchemaCache: Map<string, EntitySchema> = new Map();
 const validationFnCache: Map<string, Ajv.ValidateFunction> = new Map();
 
 const ajv = new Ajv({
@@ -15,6 +15,15 @@ const ajv = new Ajv({
     format: 'full',
 });
 
+export type PrimitiveSchemaType = 'string' | 'number' | 'integer' | 'boolean' | 'object' | 'array';
+
+export interface EntitySchema {
+    type: PrimitiveSchemaType |
+        ['null', PrimitiveSchemaType];
+    items?: EntitySchema;
+    [keywords: string]: any;
+}
+
 export function Field(spec: FieldSpec) {
     return (prototype: any, propertyKey: string) => {
         const {
@@ -22,28 +31,32 @@ export function Field(spec: FieldSpec) {
             schema,
             presenters = [],
             entity,
-            deserializeItem,
-            nullable = false,
             serialized = true,
             deprecated = false,
         } = spec;
-        const designType = Reflect.getMetadata('design:type', prototype, propertyKey);
-        if (designType === Array) {
-            if (!entity && !deserializeItem) {
-                throw new Error(`@Field ${propertyKey}: array field must specify entity or deserializeItem`);
+        const primitiveType = Array.isArray(schema.type) ? schema.type[1] : schema.type;
+        const nullable = Array.isArray(schema.type) && schema.type[0] === 'null';
+        const entityClass: AnyConstructor | null = entity ? entity() : null;
+        // Validate schema compatibility with other options, enhance it with nested types
+        if (schema.type === 'array') {
+            // Arrays require either explicit `items` schema, or sub entity constructor to derive schema from
+            if (!entityClass && !schema.type) {
+                throw new Error(`@Field ${propertyKey}: array field must specify either entity or items schema`);
+            }
+            if (entityClass && schema.type) {
+                throw new Error(`@Field ${propertyKey}: array field must not specify both entity and items schema`);
             }
         }
-        const field = {
+        const field: FieldDefinition = {
             propertyKey,
             description,
             schema,
             presenters,
-            entity,
-            deserializeItem,
-            designType,
-            nullable,
+            entityClass,
             serialized,
             deprecated,
+            nullable,
+            primitiveType
         };
         const fields: FieldDefinition[] = Reflect.getMetadata(FIELDS_KEY, prototype) || [];
         fields.push(field);
@@ -98,7 +111,6 @@ export class Entity {
     }
 
     present(presenter: string = ''): object {
-        // TODO how to go about { object: 'blah' } field?
         const object: { [key: string]: any } = {};
         const fields = getFieldsForPresenter(this.constructor as AnyConstructor, presenter);
         for (const field of fields) {
@@ -112,12 +124,14 @@ export class Entity {
     }
 
     assign(object: any): this {
-        for (const field of getAllFields(this.constructor as AnyConstructor)) {
-            const val = object[field.propertyKey];
-            if (val === undefined) {
+        // TODO cache fields if this becomes too slow
+        const fields = getAllFields(this.constructor as AnyConstructor);
+        for (const [k, v] of Object.entries(object)) {
+            const field = fields.find(f => f.propertyKey === k);
+            if (!field) {
                 continue;
             }
-            (this as any)[field.propertyKey] = deserializeFieldValue(field, val);
+            (this as any)[field.propertyKey] = deserializeFieldValue(field, v);
         }
         return this;
     }
@@ -144,7 +158,7 @@ export function getFieldsForPresenter(entityClass: AnyConstructor, presenter: st
     return presenter ? fields.filter(_ => _.presenters.includes(presenter)) : fields;
 }
 
-export function getValidationSchema(entityClass: AnyConstructor, presenter: string = ''): object {
+export function getValidationSchema(entityClass: AnyConstructor, presenter: string = ''): EntitySchema {
     const schemaId = entityClass.name + ':' + presenter;
     const cached = validationSchemaCache.get(schemaId);
     if (cached) {
@@ -155,15 +169,19 @@ export function getValidationSchema(entityClass: AnyConstructor, presenter: stri
     const required: string[] = [];
     for (const field of fields) {
         let schema = { ...field.schema };
-        if (field.entity) {
-            const subEntityClass = field.entity();
-            const subSchema = getValidationSchema(subEntityClass, presenter);
+        // Enhance object and array schema if entity class is provided
+        if (field.primitiveType === 'object' && field.entityClass) {
+            const subSchema = getValidationSchema(field.entityClass, presenter);
             schema = { ...subSchema, ...schema };
+        }
+        if (field.primitiveType === 'array' && field.entityClass) {
+            const subSchema = getValidationSchema(field.entityClass, presenter);
+            schema.items = subSchema;
         }
         properties[field.propertyKey] = schema;
         required.push(field.propertyKey);
     }
-    const schema = {
+    const schema: EntitySchema = {
         type: 'object',
         properties,
         required,
@@ -225,55 +243,74 @@ export function getValidateFunction(entityClass: AnyConstructor, presenter: stri
 export interface FieldDefinition {
     propertyKey: string;
     description: string;
-    schema: any;
+    schema: EntitySchema;
     presenters: string[];
-    designType: (...args: any) => any;
-    entity?: () => AnyConstructor;
-    deserializeItem?: (value: any) => any;
-    nullable: boolean;
+    entityClass: AnyConstructor | null;
     serialized: boolean;
     deprecated: boolean;
+    // evaluated fields
+    primitiveType: PrimitiveSchemaType;
+    nullable: boolean;
 }
 
 export interface FieldSpec {
     description?: string;
-    schema: any;
+    schema: EntitySchema;
     presenters?: string[];
     entity?: () => AnyConstructor;
-    deserializeItem?: (value: any) => any;
-    nullable?: boolean;
     serialized?: boolean;
     deprecated?: boolean;
 }
 
-function deserializeFieldValue(field: FieldDefinition, value: any): any {
+function deserializeFieldValue(
+    key: string,
+    value: any,
+    primitiveType: PrimitiveSchemaType,
+    nullable: boolean,
+    entityClass: AnyConstructor | null,
+    items?: EntitySchema
+): any {
     if (value == null) {
-        if (field.nullable) {
+        if (nullable) {
             return null;
         }
         throw createError({
             name: 'DeserializationError',
-            message: `Cannot assign null to non-nullable field ${field.propertyKey}`,
+            message: `Cannot assign null to non-nullable field ${key}`,
         });
     }
-    if (field.designType === Array) {
-        const array = Array.isArray(value) ? value : [value];
-        return array.map(v => {
-            if (field.deserializeItem) {
-                return field.deserializeItem(v);
+    switch (primitiveType) {
+        case 'array': {
+            const array = Array.isArray(value) ? value : [value];
+            if (entityClass) {
+                return array.map(v => deserializeSubEntity(entityClass, v));
             }
-            if (field.entity) {
-                return deserializeSubEntity(field.entity(), v);
+            if (items) {
+                return array.map(v => deserializeFieldValue(key, v, items.type, false, null));
             }
             throw createError({
                 name: 'DeserializationError',
-                message: `Cannot deserialize array field ${field.propertyKey}`,
+                message: `Cannot deserialize array ${key}`,
             });
-        });
-    } else if (field.entity) {
-        return deserializeSubEntity(field.entity(), value);
-    } else {
-        return field.designType(value);
+        }
+        case 'object': {
+            if (entityClass) {
+                return deserializeSubEntity(entityClass, value);
+            }
+            return value;
+        }
+        case 'string': {
+            return String(value);
+        }
+        case 'boolean': {
+            return Boolean(value);
+        }
+        case 'number': {
+            return parseFloat(value) || 0;
+        }
+        case 'integer': {
+            return parseInt(value, 10) || 0;
+        }
     }
 }
 

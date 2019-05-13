@@ -30,7 +30,6 @@ export class Country extends Entity {
 
     @Field({
         schema: { type: 'array', items: { type: 'string' } },
-        deserializeItem: val => String(val),
     })
     languages: string[] = [];
 
