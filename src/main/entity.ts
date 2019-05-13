@@ -63,6 +63,12 @@ export function Field(spec: FieldSpec) {
  */
 export class Entity {
 
+    // https://github.com/microsoft/TypeScript/issues/5863#issuecomment-410887254
+    static fromJSON<T extends typeof Entity>(this: T, fields: object = {}): InstanceType<T> {
+        const entity = (new this()) as InstanceType<T>;
+        return entity.assign(fields);
+    }
+
     getValidationSchema(presenter: string = ''): any {
         return getValidationSchema(this.constructor as AnyConstructor, presenter);
     }

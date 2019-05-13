@@ -102,8 +102,7 @@ describe('Entity', () => {
     describe('deserialization', () => {
 
         it('reads fields from JSON object, coercing primitive types', () => {
-            const user = new User();
-            user.assign({
+            const user = User.fromJSON({
                 username: 'hello',
                 organizationId: '00000000-0000-0000-0000-000000000000',
                 createdAt: '123123123123'
@@ -114,7 +113,7 @@ describe('Entity', () => {
         });
 
         it('deserializes nested objects and arrays', () => {
-            const country = new Country().assign({
+            const country = Country.fromJSON({
                 code: 'che',
                 capital: { name: 'Bern' },
                 cities: [

@@ -153,11 +153,10 @@ Computed fields are also serialized by default, and any field can be excluded fr
 
 ## Deserialization
 
-Unpacking an entity from a raw JSON object is possible either by explicitly updating all the fields, or via `assign`:
+Unpacking an entity from a raw JSON object is possible either by explicitly updating all the fields, via static `fromJSON` or instance method `assign`:
 
 ```ts
-const user = new User();
-user.assign({
+const user = User.fromJSON({
     username: 'hello',
     organizationId: '00000000-0000-0000-0000-000000000000',
     createdAt: '123123123123'
