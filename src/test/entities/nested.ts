@@ -18,19 +18,18 @@ export class Country extends Entity {
 
     @Field({
         schema: { type: 'object' },
-        entity: () => City,
+        entity: City,
     })
     capital: City = new City();
 
     @Field({
         schema: { type: 'array' },
-        entity: () => City,
+        entity: City,
     })
     cities: City[] = [];
 
     @Field({
         schema: { type: 'array', items: { type: 'string' } },
-        deserializeItem: val => String(val),
     })
     languages: string[] = [];
 

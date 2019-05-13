@@ -7,6 +7,7 @@
         "module": "commonjs",
         "outDir": "./out",
         "removeComments": true,
+        "resolveJsonModule": true,
         "rootDir": "./src",
         "sourceMap": true,
         "strict": true,

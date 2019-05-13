@@ -1,7 +1,9 @@
 import assert from 'assert';
-import { User } from '../entities/user';
 import { getAllFields, getValidationSchema } from '../../main';
+import { User } from '../entities/user';
 import { Country, City } from '../entities/nested';
+import { TypeKit, Foo } from '../entities/typekit';
+import expectedTypeKitSchema from '../entities/typekit-schema.json';
 
 describe('Entity', () => {
 
@@ -142,6 +144,132 @@ describe('Entity', () => {
             assert.deepEqual(cityNames, ['Bern', 'Zurich', 'Geneva', 'Basel', 'Lucerne', 'Lausanne']);
         });
 
+        describe('integration', () => {
+
+            const specs: { [key: string]: Array<[any, any]> } = {
+                primitiveString: [
+                    ['hello', 'hello'],
+                    [90, '90'],
+                    [false, 'false'],
+                    [null, '']
+                ],
+                primitiveBoolean: [
+                    [true, true],
+                    [false, false],
+                    ['true', true],
+                    ['false', false],
+                    [null, false],
+                ],
+                primitiveNumber: [
+                    [2.71, 2.71],
+                    ['2.71', 2.71],
+                    [false, 0],
+                    ['blah', 0],
+                    [null, 0],
+                ],
+                primitiveInteger: [
+                    [2, 2],
+                    [2.71, 2],
+                    ['2.71', 2],
+                    [false, 0],
+                    ['blah', 0],
+                    [null, 0],
+                ],
+                primitiveObject: [
+                    [{ foo: 1 }, { foo: 1}],
+                    [null, {}],
+                ],
+
+                optionalString: [
+                    ['hey', 'hey'],
+                    [null, null],
+                ],
+                optionalBoolean: [
+                    ['true', true],
+                    [null, null],
+                ],
+                optionalNumber: [
+                    ['0', 0],
+                    [null, null],
+                ],
+                optionalInteger: [
+                    ['0', 0],
+                    [null, null],
+                ],
+                optionalObject: [
+                    [{ foo: 1 }, { foo: 1}],
+                    [null, null],
+                ],
+
+                arrayOfString: [
+                    [['foo', 'bar'], ['foo', 'bar']],
+                    ['foo', ['foo']],
+                    [null, []],
+                    [[null], []],
+                    [['foo', null, 'bar'], ['foo', 'bar']],
+                    [[90, true, null], ['90', 'true']],
+                ],
+                arrayOfBoolean: [
+                    [[true, false], [true, false]],
+                    [['true', 'false'], [true, false]],
+                    [['true', null, 'false'], [true, false]],
+                    [[90, 'bar', null], [false, false]],
+                ],
+                arrayOfNumber: [
+                    [[0, 1, 2.71, 3.14], [0, 1, 2.71, 3.14]],
+                    [['0', '1'], [0, 1]],
+                    [['0', null, '1'], [0, 1]],
+                ],
+                arrayOfInteger: [
+                    [[0, 1, 2.71, 3.14], [0, 1, 2, 3]],
+                    [['0', '1'], [0, 1]],
+                    [['0', null, '1'], [0, 1]],
+                ],
+
+                nestedOne: [
+                    [{ foo: 'hi' }, Foo.fromJSON({ foo: 'hi' })],
+                    [{}, Foo.fromJSON({ foo: 'hello' })],
+                    [null, Foo.fromJSON({ foo: 'hello' })],
+                ],
+                nestedOptional: [
+                    [{ foo: 'hi' }, Foo.fromJSON({ foo: 'hi' })],
+                    [{}, Foo.fromJSON({ foo: 'hello' })],
+                    [null, null],
+                ],
+                nestedMany: [
+                    [
+                        [{ foo: 'hi' }, { foo: 'hey'}],
+                        [Foo.fromJSON({ foo: 'hi' }), Foo.fromJSON({ foo: 'hey' })]
+                    ],
+                    [
+                        { foo: 'hi' },
+                        [Foo.fromJSON({ foo: 'hi' })]
+                    ],
+                    [null, []],
+                ]
+            };
+
+            for (const [key, values] of Object.entries(specs)) {
+                for (const [rawValue, expectedValue] of values) {
+                    const testName =
+                        `deserializes ${key} from ${JSON.stringify(rawValue)} to ${JSON.stringify(expectedValue)}`;
+                    it(testName, () => {
+                        const kit: any = TypeKit.fromJSON({ [key]: rawValue });
+                        assert.deepEqual(kit[key], expectedValue);
+                        if (expectedValue != null) {
+                            assert.equal(kit[key].constructor.prototype, expectedValue.constructor.prototype);
+                        }
+                        if (Array.isArray(expectedValue)) {
+                            for (const [i, v] of expectedValue.entries()) {
+                                assert.equal(v.constructor.prototype, expectedValue[i].constructor.prototype);
+                            }
+                        }
+                    });
+                }
+            }
+
+        });
+
     });
 
     describe('validate', () => {
@@ -191,8 +319,17 @@ describe('Entity', () => {
                     'organizationId',
                     'username'
                 ],
-                additionalProperties: false
+                additionalProperties: true
             });
+        });
+
+        describe('integration', () => {
+
+            it('generates valid schema for all valid field schema types', () => {
+                const schema = getValidationSchema(TypeKit);
+                assert.deepEqual(schema, expectedTypeKitSchema);
+            });
+
         });
 
     });

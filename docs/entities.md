@@ -156,11 +156,16 @@ Computed fields are also serialized by default, and any field can be excluded fr
 Unpacking an entity from a raw JSON object is possible either by explicitly updating all the fields, via static `fromJSON` or instance method `assign`:
 
 ```ts
+// Create from JSON
 const user = User.fromJSON({
     username: 'hello',
-    organizationId: '00000000-0000-0000-0000-000000000000',
     createdAt: '123123123123'
     unrelated: 'foo'
+});
+// Update fields
+user.assign({
+    organizationId: '00000000-0000-0000-0000-000000000000',
+    other: 'blah',
 });
 console.log(user);
 // User {
@@ -184,13 +189,15 @@ Nullable fields are defined like this:
 
 ```ts
     @Field({
-        schema: { type: ['null', 'string'] },
+        schema: { type: 'string' },
         nullable: true
     })
     assigneeId: string | null = null;
 ```
 
 Nullable fields should only be used when domain explicitly allows missing values (e.g. an issue may not have an assignee). Nullable fields should not be confused with uninitialized required fields, and as such should not be used for initializing fields that are not optional. For initializing required fields you must use the default value of the same type as the type of the field. For example, the User entity above has required `organizationId: string` field which is initialized with an empty string which, if unassigned, will fail validation before being saved into database.
+
+JSON schema for nullable types will automatically be enhanced to allow `null` value. In example above, it'll be `{ type: ['null', 'string'] }` so you don't have to manually specify that.
 
 ## Validation
 
@@ -226,3 +233,8 @@ const userPublicSchema = getValidationSchema(User, 'public');
 //   additionalProperties: false }
 ```
 
+## Nested entities
+
+Entities can embed other entities and even arrays of entities. Framework will take care of (de)serializing them from/to raw JSON, as well as generating correct validation schema for them.
+
+You can find some examples of how to define embedded entities in [tests](../src/test/entities).
