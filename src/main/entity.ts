@@ -1,11 +1,11 @@
 import 'reflect-metadata';
 import Ajv from 'ajv';
-import { ajvErrorToMessage, AnyConstructor, createError } from './util';
+import { ajvErrorToMessage, AnyConstructor, createError, Constructor } from './util';
 import uuid from 'uuid';
 
 const FIELDS_KEY = Symbol('Fields');
 
-const validationSchemaCache: Map<string, EntitySchema> = new Map();
+const validationSchemaCache: Map<string, object> = new Map();
 const validationFnCache: Map<string, Ajv.ValidateFunction> = new Map();
 
 const ajv = new Ajv({
@@ -15,11 +15,10 @@ const ajv = new Ajv({
     format: 'full',
 });
 
-export type PrimitiveSchemaType = 'string' | 'number' | 'integer' | 'boolean' | 'object' | 'array';
+export type SchemaType = 'string' | 'number' | 'integer' | 'boolean' | 'object' | 'array';
 
 export interface EntitySchema {
-    type: PrimitiveSchemaType |
-        ['null', PrimitiveSchemaType];
+    type: SchemaType;
     items?: EntitySchema;
     [keywords: string]: any;
 }
@@ -31,19 +30,18 @@ export function Field(spec: FieldSpec) {
             schema,
             presenters = [],
             entity,
+            nullable = false,
             serialized = true,
             deprecated = false,
         } = spec;
-        const primitiveType = Array.isArray(schema.type) ? schema.type[1] : schema.type;
-        const nullable = Array.isArray(schema.type) && schema.type[0] === 'null';
-        const entityClass: AnyConstructor | null = entity ? entity() : null;
+        const entityClass: AnyConstructor | null = entity || null;
         // Validate schema compatibility with other options, enhance it with nested types
         if (schema.type === 'array') {
             // Arrays require either explicit `items` schema, or sub entity constructor to derive schema from
-            if (!entityClass && !schema.type) {
+            if (!entityClass && !schema.items) {
                 throw new Error(`@Field ${propertyKey}: array field must specify either entity or items schema`);
             }
-            if (entityClass && schema.type) {
+            if (entityClass && schema.items) {
                 throw new Error(`@Field ${propertyKey}: array field must not specify both entity and items schema`);
             }
         }
@@ -51,12 +49,11 @@ export function Field(spec: FieldSpec) {
             propertyKey,
             description,
             schema,
+            nullable,
             presenters,
             entityClass,
             serialized,
-            deprecated,
-            nullable,
-            primitiveType
+            deprecated
         };
         const fields: FieldDefinition[] = Reflect.getMetadata(FIELDS_KEY, prototype) || [];
         fields.push(field);
@@ -124,6 +121,9 @@ export class Entity {
     }
 
     assign(object: any): this {
+        if (object == null || (typeof object !== 'object')) {
+            return this;
+        }
         // TODO cache fields if this becomes too slow
         const fields = getAllFields(this.constructor as AnyConstructor);
         for (const [k, v] of Object.entries(object)) {
@@ -131,7 +131,12 @@ export class Entity {
             if (!field) {
                 continue;
             }
-            (this as any)[field.propertyKey] = deserializeFieldValue(field, v);
+            if (v == null && field.nullable) {
+                (this as any)[field.propertyKey] = null;
+            } else {
+                const value = deserializeFieldValue(k, v, field.schema.type, field.entityClass, field.schema.items);
+                (this as any)[field.propertyKey] = value;
+            }
         }
         return this;
     }
@@ -158,7 +163,7 @@ export function getFieldsForPresenter(entityClass: AnyConstructor, presenter: st
     return presenter ? fields.filter(_ => _.presenters.includes(presenter)) : fields;
 }
 
-export function getValidationSchema(entityClass: AnyConstructor, presenter: string = ''): EntitySchema {
+export function getValidationSchema(entityClass: AnyConstructor, presenter: string = ''): object {
     const schemaId = entityClass.name + ':' + presenter;
     const cached = validationSchemaCache.get(schemaId);
     if (cached) {
@@ -168,24 +173,28 @@ export function getValidationSchema(entityClass: AnyConstructor, presenter: stri
     const properties: any = {};
     const required: string[] = [];
     for (const field of fields) {
-        let schema = { ...field.schema };
+        let schema: any = { ...field.schema };
+        // Wrap nullable types to a ['null', type] tuple
+        if (field.nullable) {
+            schema.type = ['null', field.schema.type];
+        }
         // Enhance object and array schema if entity class is provided
-        if (field.primitiveType === 'object' && field.entityClass) {
+        if (field.schema.type === 'object' && field.entityClass) {
             const subSchema = getValidationSchema(field.entityClass, presenter);
             schema = { ...subSchema, ...schema };
         }
-        if (field.primitiveType === 'array' && field.entityClass) {
+        if (field.schema.type === 'array' && field.entityClass) {
             const subSchema = getValidationSchema(field.entityClass, presenter);
             schema.items = subSchema;
         }
         properties[field.propertyKey] = schema;
         required.push(field.propertyKey);
     }
-    const schema: EntitySchema = {
+    const schema = {
         type: 'object',
         properties,
         required,
-        additionalProperties: false,
+        additionalProperties: true,
     };
     validationSchemaCache.set(schemaId, schema);
     return schema;
@@ -248,45 +257,36 @@ export interface FieldDefinition {
     entityClass: AnyConstructor | null;
     serialized: boolean;
     deprecated: boolean;
-    // evaluated fields
-    primitiveType: PrimitiveSchemaType;
     nullable: boolean;
 }
 
 export interface FieldSpec {
     description?: string;
     schema: EntitySchema;
-    presenters?: string[];
-    entity?: () => AnyConstructor;
+    nullable?: boolean;
     serialized?: boolean;
     deprecated?: boolean;
+    entity?: Constructor<Entity>;
+    presenters?: string[];
 }
 
 function deserializeFieldValue(
     key: string,
     value: any,
-    primitiveType: PrimitiveSchemaType,
-    nullable: boolean,
-    entityClass: AnyConstructor | null,
+    type: SchemaType,
+    // only for objects and arrays
+    entityClass: AnyConstructor | null = null,
     items?: EntitySchema
 ): any {
-    if (value == null) {
-        if (nullable) {
-            return null;
-        }
-        throw createError({
-            name: 'DeserializationError',
-            message: `Cannot assign null to non-nullable field ${key}`,
-        });
-    }
-    switch (primitiveType) {
+    switch (type) {
         case 'array': {
-            const array = Array.isArray(value) ? value : [value];
+            const array: any[] = (Array.isArray(value) ? value : [value])
+                .filter(_ => _ != null);
             if (entityClass) {
                 return array.map(v => deserializeSubEntity(entityClass, v));
             }
             if (items) {
-                return array.map(v => deserializeFieldValue(key, v, items.type, false, null));
+                return array.map(v => deserializeFieldValue(key, v, items.type));
             }
             throw createError({
                 name: 'DeserializationError',
@@ -297,13 +297,13 @@ function deserializeFieldValue(
             if (entityClass) {
                 return deserializeSubEntity(entityClass, value);
             }
-            return value;
+            return value == null ? {} : typeof value === 'object' ? value : {};
         }
         case 'string': {
-            return String(value);
+            return value == null ? '' : String(value);
         }
         case 'boolean': {
-            return Boolean(value);
+            return String(value) === 'true';
         }
         case 'number': {
             return parseFloat(value) || 0;
