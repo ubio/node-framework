@@ -19,7 +19,8 @@ export class Logger {
         });
     }
 
-    protected log(level: LogLevel, message: string, data: object) {
+    protected log(level: LogLevel, message: string, details: object) {
+        const data = this.convertDetails(details);
         this.ubioLogger[level](message, { ...this.contextData, ...data });
     }
 
@@ -27,20 +28,20 @@ export class Logger {
         this.log('metric', message, details);
     }
 
-    info(message: string, data: object = {}) {
-        this.log('info', message, data);
+    info(message: string, details: object = {}) {
+        this.log('info', message, details);
     }
 
-    warn(message: string, data: object = {}) {
-        this.log('warn', message, data);
+    warn(message: string, details: object = {}) {
+        this.log('warn', message, details);
     }
 
-    error(message: string, data: object = {}) {
-        this.log('error', message, data);
+    error(message: string, details: object = {}) {
+        this.log('error', message, details);
     }
 
-    debug(message: string, data: object = {}) {
-        this.log('debug', message, data);
+    debug(message: string, details: object = {}) {
+        this.log('debug', message, details);
     }
 
     addContextData(data: object): this {
@@ -49,6 +50,7 @@ export class Logger {
     }
 
     convertDetails(details: any) {
+        // TODO consider converting error objects recursively
         return details instanceof Error ? {
             error: {
                 name: details.name,
