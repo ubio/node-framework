@@ -19,7 +19,7 @@ export async function errorHandler(ctx: Context, next: () => Promise<any>) {
         ctx.status = typeof error.status === 'number' ? error.status : 500;
         ctx.body = {
             object: 'error',
-            name: error.constructor.name,
+            name: error.name || error.constructor.name,
             message: error.message,
             ...error
         };
