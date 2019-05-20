@@ -1,6 +1,8 @@
 import fetch from 'node-fetch';
 import querystring from 'querystring';
 import { util } from '.';
+import { injectable, inject } from 'inversify';
+import { Logger } from './logger';
 
 const NETWORK_ERRORS = [
     'EAI_AGAIN',
@@ -13,8 +15,6 @@ const NETWORK_ERRORS = [
 ];
 
 export interface RequestOptions {
-    url: string;
-    method?: string;
     body?: any;
     query?: { [key: string]: any };
     headers?: { [key: string]: string };
@@ -30,33 +30,65 @@ export interface RequestConfig {
 
 export type RequestFunction = (options: RequestOptions) => Promise<any>;
 
-export function createRequest(config: RequestConfig): RequestFunction {
-    const { baseUrl, authKey, retryAttempts = 20, retryDelay = 1000 } = config;
-    const authHeader = 'Basic ' + Buffer.from(authKey + ':').toString('base64');
+@injectable()
+export class RequestFactory {
+    @inject(Logger)
+    logger!: Logger;
 
-    return async function request(options: RequestOptions): Promise<any> {
-        const {
-            url,
-            method = 'GET',
-            query = {},
-        } = options;
+    configure(config: RequestConfig): Request {
+        return new Request(this, config);
+    }
+}
 
+export class Request {
+    factory: RequestFactory;
+    config: RequestConfig;
+
+    constructor(factory: RequestFactory, config: RequestConfig) {
+        this.factory = factory;
+        this.config = config;
+    }
+
+    get logger(): Logger {
+        return this.factory.logger;
+    }
+
+    async get(url: string, options: RequestOptions = {}): Promise<any> {
+        return await this.send('get', url, options);
+    }
+
+    async post(url: string, options: RequestOptions = {}): Promise<any> {
+        return await this.send('post', url, options);
+    }
+
+    async put(url: string, options: RequestOptions = {}): Promise<any> {
+        return await this.send('put', url, options);
+    }
+
+    async delete(url: string, options: RequestOptions = {}): Promise<any> {
+        return await this.send('delete', url, options);
+    }
+
+    async send(method: string, url: string, options: RequestOptions = {}): Promise<any> {
+        const { baseUrl, authKey } = this.config;
+        // Prepare headers
+        const authHeader = 'Basic ' + Buffer.from(authKey + ':').toString('base64');
         const headers: { [key: string]: string } = {
             Authorization: authHeader,
-            ...config.headers,
+            ...this.config.headers,
             ...options.headers
         };
-
+        // Prepare body
         let body = options.body || null;
-
         if (body) {
             headers['Content-Type'] = 'application/json';
             body = JSON.stringify(body);
         }
-
-        const qs = querystring.stringify(query);
+        // Prepare URL
+        const qs = querystring.stringify(options.query || {});
         const fullUrl = baseUrl + url + (qs ? '?' + qs : '');
-        const res = await fetchWithRetry(fullUrl, {
+        // Send request
+        const res = await this.fetchWithRetry(fullUrl, {
             method,
             body,
             headers
@@ -68,16 +100,14 @@ export function createRequest(config: RequestConfig): RequestFunction {
         }
         if (!res.ok) {
             const text = await res.text();
-            throw createErrorFromResponse(status, text, {
-                requestMethod: method,
-                requestUrl: fullUrl
-            });
+            throw this.createErrorFromResponse(method, url, fullUrl, status, text);
         }
         const json = await res.json();
         return json;
-    };
+    }
 
-    async function fetchWithRetry(fullUrl: string, fetchOptions: any): Promise<any> {
+    async fetchWithRetry(fullUrl: string, fetchOptions: any): Promise<any> {
+        const { retryAttempts = 20, retryDelay = 1000 } = this.config;
         let attempted = 0;
         let lastError = null;
         while (attempted < retryAttempts) {
@@ -96,21 +126,36 @@ export function createRequest(config: RequestConfig): RequestFunction {
         throw lastError;
     }
 
-    function createErrorFromResponse(status: number, responseText: string, details: any = {}): Error {
+    createErrorFromResponse(
+        method: string,
+        url: string,
+        fullUrl: string,
+        status: number,
+        responseText: string
+    ): Error {
         try {
             const json = JSON.parse(responseText);
             return util.createError({
                 name: json.name,
                 message: json.message,
-                details: { ...details, ...json.details },
+                details: json.details,
                 status
             });
         } catch (err) {
+            this.logger.warn(`Request failed: unable to parse JSON`, {
+                details: {
+                    method,
+                    url,
+                    fullUrl
+                },
+                error: {
+                    name: err.name,
+                    message: err.name
+                }
+            });
             return util.createError({
-                name: 'RequestFailedError',
-                message: `Could not parse JSON response: ${err.message}`,
-                status,
-                details
+                name: 'InternalError',
+                message: 'The request cannot be processed'
             });
         }
     }
