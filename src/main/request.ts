@@ -67,8 +67,8 @@ export function createRequest(config: RequestConfig): RequestFunction {
             return null;
         }
         if (!res.ok) {
-            const err = await util.createErrorFromResponse(res);
-            throw err;
+            const text = await res.text();
+            throw createErrorFromResponse(status, text);
         }
         const json = await res.json();
         return json;
@@ -92,4 +92,23 @@ export function createRequest(config: RequestConfig): RequestFunction {
         }
         throw lastError;
     }
+
+    function createErrorFromResponse(status: number, responseText: string): Error {
+        try {
+            const json = JSON.parse(responseText);
+            return util.createError({
+                name: json.name,
+                message: json.message,
+                details: json.details,
+                status
+            });
+        } catch (err) {
+            return util.createError({
+                name: 'RequestFailedError',
+                message: `Could not parse JSON response: ${err.message}`,
+                status
+            });
+        }
+    }
+
 }

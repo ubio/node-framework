@@ -1,5 +1,4 @@
 import Ajv from 'ajv';
-import { Response } from 'node-fetch';
 import uuid from 'uuid';
 
 export function deepClone<T>(data: T): T {
@@ -37,28 +36,6 @@ export function createError(info: ErrorInfo): Error {
         ...info
     });
     return err;
-}
-
-export async function createErrorFromResponse(res: Response) {
-    try {
-        const json = await res.json();
-        throw createError({
-            name: json.name || 'InternalError',
-            ...json,
-            status: res.status,
-        });
-    } catch (err) {
-        throw createError({
-            name: 'InternalError',
-            details: {
-                error: {
-                    name: err.name,
-                    message: err.message,
-                    details: err.details,
-                }
-            }
-        });
-    }
 }
 
 export function ajvErrorToMessage(e: Ajv.ErrorObject): string {
