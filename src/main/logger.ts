@@ -22,12 +22,14 @@ export class Logger {
         if (level === 'mute' || LEVELS.indexOf(level) < LEVELS.indexOf(this.level)) {
             return;
         }
-        const [seconds, nanos] = process.hrtime();
-        const timestamp = { seconds, nanos };
+        // Note: this seems to not be supported for the time being
+        // const [seconds, nanos] = process.hrtime();
+        // const timestamp = { seconds, nanos };
         const payload = {
             message,
             severity: level === 'warn' ? 'warning' : level,
-            timestamp,
+            // timestamp,
+            timestamp: new Date().toISOString()
             ...this.contextData,
             ...details
         };
