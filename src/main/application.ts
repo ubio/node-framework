@@ -82,7 +82,7 @@ export class Application extends Koa {
             const requestContainer = new Container({ skipBaseClassChecks: true });
             requestContainer.parent = this.container;
             requestContainer.bind('KoaContext').toConstantValue(ctx);
-            requestContainer.bind(Logger).to(RequestLogger).inRequestScope();
+            requestContainer.bind(Logger).to(RequestLogger).inSingletonScope();
             ctx.container = requestContainer;
             ctx.logger = requestContainer.get<Logger>(Logger);
 

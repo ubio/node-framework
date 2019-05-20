@@ -142,11 +142,13 @@ export class Request {
                 status
             });
         } catch (err) {
-            this.logger.warn(`Request failed: unable to parse JSON`, {
+            this.logger.warn(`Request failed: unable to parse response JSON`, {
                 details: {
                     method,
                     url,
-                    fullUrl
+                    fullUrl,
+                    status,
+                    responseText
                 },
                 error: {
                     name: err.name,

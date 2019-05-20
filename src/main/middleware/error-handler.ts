@@ -16,13 +16,14 @@ export async function errorHandler(ctx: Context, next: () => Promise<any>) {
     try {
         await next();
     } catch (error) {
+        const name = error.name || error.constructor.name;
         ctx.status = typeof error.status === 'number' ? error.status : 500;
         ctx.body = {
             object: 'error',
-            name: error.name || error.constructor.name,
+            name,
             message: error.message,
             ...error
         };
-        ctx.logger.warn(error.message, { error });
+        ctx.logger.warn(`${ctx.status} ${ctx.message} ${ctx.path}: ${name}`, { error });
     }
 }
