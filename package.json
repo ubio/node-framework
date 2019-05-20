@@ -1,6 +1,6 @@
 {
   "name": "@ubio/framework",
-  "version": "0.8.3",
+  "version": "0.8.4",
   "description": "ubio Microservices Framework",
   "main": "out/main/index.js",
   "files": [
