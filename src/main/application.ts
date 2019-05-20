@@ -29,7 +29,7 @@ export class Application extends Koa {
         process.once('SIGTERM', () => this.gracefulShutdown('SIGTERM'));
         process.once('SIGINT', () => this.gracefulShutdown('SIGINT'));
         this.bindSingleton(Logger);
-        this.bind(RequestFactory, RequestFactory);
+        this.bind(RequestFactory);
         this.logger = container.get<Logger>(Logger);
     }
 

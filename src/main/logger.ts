@@ -1,31 +1,42 @@
 import { injectable, inject } from 'inversify';
 import * as koa from 'koa';
-import createUbioLogger from '@ubio/logger';
 
-export type LogLevel = 'metric' | 'error' | 'warn' | 'info' | 'debug';
+export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'mute';
+
+const LEVELS: LogLevel[] = ['debug', 'info', 'warn', 'error', 'mute'];
 
 @injectable()
 export class Logger {
+    level: LogLevel;
     contextData: object = {};
     ubioLogger: any;
 
     constructor() {
-        const pkg = require(process.cwd() + '/package.json');
-        this.ubioLogger = createUbioLogger({
-            severity: process.env.LOG_LEVEL || 'info',
-            mode: process.env.LOG_PRETTY === 'true' ? 'pretty' : 'production',
-            service: pkg.name,
-            version: pkg.version,
-        });
+        this.level = (process.env.LOG_LEVEL || 'info') as LogLevel;
+        if (!LEVELS.includes(this.level)) {
+            this.level = 'info';
+        }
     }
 
     protected log(level: LogLevel, message: string, details: object) {
-        const data = this.convertDetails(details);
-        this.ubioLogger[level](message, { ...this.contextData, ...data });
+        if (level === 'mute' || LEVELS.indexOf(level) < LEVELS.indexOf(this.level)) {
+            return;
+        }
+        const [seconds, nanos] = process.hrtime();
+        const timestamp = { seconds, nanos };
+        const payload = {
+            message,
+            severity: level === 'warn' ? 'warning' : level,
+            timestamp,
+            ...this.contextData,
+            ...details
+        };
+        process.stdout.write(JSON.stringify(payload, jsonReplacer) + '\n');
+        // this.ubioLogger[level](message, { ...this.contextData, ...data });
     }
 
     metric(message: string, details: any = {}): void {
-        this.log('metric', message, details);
+        this.log('info', message, { isMetric: true, ...details });
     }
 
     info(message: string, details: object = {}) {
@@ -49,19 +60,6 @@ export class Logger {
         return this;
     }
 
-    convertDetails(details: any) {
-        // TODO consider converting error objects recursively
-        return details instanceof Error ? {
-            error: {
-                name: details.name,
-                code: (details as any).code,
-                message: details.message,
-                stack: details.stack,
-                details: (details as any).details
-            }
-        } : details;
-    }
-
 }
 
 @injectable()
@@ -77,4 +75,17 @@ export class RequestLogger extends Logger {
         });
     }
 
+}
+
+// Helper to deserialize error fields to JSON
+function jsonReplacer(k: string, v: any) {
+    if (v instanceof Error) {
+        return {
+            name: v.name,
+            message: v.message,
+            code: (v as any).code,
+            details: (v as any).details,
+        };
+    }
+    return v;
 }
