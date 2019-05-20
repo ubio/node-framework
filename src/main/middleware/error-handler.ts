@@ -24,6 +24,6 @@ export async function errorHandler(ctx: Context, next: () => Promise<any>) {
             message: error.message,
             ...error
         };
-        ctx.logger.warn(`${ctx.status} ${ctx.message} ${ctx.path}: ${name}`, { error });
+        ctx.logger.warn(`${ctx.status} ${ctx.method} ${ctx.path}: ${name}`, { error });
     }
 }

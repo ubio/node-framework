@@ -88,11 +88,8 @@ export class Request {
         const qs = querystring.stringify(options.query || {});
         const fullUrl = baseUrl + url + (qs ? '?' + qs : '');
         // Send request
-        const res = await this.fetchWithRetry(fullUrl, {
-            method,
-            body,
-            headers
-        });
+        this.logger.debug(`Sending request ${method} ${fullUrl}`, { method, headers, body });
+        const res = await this.fetchWithRetry(fullUrl, { method, headers, body });
         const { status } = res;
         if (status === 204) {
             // No response
