@@ -121,6 +121,9 @@ export class Router {
                 continue;
             }
             // Route matched, now execute all middleware first, then execute the route itself
+            this.logger.addContextData({
+                route: `${this.ctx.method} ${this.ctx.path}`
+            });
             for (const middleware of getMiddlewareRoutes(this.constructor as Constructor<Router>)) {
                 const pathParams = matchRoute(middleware, this.ctx.method, this.ctx.path);
                 if (pathParams == null) {

@@ -8,7 +8,8 @@ export async function responseTime(ctx: Context, next: () => Promise<any>) {
     ctx.state.startedAt = startedAt;
     try {
         await next();
-    } catch (error) {
-        ctx.response.set('x-response-time', `${Date.now() - startedAt}ms`);
+    } finally {
+        ctx.state.responseTime = Date.now() - startedAt;
+        ctx.response.set('x-response-time', `${ctx.state.responseTime}ms`);
     }
 }

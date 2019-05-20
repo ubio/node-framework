@@ -73,7 +73,8 @@ export class RequestLogger extends Logger {
         const { requestId } = this.ctx.state;
         super.log(level, message, {
             ...data,
-            requestId
+            requestId,
         });
     }
+
 }

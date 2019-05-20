@@ -5,6 +5,9 @@ import { Router, RouterConstructor } from './router';
 import { createServer } from 'http';
 import stoppable, { StoppableServer } from 'stoppable';
 import bodyParser from 'koa-bodyparser';
+import conditional from 'koa-conditional-get';
+import etag from 'koa-etag';
+import cors from '@koa/cors';
 import * as middleware from './middleware';
 import { Constructor } from './util';
 
@@ -71,7 +74,7 @@ export class Application extends Koa {
     }
 
     createRoutingMiddleware(): Middleware {
-        return async (ctx: Context, next: () => Promise<any>) => {
+        return async (ctx: Context) => {
             // Request container injects 'KoaContext' (by string!)
             // and overrides Logger with RequestLogger.
             const requestContainer = new Container({ skipBaseClassChecks: true });
@@ -79,6 +82,7 @@ export class Application extends Koa {
             requestContainer.bind('KoaContext').toConstantValue(ctx);
             requestContainer.bind(Logger).to(RequestLogger).inRequestScope();
             ctx.container = requestContainer;
+            ctx.logger = requestContainer.get<Logger>(Logger);
 
             const routers = requestContainer.getAll<Router>(Router);
             for (const router of routers) {
@@ -96,6 +100,13 @@ export class Application extends Koa {
         this.use(bodyParser({
             enableTypes: ['json']
         }));
+        this.use(conditional());
+        this.use(etag());
+        this.use(cors({
+            exposeHeaders: ['Date', 'Content-Length'],
+            maxAge: 15 * 60
+        }));
+        this.use(middleware.debugRequestLog);
         this.use(middleware.requestId);
         this.use(middleware.responseTime);
         this.use(middleware.errorHandler);
