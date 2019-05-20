@@ -10,6 +10,7 @@ import etag from 'koa-etag';
 import cors from '@koa/cors';
 import * as middleware from './middleware';
 import { Constructor } from './util';
+import { RequestFactory } from './request';
 
 type AsyncFn = () => Promise<any>;
 
@@ -28,6 +29,7 @@ export class Application extends Koa {
         process.once('SIGTERM', () => this.gracefulShutdown('SIGTERM'));
         process.once('SIGINT', () => this.gracefulShutdown('SIGINT'));
         this.bindSingleton(Logger);
+        this.bind(RequestFactory, RequestFactory);
         this.logger = container.get<Logger>(Logger);
     }
 

@@ -35,7 +35,7 @@ export class RequestFactory {
     @inject(Logger)
     logger!: Logger;
 
-    configure(config: RequestConfig): Request {
+    create(config: RequestConfig): Request {
         return new Request(this, config);
     }
 }
