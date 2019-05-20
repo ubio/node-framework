@@ -72,12 +72,8 @@ export class Request {
     async send(method: string, url: string, options: RequestOptions = {}): Promise<any> {
         const { baseUrl, authKey } = this.config;
         // Prepare headers
-        const authHeader = 'Basic ' + Buffer.from(authKey + ':').toString('base64');
-        const headers: { [key: string]: string } = {
-            Authorization: authHeader,
-            ...this.config.headers,
-            ...options.headers
-        };
+        const authorization = 'Basic ' + Buffer.from(authKey + ':').toString('base64');
+        const headers = this.mergeHeaders({ authorization }, this.config.headers || {}, options.headers || {});
         // Prepare body
         let body = options.body || null;
         if (body) {
@@ -121,6 +117,16 @@ export class Request {
             }
         }
         throw lastError;
+    }
+
+    mergeHeaders(...headers: Array<{ [key: string]: string }>) {
+        const result: { [key: string]: string } = {};
+        for (const hdrs of headers) {
+            for (const [k, v] of Object.entries(hdrs)) {
+                result[k.toLowerCase()] = v;
+            }
+        }
+        return result;
     }
 
     createErrorFromResponse(
