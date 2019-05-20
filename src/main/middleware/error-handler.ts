@@ -23,6 +23,6 @@ export async function errorHandler(ctx: Context, next: () => Promise<any>) {
             message: error.message,
             ...error
         };
-        ctx.logger.debug('Error', { error });
+        ctx.logger.warn(error.message, { error });
     }
 }
