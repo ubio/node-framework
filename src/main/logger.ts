@@ -1,18 +1,28 @@
 import { injectable, inject } from 'inversify';
 import * as koa from 'koa';
+import chalk, { Chalk} from 'chalk';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'mute';
 
 const LEVELS: LogLevel[] = ['debug', 'info', 'warn', 'error', 'mute'];
+const LEVELS_COLOR: { [key: string]: Chalk } = {
+    mute: chalk.grey.bind(chalk),
+    debug: chalk.grey.bind(chalk),
+    info: chalk.cyan.bind(chalk),
+    warn: chalk.yellow.bind(chalk),
+    error: chalk.red.bind(chalk)
+};
 
 @injectable()
 export class Logger {
     level: LogLevel;
+    pretty: boolean = false;
     contextData: object = {};
     ubioLogger: any;
 
     constructor() {
         this.level = (process.env.LOG_LEVEL || 'info') as LogLevel;
+        this.pretty = process.env.LOG_PRETTY === 'true';
         if (!LEVELS.includes(this.level)) {
             this.level = 'info';
         }
@@ -22,6 +32,12 @@ export class Logger {
         if (level === 'mute' || LEVELS.indexOf(level) < LEVELS.indexOf(this.level)) {
             return;
         }
+        return this.pretty ?
+            this.logPretty(level, message, details) :
+            this.logStructured(level, message, details);
+    }
+
+    protected logStructured(level: LogLevel, message: string, details: object) {
         const [seconds, nanos] = process.hrtime();
         // Note: this format seems to not be supported for the time being
         // const timestamp = { seconds, nanos };
@@ -29,13 +45,21 @@ export class Logger {
         const payload = {
             message,
             severity: level === 'warn' ? 'warning' : level,
-            // timestamp,
             timestamp,
             ...this.contextData,
             ...details
         };
         process.stdout.write(JSON.stringify(payload, jsonReplacer) + '\n');
-        // this.ubioLogger[level](message, { ...this.contextData, ...data });
+    }
+
+    protected logPretty(level: LogLevel, message: string, details: object) {
+        const color = LEVELS_COLOR[level] || chalk;
+        let ts = new Date().toISOString().replace('T', ' ').replace('Z', '');
+        if (level === 'debug') {
+            ts = chalk.gray(ts);
+        }
+        const detailsStr = chalk.gray(JSON.stringify(details, null, 2));
+        process.stdout.write(`${ts} ${color(message)} ${detailsStr}\n`);
     }
 
     metric(message: string, details: any = {}): void {

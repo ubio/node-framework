@@ -28,8 +28,6 @@ export interface RequestConfig {
     headers?: { [key: string]: string };
 }
 
-export type RequestFunction = (options: RequestOptions) => Promise<any>;
-
 @injectable()
 export class RequestFactory {
     @inject(Logger)

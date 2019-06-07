@@ -1,5 +1,5 @@
 import Koa, { Middleware, Context } from 'koa';
-import { Container, ContainerModule } from 'inversify';
+import { Container } from 'inversify';
 import { Logger, RequestLogger } from './logger';
 import { Router, RouterConstructor } from './router';
 import { createServer } from 'http';
@@ -163,7 +163,7 @@ export class Application extends Koa {
             await this.stop();
             this.logger.info('Graceful shutdown: complete');
         } catch (error) {
-            this.logger.error('Graceful shutdown failed', { error });
+            this.logger.error('Graceful shutdown: failed', { error });
             process.exit(1);
         }
     }
