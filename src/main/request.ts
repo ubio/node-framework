@@ -14,10 +14,14 @@ const NETWORK_ERRORS = [
     'EPIPE'
 ];
 
+export interface RequestHeaders {
+    [key: string]: string | null | undefined;
+}
+
 export interface RequestOptions {
     body?: any;
     query?: { [key: string]: any };
-    headers?: { [key: string]: string };
+    headers?: RequestHeaders;
 }
 
 export interface RequestConfig {
@@ -25,7 +29,7 @@ export interface RequestConfig {
     authKey?: string;
     retryAttempts?: number;
     retryDelay?: number;
-    headers?: { [key: string]: string };
+    headers?: RequestHeaders;
 }
 
 @injectable()
@@ -117,7 +121,7 @@ export class Request {
         throw lastError;
     }
 
-    mergeHeaders(...headers: Array<{ [key: string]: string | null | undefined }>) {
+    mergeHeaders(...headers: RequestHeaders[]) {
         const result: { [key: string]: string } = {};
         for (const hdrs of headers) {
             for (const [k, v] of Object.entries(hdrs)) {
