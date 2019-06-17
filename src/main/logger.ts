@@ -44,7 +44,7 @@ export class Logger {
         const timestamp = new Date().toISOString().split('.')[0] + nanos + 'Z';
         const payload = {
             message,
-            severity: level === 'warn' ? 'warning' : level,
+            severity: (level === 'warn' ? 'warning' : level).toUpperCase(),
             timestamp,
             ...this.contextData,
             ...details
@@ -112,6 +112,7 @@ function jsonReplacer(k: string, v: any) {
             message: v.message,
             code: (v as any).code,
             details: (v as any).details,
+            status: (v as any).status,
         };
     }
     return v;
