@@ -22,7 +22,7 @@ export interface RequestOptions {
 
 export interface RequestConfig {
     baseUrl: string;
-    authKey: string;
+    authKey?: string;
     retryAttempts?: number;
     retryDelay?: number;
     headers?: { [key: string]: string };
@@ -70,7 +70,7 @@ export class Request {
     async send(method: string, url: string, options: RequestOptions = {}): Promise<any> {
         const { baseUrl, authKey } = this.config;
         // Prepare headers
-        const authorization = 'Basic ' + Buffer.from(authKey + ':').toString('base64');
+        const authorization = authKey ? 'Basic ' + Buffer.from(authKey + ':').toString('base64') : undefined;
         const headers = this.mergeHeaders({ authorization }, this.config.headers || {}, options.headers || {});
         // Prepare body
         let body = options.body || null;
@@ -117,10 +117,13 @@ export class Request {
         throw lastError;
     }
 
-    mergeHeaders(...headers: Array<{ [key: string]: string }>) {
+    mergeHeaders(...headers: Array<{ [key: string]: string | null | undefined }>) {
         const result: { [key: string]: string } = {};
         for (const hdrs of headers) {
             for (const [k, v] of Object.entries(hdrs)) {
+                if (!v) {
+                    continue;
+                }
                 result[k.toLowerCase()] = v;
             }
         }
