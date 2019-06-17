@@ -120,8 +120,8 @@ describe('Router', () => {
 
         const port = readNumber('PORT', 3000);
 
-        beforeEach(() => app.start(port));
-        afterEach(() => app.stop());
+        beforeEach(() => app.startServer(port));
+        afterEach(() => app.stopServer());
 
         it('GET /foo', async () => {
             const request = supertest(app.callback());

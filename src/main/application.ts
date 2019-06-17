@@ -15,6 +15,19 @@ import { util } from '.';
 
 type AsyncFn = () => Promise<any>;
 
+/**
+ * Application provides an IoC container where all modules should be registered
+ * and provides minimal lifecycle framework (start, stop, beforeStart, afterStop).
+ *
+ * Note: it is convenient (less typing, fewer possibilities for human errors)
+ * for a typical http server application to bind its lifecycle to http server lifecycle,
+ * so currently Application combines concerns of both http server and IoC composition root.
+ * If this proves problematic in future, we may choose to change that and decouple the two.
+ *
+ * Despite depending on Koa, Application can run just fine without starting an http server.
+ * Simply avoid invoking `app.startServer()` and manage the app lifecycle separately
+ * (e.g invoke `app.runStartHooks()` instead of `app.startServer()`).
+ */
 export class Application extends Koa {
     container: Container;
     server: StoppableServer | null = null;
@@ -130,24 +143,32 @@ export class Application extends Koa {
         return this;
     }
 
-    async start(port: number) {
+    async startServer(port: number) {
         const server = stoppable(createServer(this.callback()), 10000);
         this.server = server;
-        for (const asyncFn of this.startHooks) {
-            await asyncFn();
-        }
+        await this.runStartHooks();
         server.listen(port, () => {
             this.logger.info(`Listening on ${port}`);
         });
     }
 
-    async stop() {
+    async stopServer() {
         const server = this.server;
         if (!server) {
             return;
         }
         process.removeAllListeners();
         await new Promise(r => server.stop(r));
+        await this.runStopHooks();
+    }
+
+    async runStartHooks() {
+        for (const asyncFn of this.startHooks) {
+            await asyncFn();
+        }
+    }
+
+    async runStopHooks() {
         for (const asyncFn of this.stopHooks) {
             await asyncFn();
         }
@@ -164,7 +185,7 @@ export class Application extends Koa {
                 await new Promise(r => setTimeout(r, 10000));
             }
             this.logger.info('Graceful shutdown: stop accepting new requests, wait for existing requests to finish');
-            await this.stop();
+            await this.stopServer();
             this.logger.info('Graceful shutdown: complete');
         } catch (error) {
             this.logger.error('Graceful shutdown: failed', { error });

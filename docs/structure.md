@@ -4,6 +4,8 @@ Typical microservices share the following directory structure:
 
 ```
 src/                               // TypeScript sources
+    bin/                           // Runnable entrypoints
+        serve.ts                   // Start application HTTP server
     main/
         entities/
         routes/
@@ -12,7 +14,7 @@ src/                               // TypeScript sources
         util/                      // Helpers and utilities
         app.ts                     // Application class (IoC composition root)
         env.ts                     // Application-wide environment variables
-        entrypoint.ts              // Application entrypoint (aka "main")
+        index.ts                   // Modules exported by application
         ...                        // Database drivers and other modules with global lifecycle
     test/
 out/                               // Compiled output (.js files)
@@ -24,7 +26,7 @@ out/                               // Compiled output (.js files)
 
 Following modules should look similar across all applications. This makes it easier for the developers to find their ways around the application codebase.
 
-### app.ts
+### src/main/app.ts
 
 ```ts
 import { Application } from '@ubio/framework';
@@ -65,7 +67,7 @@ export function createApp() {
 
 See [Application Container](./application.md) for more information.
 
-### env.ts
+### src/main/env.ts
 
 ```ts
 import dotenv from 'dotenv';
@@ -83,9 +85,10 @@ env.assertEnv();
 
 See [Environment Variables](./env.md) for more information.
 
-### entrypoint.ts
+### src/bin/serve.ts
 
 ```ts
+#!/usr/bin/env node
 import 'reflect-metadata';
 import { createApp } from './app';
 import { PORT } from './env';
@@ -99,5 +102,5 @@ app.start(PORT)
     });
 ```
 
-> Note: you don't have to import `reflect-metadata` everywhere; having it only in `entrypoint` is sufficient.
+> Note: you don't have to import `reflect-metadata` everywhere; having it only in bin entrypoints is sufficient.
 

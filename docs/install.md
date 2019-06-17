@@ -9,11 +9,12 @@
 
 - Configure TypeScript and TSLint (you may copy [tsconfig.json](../tsconfig.json) and [tslint.json](../tslint.json) from this repo).
 
-- Add development scripts to `package.json`:
+- Add following common metadata to `package.json`:
 
     ```json
+    "main": "out/main",
     "scripts": {
-        "start": "node out/main/entrypoint",
+        "start": "node out/bin/serve",
         "dev": "npm run clean && tsc -w",
         "check": "tslint --project ./tsconfig.json",
         "test": "NODE_ENV=test mocha --opts ./mocha.opts",
