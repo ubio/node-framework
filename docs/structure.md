@@ -26,6 +26,13 @@ out/                               // Compiled output (.js files)
 
 Following modules should look similar across all applications. This makes it easier for the developers to find their ways around the application codebase.
 
+### src/main/index.ts
+
+```ts
+export * from './app';
+export * from './env';
+```
+
 ### src/main/app.ts
 
 ```ts
@@ -90,12 +97,11 @@ See [Environment Variables](./env.md) for more information.
 ```ts
 #!/usr/bin/env node
 import 'reflect-metadata';
-import { createApp } from './app';
-import { PORT } from './env';
+import { createApp, PORT } from '../main';
 
 const app = createApp();
 
-app.start(PORT)
+app.startServer(PORT)
     .catch(err => {
         app.logger.error('Failed to start', err);
         process.exit(1);
@@ -103,4 +109,3 @@ app.start(PORT)
 ```
 
 > Note: you don't have to import `reflect-metadata` everywhere; having it only in bin entrypoints is sufficient.
-
