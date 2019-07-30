@@ -58,7 +58,7 @@ export class Logger {
         if (level === 'debug') {
             ts = chalk.gray(ts);
         }
-        const detailsStr = chalk.gray(JSON.stringify(details, null, 2));
+        const detailsStr = chalk.gray(JSON.stringify(details, jsonReplacer, 2));
         process.stdout.write(`${ts} ${color(message)} ${detailsStr}\n`);
     }
 
