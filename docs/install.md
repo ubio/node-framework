@@ -3,6 +3,7 @@
 - Install dependencies and development tools:
 
     ```
+    npm init
     npm install --save @ubio/framework dotenv inversify
     npm install --save-dev typescript tslint mocha @types/node @types/koa @types/dotenv
     ```
@@ -22,4 +23,3 @@
         "compile": "npm run clean && tsc"
     }
     ```
-

@@ -14,6 +14,7 @@ Each router should be registered with [application container](./application.md) 
 import { Router, Get } from '@ubio/framework';
 import { injectable } from 'inversify';
 
+// tslint:disable-next-line
 const pkg = require('../../../package.json');
 
 @injectable()
@@ -63,7 +64,7 @@ Now requesting `/status` should return the JSON with your application version.
 Routers support two kinds of methods:
 
 - **endpoints** are decorated with `@Get`, `@Post`, `@Put` or `@Delete`
-- **midlleware** methods are decorated with `@Middleware`
+- **middleware** methods are decorated with `@Middleware`
 
 Application dispatches each request as follows:
 

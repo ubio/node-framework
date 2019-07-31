@@ -74,7 +74,7 @@ By convention, it also defines a computed property `object` with constant value 
 It is very common for entities to declare `id`, `createdAt`, `updatedAt` fields just like in example above. Therefore, we added `BaseEntity` which includes these three fields, so the above example can be rewritten as follows:
 
 ```ts
-export class User extends Entity {
+export class User extends BaseEntity {
     @Field({
         schema: { type: 'string', const: 'user' },
         serialized: false,
