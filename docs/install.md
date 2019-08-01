@@ -5,7 +5,7 @@
     ```
     npm init
     npm install --save @ubio/framework dotenv inversify
-    npm install --save-dev typescript tslint mocha @types/node @types/koa @types/dotenv
+    npm install --save-dev typescript tslint mocha @types/node @types/koa @types/dotenv @ubio/tslint-config
     ```
 
 - Configure TypeScript and TSLint (you may copy [tsconfig.json](../tsconfig.json) and [tslint.json](../tslint.json) from this repo).
