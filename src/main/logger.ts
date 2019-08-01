@@ -87,6 +87,12 @@ export class Logger {
         return this;
     }
 
+    child(data: object): Logger {
+        const logger = new Logger();
+        logger.contextData = { ...this.contextData, data };
+        return logger;
+    }
+
 }
 
 @injectable()
