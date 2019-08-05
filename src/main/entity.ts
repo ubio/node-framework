@@ -178,7 +178,10 @@ export function getValidationSchema(entityClass: AnyConstructor, presenter: stri
         let schema: any = { ...field.schema };
         // Wrap nullable types to a ['null', type] tuple
         if (!field.required) {
-            schema.type = ['null', field.schema.type];
+            const isSchemaNullable = Array.isArray(field.schema.type) && field.schema.type.includes('null');
+            if (!isSchemaNullable) {
+                schema.type = ['null', field.schema.type];
+            }
         }
         // Enhance object and array schema if entity class is provided
         if (field.schema.type === 'object' && field.entityClass) {

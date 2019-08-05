@@ -185,12 +185,12 @@ This section is under development.
 
 ## Nullable (optional) fields
 
-Nullable fields are defined like this:
+Fields are non-nullable (required) by default. To make fields nullable they must be defined like this:
 
 ```ts
     @Field({
         schema: { type: 'string' },
-        nullable: true
+        required: false,
     })
     assigneeId: string | null = null;
 ```
