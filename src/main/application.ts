@@ -180,12 +180,14 @@ export class Application extends Koa {
             return;
         }
         try {
-            if (process.env.NODE_ENV !== 'test') {
+            if (process.env.NODE_ENV === 'production') {
                 this.logger.info(`Graceful shutdown: received ${signal}, wait for traffic to stop being sent`);
                 await new Promise(r => setTimeout(r, 10000));
             }
             this.logger.info('Graceful shutdown: stop accepting new requests, wait for existing requests to finish');
-            await this.stopServer();
+            if (process.env.NODE_ENV === 'production') {
+                await this.stopServer();
+            }
             this.logger.info('Graceful shutdown: complete');
         } catch (error) {
             this.logger.error('Graceful shutdown: failed', { error });
