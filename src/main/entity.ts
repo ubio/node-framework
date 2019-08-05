@@ -30,7 +30,7 @@ export function Field(spec: FieldSpec) {
             schema,
             presenters = [],
             entity,
-            nullable = false,
+            required = true,
             serialized = true,
             deprecated = false,
         } = spec;
@@ -45,11 +45,13 @@ export function Field(spec: FieldSpec) {
                 throw new Error(`@Field ${propertyKey}: array field must not specify both entity and items schema`);
             }
         }
+        // Deprecated `nullable`: if provided it's preferred over `required`.
+        const _required = spec.nullable == null ? required : !spec.nullable;
         const field: FieldDefinition = {
             propertyKey,
             description,
             schema,
-            nullable,
+            required: _required,
             presenters,
             entityClass,
             serialized,
@@ -131,7 +133,7 @@ export class Entity {
             if (!field) {
                 continue;
             }
-            if (v == null && field.nullable) {
+            if (v == null && !field.required) {
                 (this as any)[field.propertyKey] = null;
             } else {
                 const value = deserializeFieldValue(k, v, field.schema.type, field.entityClass, field.schema.items);
@@ -175,7 +177,7 @@ export function getValidationSchema(entityClass: AnyConstructor, presenter: stri
     for (const field of fields) {
         let schema: any = { ...field.schema };
         // Wrap nullable types to a ['null', type] tuple
-        if (field.nullable) {
+        if (!field.required) {
             schema.type = ['null', field.schema.type];
         }
         // Enhance object and array schema if entity class is provided
@@ -257,13 +259,14 @@ export interface FieldDefinition {
     entityClass: AnyConstructor | null;
     serialized: boolean;
     deprecated: boolean;
-    nullable: boolean;
+    required: boolean;
 }
 
 export interface FieldSpec {
     description?: string;
     schema: EntitySchema;
-    nullable?: boolean;
+    required?: boolean;
+    nullable?: boolean; // deprecated
     serialized?: boolean;
     deprecated?: boolean;
     entity?: Constructor<Entity>;
