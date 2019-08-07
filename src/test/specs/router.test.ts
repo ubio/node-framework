@@ -152,7 +152,7 @@ describe('Router', () => {
             assert.equal(res.header['foo-before-all'], 'true');
             assert(res.header['bar-before-all'] == null);
             assert(res.header['foo-before-get-one'] == null);
-            assert.deepEqual(res.body.name, 'RequestParametersValidationError');
+            assert.deepEqual(res.body.name, 'RequestBodyValidationError');
         });
 
         it('POST /foo with incorrect params', async () => {
@@ -163,7 +163,7 @@ describe('Router', () => {
             assert.equal(res.header['foo-before-all'], 'true');
             assert(res.header['bar-before-all'] == null);
             assert(res.header['foo-before-get-one'] == null);
-            assert.deepEqual(res.body.name, 'RequestParametersValidationError');
+            assert.deepEqual(res.body.name, 'RequestBodyValidationError');
         });
 
         it('GET /foo/{fooId}', async () => {
