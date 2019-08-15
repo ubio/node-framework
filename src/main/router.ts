@@ -48,6 +48,10 @@ export function QueryParam(name: string, spec: ParamSpec) {
     return paramDecorator('query', name, spec);
 }
 
+export function BodyParam(name: string, spec: ParamSpec) {
+    return paramDecorator('body', name, spec);
+}
+
 function routeDecorator(method: string, spec: RouteSpec, isMiddleware: boolean = false) {
     return (target: any, methodKey: string) => {
         const {
@@ -72,7 +76,15 @@ function routeDecorator(method: string, spec: RouteSpec, isMiddleware: boolean =
             responses
         };
         if (requestBodySchema) {
+            if (params.some(_ => _.source === 'body')) {
+                throw createError({
+                    name: 'InvalidRouteDefinition',
+                    message: `${method} ${path}: BodyParams are only supported if requestBodySchema is not specified`
+                });
+            }
             route.requestBodyValidateFn = ajv.compile(requestBodySchema);
+        } else {
+            // TODO compose request body schema from, for Open API
         }
         validateRouteDefinition(route);
         const routes: RouteDefinition[] = Reflect.getMetadata(ROUTES_KEY, target) || [];
@@ -88,7 +100,7 @@ export function paramDecorator(source: ParamSource, name: string, spec: ParamSpe
         const {
             description = '',
             schema,
-            required = false,
+            required = true,
             deprecated = false,
         } = spec;
         params.push({
@@ -189,6 +201,7 @@ export class Router {
     }
 
     private assembleParams(ep: RouteDefinition, pathParams: Params): { [key: string]: any } {
+        const body: any = deepClone(this.ctx.request.body || {});
         const query: any = deepClone(this.ctx.request.query || {});
         // First assemble the parameters into an object and validate them
         const paramsObject: any = {};
@@ -199,6 +212,9 @@ export class Router {
                     break;
                 case 'query':
                     paramsObject[p.name] = query[p.name];
+                    break;
+                case 'body':
+                    paramsObject[p.name] = body[p.name];
                     break;
             }
         }
@@ -218,7 +234,7 @@ function validateRouteDefinition(ep: RouteDefinition) {
         if (paramNamesSet.has(param.name)) {
             throw createError({
                 name: 'InvalidRouteDefinition',
-                message: `Parameter ${param.name} is declared more than once`
+                message: `${ep.method} ${ep.path}: Parameter ${param.name} is declared more than once`
             });
         }
         paramNamesSet.add(param.name);
@@ -388,7 +404,7 @@ export interface PathToken {
     value: string;
 }
 
-export type ParamSource = 'path' | 'query';
+export type ParamSource = 'path' | 'query' | 'body';
 
 export interface RouteDefinition {
     methodKey: string;

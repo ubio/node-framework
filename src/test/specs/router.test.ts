@@ -186,6 +186,17 @@ describe('Router', () => {
             assert.deepEqual(res.body, { fooId: 123 });
         });
 
+        it('PUT /foo/{fooId}', async () => {
+            const request = supertest(app.callback());
+            const res = await request.put('/foo/123')
+                .send({ bar: 'hello' });
+            assert.equal(res.status, 200);
+            assert.equal(res.header['foo-before-all'], 'true');
+            assert.equal(res.header['foo-before-get-one'], '123');
+            assert(res.header['bar-before-all'] == null);
+            assert.deepEqual(res.body, { fooId: 123, bar: 'hello' });
+        });
+
         it('GET /bar with default parameters', async () => {
             const request = supertest(app.callback());
             const res = await request.get('/bar');

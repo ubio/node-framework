@@ -1,4 +1,4 @@
-import { Router, Get, PathParam, Middleware, Post } from '../../main';
+import { Router, Get, PathParam, Middleware, Post, BodyParam, Put } from '../../main';
 
 export class FooRouter extends Router {
 
@@ -9,7 +9,7 @@ export class FooRouter extends Router {
 
     @Middleware({ path: '/foo/{fooId}' })
     async beforeGetOne(
-        @PathParam('fooId', { required: true, schema: { type: 'string' } })
+        @PathParam('fooId', { schema: { type: 'string' } })
         fooId: string
     ) {
         this.ctx.set('foo-before-get-one', fooId);
@@ -35,7 +35,7 @@ export class FooRouter extends Router {
             required: ['fooId']
         },
         responses: {
-            200: { contentType: 'text' }
+            200: { contentType: 'application/json' }
         }
     })
     async create() {
@@ -46,9 +46,24 @@ export class FooRouter extends Router {
 
     @Get({ path: '/foo/{fooId}' })
     async get(
-        @PathParam('fooId', { required: true, schema: { type: 'string' } })
+        @PathParam('fooId', { schema: { type: 'string' } })
         fooId: string
     ) {
         return { fooId };
+    }
+
+    @Put({
+        path: '/foo/{fooId}',
+        responses: {
+            200: { contentType: 'application/json' }
+        }
+    })
+    async update(
+        @PathParam('fooId', { schema: { type: 'string' } })
+        fooId: string,
+        @BodyParam('bar', { schema: { type: 'string' }})
+        bar: string
+    ) {
+        return { fooId, bar };
     }
 }
