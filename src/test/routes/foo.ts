@@ -1,4 +1,4 @@
-import { Router, Get, PathParam, Middleware, Post, BodyParam } from '../../main';
+import { Router, Get, PathParam, Middleware, Post } from '../../main';
 
 export class FooRouter extends Router {
 
@@ -27,15 +27,20 @@ export class FooRouter extends Router {
 
     @Post({
         path: '/foo',
+        requestBodySchema: {
+            type: 'object',
+            properties: {
+                fooId: { type: 'string', minLength: 1 }
+            },
+            required: ['fooId']
+        },
         responses: {
             200: { contentType: 'text' }
         }
     })
-    async create(
-        @BodyParam('fooId', { required: true, schema: { type: 'string', minLength: 1 } })
-        fooId: string
-    ) {
+    async create() {
         this.ctx.status = 201;
+        const { fooId } = this.ctx.request.body;
         return { fooId };
     }
 

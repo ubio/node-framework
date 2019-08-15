@@ -13,10 +13,11 @@ const PARAMS_KEY = Symbol('Param');
 // Lightweight routing based on IoC and decorators.
 
 const ajv = new Ajv({
-    coerceTypes: 'array',
     allErrors: true,
+    coerceTypes: 'array',
     useDefaults: true,
-    jsonPointers: true
+    jsonPointers: true,
+    removeAdditional: true,
 });
 
 export function Get(spec: RouteSpec = {}) {
@@ -47,10 +48,6 @@ export function QueryParam(name: string, spec: ParamSpec) {
     return paramDecorator('query', name, spec);
 }
 
-export function BodyParam(name: string, spec: ParamSpec) {
-    return paramDecorator('body', name, spec);
-}
-
 function routeDecorator(method: string, spec: RouteSpec, isMiddleware: boolean = false) {
     return (target: any, methodKey: string) => {
         const {
@@ -58,6 +55,7 @@ function routeDecorator(method: string, spec: RouteSpec, isMiddleware: boolean =
             deprecated = false,
             path = '',
             responses = {},
+            requestBodySchema,
         } = spec;
         const params: ParamDefinition[] = Reflect.getMetadata(PARAMS_KEY, target, methodKey) || [];
         const route: RouteDefinition = {
@@ -70,9 +68,13 @@ function routeDecorator(method: string, spec: RouteSpec, isMiddleware: boolean =
             pathTokens: tokenizePath(path),
             params,
             paramsValidateFn: createParamValidateFn(params),
+            requestBodySchema,
             responses
         };
-        validateRoute(route);
+        if (requestBodySchema) {
+            route.requestBodyValidateFn = ajv.compile(requestBodySchema);
+        }
+        validateRouteDefinition(route);
         const routes: RouteDefinition[] = Reflect.getMetadata(ROUTES_KEY, target) || [];
         routes.push(route);
         Reflect.defineMetadata(ROUTES_KEY, routes, target);
@@ -142,16 +144,20 @@ export class Router {
     }
 
     async executeRoute(ep: RouteDefinition, pathParams: Params): Promise<any> {
-        const query: any = deepClone(this.ctx.request.query || {});
-        const body: any = deepClone(this.ctx.request.body || {});
-        // First assemble the parameters into an object and validate them
-        const paramsObject: any = {};
+        const paramsObject = this.assembleParams(ep, pathParams);
+        this.validateRequestParams(ep, paramsObject);
+        this.validateRequestBody(ep, this.ctx.request.body);
+        // Bind params to router instance, so that the route can use them
+        this.params = paramsObject;
+        // Retrieve the parameters by name, because validator will apply coercion and defaults
+        const paramsArray: any[] = new Array(ep.params.length);
         for (const p of ep.params) {
-            const val: any = p.source === 'path' ? pathParams[p.name] :
-                p.source === 'query' ? query[p.name] :
-                p.source === 'body' ? body[p.name] : null;
-            paramsObject[p.name] = val;
+            paramsArray[p.index] = paramsObject[p.name];
         }
+        return await (this as any)[ep.methodKey](...paramsArray);
+    }
+
+    private validateRequestParams(ep: RouteDefinition, paramsObject: { [key: string]: any }) {
         const valid = ep.paramsValidateFn(paramsObject);
         if (!valid) {
             const messages = ep.paramsValidateFn.errors!.map(e => ajvErrorToMessage(e));
@@ -163,40 +169,50 @@ export class Router {
                 }
             });
         }
-        // Retrieve the parameters by name, because validator will apply coercion and defaults
-        const paramsArray: any[] = new Array(ep.params.length);
-        for (const p of ep.params) {
-            paramsArray[p.index] = paramsObject[p.name];
+    }
+
+    private validateRequestBody(ep: RouteDefinition, body: any) {
+        if (!ep.requestBodyValidateFn) {
+            return;
         }
-        // Bind params to router instance, so that the route can use them
-        this.params = paramsObject;
-        return await (this as any)[ep.methodKey](...paramsArray);
+        const valid = ep.requestBodyValidateFn(body);
+        if (!valid) {
+            const messages = ep.requestBodyValidateFn.errors!.map(e => ajvErrorToMessage(e));
+            throw createError({
+                name: 'RequestBodyValidationError',
+                status: 400,
+                details: {
+                    messages
+                }
+            });
+        }
+    }
+
+    private assembleParams(ep: RouteDefinition, pathParams: Params): { [key: string]: any } {
+        const query: any = deepClone(this.ctx.request.query || {});
+        // First assemble the parameters into an object and validate them
+        const paramsObject: any = {};
+        for (const p of ep.params) {
+            switch (p.source) {
+                case 'path':
+                    paramsObject[p.name] = pathParams[p.name];
+                    break;
+                case 'query':
+                    paramsObject[p.name] = query[p.name];
+                    break;
+            }
+        }
+        return paramsObject;
     }
 
     generateDocs(): object {
         return generateRouterDocumentation(this.constructor as Constructor<Router>);
     }
 
-    // Presenter helpers
-
-    presentList(type: string, items: any[], totalCount: number): object {
-        return {
-            object: 'list',
-            count: totalCount,
-            data: items.map(o => this.presentObject(type, o))
-        };
-    }
-
-    presentObject(type: string, object: object): object {
-        return {
-            object: type,
-            ...object
-        };
-    }
-
 }
 
-function validateRoute(ep: RouteDefinition) {
+function validateRouteDefinition(ep: RouteDefinition) {
+    // TODO we can also validate all JSON schema against metaschema here
     const paramNamesSet: Set<string> = new Set();
     for (const param of ep.params) {
         if (paramNamesSet.has(param.name)) {
@@ -233,12 +249,13 @@ function createParamValidateFn(params: ParamDefinition[] = []): Ajv.ValidateFunc
         type: 'object',
         properties,
         required,
-        additionalProperties: true,
+        additionalProperties: false, // now required, because of removeAdditional: true
     });
 }
 
-// Path tokenization and matching
-
+/**
+ * Parses /foo/{fooId}/bar/{barId} to extract static and parameter tokens.
+ */
 export function tokenizePath(path: string): PathToken[] {
     const tokens: PathToken[] = [];
     const re = /\{(.*?)\}/ig;
@@ -260,6 +277,10 @@ export function tokenizePath(path: string): PathToken[] {
     return tokens;
 }
 
+/**
+ * Matches `path` against a list of path tokens, obtained from `tokenizePath`.
+ * If `matchStart` is true, allows path to have prefix which does not match the tokens.
+ */
 export function matchPath(
     path: string,
     tokens: PathToken[],
@@ -302,11 +323,19 @@ export function generateRouterDocumentation(routerClass: AnyConstructor) {
     for (const [path, routes] of groupByPath) {
         doc[path] = {};
         for (const route of routes) {
-            doc[path][route.method] = {
+            const endpoint: any = {
                 summary: route.summary,
                 parameters: generateEndpointParametersDocs(route),
                 responses: generateEndpointResponsesDocs(route),
             };
+            if (route.requestBodySchema) {
+                endpoint.requestBody = {
+                    'application/json': {
+                        schema: route.requestBodySchema,
+                    },
+                };
+            }
+            doc[path][route.method] = endpoint;
         }
     }
     return doc;
@@ -348,6 +377,8 @@ export function generateEndpointResponsesDocs(route: RouteDefinition) {
     return result;
 }
 
+// Type definitions
+
 export interface Params {
     [key: string]: any;
 }
@@ -357,7 +388,7 @@ export interface PathToken {
     value: string;
 }
 
-export type ParamSource = 'path' | 'query' | 'body';
+export type ParamSource = 'path' | 'query';
 
 export interface RouteDefinition {
     methodKey: string;
@@ -370,6 +401,8 @@ export interface RouteDefinition {
     pathTokens: PathToken[];
     params: ParamDefinition[];
     paramsValidateFn: Ajv.ValidateFunction;
+    requestBodySchema?: object;
+    requestBodyValidateFn?: Ajv.ValidateFunction;
     responses: ResponsesSpec;
 }
 
@@ -387,6 +420,7 @@ export interface RouteSpec {
     summary?: string;
     deprecated?: boolean;
     path?: string;
+    requestBodySchema?: object;
     responses?: ResponsesSpec;
 }
 
