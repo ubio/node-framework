@@ -98,9 +98,9 @@ Consider the following example:
     },
 })
 async list(
-    @QueryParam('jobId', { required: true, schema: { type: 'string', format: 'uuid' } })
+    @QueryParam('jobId', { schema: { type: 'string', format: 'uuid' } })
     jobId: string,
-    @QueryParam('executionId', { required: true, schema: { type: 'string', format: 'uuid' } })
+    @QueryParam('executionId', { schema: { type: 'string', format: 'uuid' } })
     executionId: string,
     @QueryParam('since', { schema: { type: 'number', minimum: 0, default: 0 } })
     since: number,
