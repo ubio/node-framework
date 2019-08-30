@@ -11,7 +11,7 @@ import cors from '@koa/cors';
 import * as middleware from './middleware';
 import { Constructor } from './util';
 import { RequestFactory } from './request';
-import { util } from '.';
+import { Exception } from '@ubio/essentials';
 
 type AsyncFn = () => Promise<any>;
 
@@ -108,7 +108,7 @@ export class Application extends Koa {
                 }
             }
 
-            throw util.createError({
+            throw new Exception({
                 name: 'RouteNotFoundError',
                 status: 404
             });

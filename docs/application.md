@@ -39,22 +39,20 @@ The service identifiers are wired with implementations in a single place called 
 ```ts
 import { Application } from './framework';
 
-export function createApp() {
-    const app = new Application();
-    // Bind Logger service identifier to MyLogger class
-    app.bind(Logger, MyLogger);
-    // Bind MyService service identifier to the same MyService class
-    app.bind(MyService);
-    // Bind everything else
-    // ...
-    return app;
+export class App extends Application {
+    constructor() {
+        // Bind Logger service identifier to MyLogger class
+        this.bind(Logger, MyLogger);
+        // Bind MyService service identifier to the same MyService class
+        this.bind(MyService);
+    }
 }
 ```
 
 When the wiring is done, you can request an instance of any service from application container:
 
 ```ts
-const app = createApp();
+const app = new App();
 const myService = app.container.get<MyService>(MyService);
 // myService instance is created by Application, and all its dependencies are satisfied
 myService.myMethod();

@@ -1,8 +1,8 @@
 import fetch from 'node-fetch';
 import querystring from 'querystring';
-import { util } from '.';
 import { injectable, inject } from 'inversify';
 import { Logger } from './logger';
+import { Exception } from '@ubio/essentials';
 
 const NETWORK_ERRORS = [
     'EAI_AGAIN',
@@ -142,7 +142,7 @@ export class Request {
     ): Error {
         try {
             const json = JSON.parse(responseText);
-            return util.createError({
+            return new Exception({
                 name: json.name,
                 message: json.message,
                 details: json.details,
@@ -162,7 +162,7 @@ export class Request {
                     message: err.name
                 }
             });
-            return util.createError({
+            return new Exception({
                 name: 'InternalError',
                 message: 'The request cannot be processed'
             });

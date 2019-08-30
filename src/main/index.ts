@@ -5,6 +5,7 @@ export * from './application';
 export * from './request';
 import * as env from './env';
 import * as util from './util';
+export * from '@ubio/essentials';
 
 export {
     env,

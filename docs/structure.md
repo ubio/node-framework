@@ -43,31 +43,27 @@ import { MyRouter } from './routers/my';
 import { MyRepository } from './repositories/my';
 // Add other imports (services, routers, repositories, etc.)
 
-export function createApp() {
-    const app = new Application();
-    app.addStandardMiddleware();
-
-    app.bindSingleton(MongoDb);
-    // Bind other singletons
-
-    app.bind(MyService);
-    // Bind other services
-
-    app.bindRouter(MyRouter);
-    // Bind other routers
-
-    app.beforeStart(async () => {
-        const mongo = app.container.get<MongoDb>(MongoDb);
-        await mongo.client.connect();
-        await (app.container.get<MyRepository>(MyRepository)).createIndexes();
-        // Add other code to execute on application startup
-    });
-    app.afterStop(async () => {
-        const mongo = app.container.get<MongoDb>(MongoDb);
-        mongo.client.close();
-        // Add other finalization code
-    });
-    return app;
+export class App extends Application {
+    constructor() {
+        this.addStandardMiddleware();
+        this.bindSingleton(MongoDb);
+        // Bind other singletons
+        this.bind(MyService);
+        // Bind other services
+        this.bindRouter(MyRouter);
+        // Bind other routers
+        this.beforeStart(async () => {
+            const mongo = this.container.get<MongoDb>(MongoDb);
+            await mongo.client.connect();
+            await (this.container.get<MyRepository>(MyRepository)).createIndexes();
+            // Add other code to execute on application startup
+        });
+        this.afterStop(async () => {
+            const mongo = this.container.get<MongoDb>(MongoDb);
+            mongo.client.close();
+            // Add other finalization code
+        });
+    }
 }
 
 ```
@@ -97,9 +93,9 @@ See [Environment Variables](./env.md) for more information.
 ```ts
 #!/usr/bin/env node
 import 'reflect-metadata';
-import { createApp, PORT } from '../main';
+import { App, PORT } from '../main';
 
-const app = createApp();
+const app = new App();
 
 app.startServer(PORT)
     .catch(err => {

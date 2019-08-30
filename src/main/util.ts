@@ -1,42 +1,8 @@
 import Ajv from 'ajv';
 import uuid from 'uuid';
 
-export function deepClone<T>(data: T): T {
-    return data == null ? null : JSON.parse(JSON.stringify(data));
-}
-
-export function groupBy<T, K>(items: T[], fn: (item: T, index: number) => K): Array<[K, T[]]> {
-    const map: Map<K, T[]> = new Map();
-    for (const [i, item] of items.entries()) {
-        const key = fn(item, i);
-        const list = map.get(key);
-        if (list) {
-            list.push(item);
-        } else {
-            map.set(key, [item]);
-        }
-    }
-    return [...map.entries()];
-}
-
 export type Constructor<T> = new (...args: any[]) => T;
 export type AnyConstructor = new (...args: any[]) => {};
-
-export interface ErrorInfo {
-    name: string;
-    message?: string;
-    status?: number;
-    details?: object;
-}
-
-export function createError(info: ErrorInfo): Error {
-    const err = new Error();
-    Object.assign(err, {
-        message: info.name,
-        ...info
-    });
-    return err;
-}
 
 export function ajvErrorToMessage(e: Ajv.ErrorObject): string {
     const msgs = [];
