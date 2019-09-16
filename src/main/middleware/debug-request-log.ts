@@ -1,5 +1,5 @@
 import { Context } from 'koa';
-import { Logger } from '../logger';
+import { Logger } from '@ubio/essentials';
 
 export async function debugRequestLog(ctx: Context, next: () => Promise<any>) {
     const startedAt = Date.now();

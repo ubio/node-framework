@@ -1,6 +1,6 @@
 import Koa, { Middleware, Context } from 'koa';
 import { Container } from 'inversify';
-import { Logger, RequestLogger } from './logger';
+import { RequestLogger } from './logger';
 import { Router, RouterConstructor } from './router';
 import { createServer } from 'http';
 import stoppable, { StoppableServer } from 'stoppable';
@@ -11,7 +11,7 @@ import cors from '@koa/cors';
 import * as middleware from './middleware';
 import { Constructor } from './util';
 import { RequestFactory } from './request';
-import { util } from '.';
+import { Exception, Logger, StandardLogger } from '@ubio/essentials';
 
 type AsyncFn = () => Promise<any>;
 
@@ -31,7 +31,6 @@ type AsyncFn = () => Promise<any>;
 export class Application extends Koa {
     container: Container;
     server: StoppableServer | null = null;
-    logger: Logger;
     startHooks: AsyncFn[] = [];
     stopHooks: AsyncFn[] = [];
 
@@ -42,9 +41,12 @@ export class Application extends Koa {
         this.proxy = true;
         process.once('SIGTERM', () => this.gracefulShutdown('SIGTERM'));
         process.once('SIGINT', () => this.gracefulShutdown('SIGINT'));
-        this.bindSingleton(Logger);
+        this.bindSingleton(Logger, StandardLogger);
         this.bind(RequestFactory);
-        this.logger = container.get<Logger>(Logger);
+    }
+
+    get logger(): Logger {
+        return this.container.get<Logger>(Logger);
     }
 
     /**
@@ -108,7 +110,7 @@ export class Application extends Koa {
                 }
             }
 
-            throw util.createError({
+            throw new Exception({
                 name: 'RouteNotFoundError',
                 status: 404
             });

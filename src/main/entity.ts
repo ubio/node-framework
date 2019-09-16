@@ -1,7 +1,8 @@
 import 'reflect-metadata';
 import Ajv from 'ajv';
-import { ajvErrorToMessage, AnyConstructor, createError, Constructor } from './util';
+import { ajvErrorToMessage, AnyConstructor, Constructor } from './util';
 import uuid from 'uuid';
+import { Exception } from '@ubio/essentials';
 
 const FIELDS_KEY = Symbol('Fields');
 
@@ -100,7 +101,7 @@ export class Entity {
             return;
         }
         const messages = errors.map(e => ajvErrorToMessage(e));
-        throw createError({
+        throw new Exception({
             name: 'EntityValidationError',
             message: `${this.constructor.name} validation failed`,
             details: {
@@ -294,7 +295,7 @@ function deserializeFieldValue(
             if (items) {
                 return array.map(v => deserializeFieldValue(key, v, items.type));
             }
-            throw createError({
+            throw new Exception({
                 name: 'DeserializationError',
                 message: `Cannot deserialize array ${key}`,
             });

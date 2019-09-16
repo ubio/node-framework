@@ -46,13 +46,12 @@ Don't forget to register the `StatusRouter` in `app.ts`:
 import { Application } from '@ubio/framework';
 import { StatusRouter } from './routes/status';
 
-export function createApp() {
-    const app = new Application();
-    app.addStandardMiddleware();
-    // ...
-    app.bindRouter(StatusRouter);
-    // ...
-    return app;
+export class App extends Application {
+    constructor() {
+        this.addStandardMiddleware();
+        // ...
+        this.bindRouter(StatusRouter);
+    }
 }
 
 ```

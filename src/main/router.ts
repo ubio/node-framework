@@ -2,10 +2,9 @@ import { injectable, inject } from 'inversify';
 import * as koa from 'koa';
 import escapeRegexp from 'escape-string-regexp';
 import Ajv from 'ajv';
-import { Logger } from './logger';
-import {
-    Constructor, deepClone, ajvErrorToMessage, createError, AnyConstructor, groupBy
-} from './util';
+import { Logger } from '@ubio/essentials';
+import { Constructor, ajvErrorToMessage, AnyConstructor } from './util';
+import { Exception, groupBy, deepClone } from '@ubio/essentials';
 
 const ROUTES_KEY = Symbol('Route');
 const PARAMS_KEY = Symbol('Param');
@@ -77,7 +76,7 @@ function routeDecorator(method: string, spec: RouteSpec, isMiddleware: boolean =
         };
         if (requestBodySchema) {
             if (params.some(_ => _.source === 'body')) {
-                throw createError({
+                throw new Exception({
                     name: 'InvalidRouteDefinition',
                     message: `${method} ${path}: BodyParams are only supported if requestBodySchema is not specified`
                 });
@@ -135,9 +134,6 @@ export class Router {
                 continue;
             }
             // Route matched, now execute all middleware first, then execute the route itself
-            this.logger.addContextData({
-                route: `${this.ctx.method} ${this.ctx.path}`
-            });
             for (const middleware of getMiddlewareRoutes(this.constructor as Constructor<Router>)) {
                 const pathParams = matchRoute(middleware, this.ctx.method, this.ctx.path);
                 if (pathParams == null) {
@@ -173,7 +169,7 @@ export class Router {
         const valid = ep.paramsValidateFn(paramsObject);
         if (!valid) {
             const messages = ep.paramsValidateFn.errors!.map(e => ajvErrorToMessage(e));
-            throw createError({
+            throw new Exception({
                 name: 'RequestParametersValidationError',
                 status: 400,
                 details: {
@@ -190,7 +186,7 @@ export class Router {
         const valid = ep.requestBodyValidateFn(body);
         if (!valid) {
             const messages = ep.requestBodyValidateFn.errors!.map(e => ajvErrorToMessage(e));
-            throw createError({
+            throw new Exception({
                 name: 'RequestBodyValidationError',
                 status: 400,
                 details: {
@@ -232,7 +228,7 @@ function validateRouteDefinition(ep: RouteDefinition) {
     const paramNamesSet: Set<string> = new Set();
     for (const param of ep.params) {
         if (paramNamesSet.has(param.name)) {
-            throw createError({
+            throw new Exception({
                 name: 'InvalidRouteDefinition',
                 message: `${ep.method} ${ep.path}: Parameter ${param.name} is declared more than once`
             });
