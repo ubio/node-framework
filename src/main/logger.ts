@@ -1,17 +1,13 @@
 import { injectable, inject } from 'inversify';
 import * as koa from 'koa';
-import { Logger, LogLevel } from '@ubio/essentials';
-
-export {
-    Logger
-};
+import { LogLevel, StandardLogger } from '@ubio/essentials';
 
 @injectable()
-export class RequestLogger extends Logger {
+export class RequestLogger extends StandardLogger {
     @inject('KoaContext')
     ctx!: koa.Context;
 
-    protected log(level: LogLevel, message: string, data: object = {}) {
+    log(level: LogLevel, message: string, data: object = {}) {
         const { requestId } = this.ctx.state;
         super.log(level, message, {
             ...data,

@@ -2,7 +2,7 @@ import { injectable, inject } from 'inversify';
 import * as koa from 'koa';
 import escapeRegexp from 'escape-string-regexp';
 import Ajv from 'ajv';
-import { Logger } from './logger';
+import { Logger } from '@ubio/essentials';
 import { Constructor, ajvErrorToMessage, AnyConstructor } from './util';
 import { Exception, groupBy, deepClone } from '@ubio/essentials';
 
@@ -134,9 +134,6 @@ export class Router {
                 continue;
             }
             // Route matched, now execute all middleware first, then execute the route itself
-            this.logger.addContextData({
-                route: `${this.ctx.method} ${this.ctx.path}`
-            });
             for (const middleware of getMiddlewareRoutes(this.constructor as Constructor<Router>)) {
                 const pathParams = matchRoute(middleware, this.ctx.method, this.ctx.path);
                 if (pathParams == null) {
