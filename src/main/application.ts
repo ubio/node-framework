@@ -2,7 +2,8 @@ import Koa, { Middleware, Context } from 'koa';
 import { Container } from 'inversify';
 import { RequestLogger } from './logger';
 import { Router, RouterConstructor } from './router';
-import { createServer } from 'http';
+import http from 'http';
+import https from 'https';
 import stoppable, { StoppableServer } from 'stoppable';
 import bodyParser from 'koa-bodyparser';
 import conditional from 'koa-conditional-get';
@@ -146,7 +147,22 @@ export class Application extends Koa {
     }
 
     async startServer(port: number) {
-        const server = stoppable(createServer(this.callback()), 10000);
+        if (this.server) {
+            return;
+        }
+        const server = stoppable(http.createServer(this.callback()), 10000);
+        this.server = server;
+        await this.runStartHooks();
+        server.listen(port, () => {
+            this.logger.info(`Listening on ${port}`);
+        });
+    }
+
+    async startHttpsServer(port: number, options: https.ServerOptions) {
+        if (this.server) {
+            return;
+        }
+        const server = stoppable(https.createServer(options, this.callback()), 10000);
         this.server = server;
         await this.runStartHooks();
         server.listen(port, () => {
