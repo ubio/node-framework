@@ -3,7 +3,7 @@ import { tokenizePath, matchPath, Application } from '../../main';
 import { FooRouter } from '../routes/foo';
 import { BarRouter } from '../routes/bar';
 import supertest from 'supertest';
-import { readNumber } from '../../main/env';
+import { HttpServer } from '../../main/server';
 
 describe('Router', () => {
 
@@ -113,18 +113,36 @@ describe('Router', () => {
 
     describe('request dispatching', () => {
 
-        const app = new Application();
-        app.addStandardMiddleware();
-        app.bindRouter(FooRouter);
-        app.bindRouter(BarRouter);
+        class MyHttpServer extends HttpServer {
+            constructor() {
+                super();
+                this.bindRouter(FooRouter);
+                this.bindRouter(BarRouter);
+            }
+        }
 
-        const port = readNumber('PORT', 3000);
+        class App extends Application {
+            constructor() {
+                super();
+                this.bindSingleton(HttpServer, MyHttpServer);
+            }
+            get server() {
+                return this.container.get(HttpServer);
+            }
+            async beforeStart() {
+                await this.server.startServer();
+            }
+            async afterStop() {
+                await this.server.stopServer();
+            }
+        }
 
-        beforeEach(() => app.startServer(port));
-        afterEach(() => app.stopServer());
+        const app = new App();
+        beforeEach(() => app.start());
+        afterEach(() => app.stop());
 
         it('GET /foo', async () => {
-            const request = supertest(app.callback());
+            const request = supertest(app.server.callback());
             const res = await request.get('/foo');
             assert.equal(res.status, 200);
             assert.equal(res.header['foo-before-all'], 'true');
@@ -134,7 +152,7 @@ describe('Router', () => {
         });
 
         it('POST /foo', async () => {
-            const request = supertest(app.callback());
+            const request = supertest(app.server.callback());
             const res = await request.post('/foo')
                 .send({ fooId: 'blah' });
             assert.equal(res.status, 201);
@@ -145,7 +163,7 @@ describe('Router', () => {
         });
 
         it('POST /foo with missing params', async () => {
-            const request = supertest(app.callback());
+            const request = supertest(app.server.callback());
             const res = await request.post('/foo')
                 .send({});
             assert.equal(res.status, 400);
@@ -156,7 +174,7 @@ describe('Router', () => {
         });
 
         it('POST /foo with incorrect params', async () => {
-            const request = supertest(app.callback());
+            const request = supertest(app.server.callback());
             const res = await request.post('/foo')
                 .send({ fooId: '' });
             assert.equal(res.status, 400);
@@ -167,7 +185,7 @@ describe('Router', () => {
         });
 
         it('GET /foo/{fooId}', async () => {
-            const request = supertest(app.callback());
+            const request = supertest(app.server.callback());
             const res = await request.get('/foo/123');
             assert.equal(res.status, 200);
             assert.equal(res.header['foo-before-all'], 'true');
@@ -177,7 +195,7 @@ describe('Router', () => {
         });
 
         it('GET /foo/{fooId}', async () => {
-            const request = supertest(app.callback());
+            const request = supertest(app.server.callback());
             const res = await request.get('/foo/123');
             assert.equal(res.status, 200);
             assert.equal(res.header['foo-before-all'], 'true');
@@ -187,7 +205,7 @@ describe('Router', () => {
         });
 
         it('PUT /foo/{fooId}', async () => {
-            const request = supertest(app.callback());
+            const request = supertest(app.server.callback());
             const res = await request.put('/foo/123')
                 .send({ bar: 'hello' });
             assert.equal(res.status, 200);
@@ -198,7 +216,7 @@ describe('Router', () => {
         });
 
         it('GET /bar with default parameters', async () => {
-            const request = supertest(app.callback());
+            const request = supertest(app.server.callback());
             const res = await request.get('/bar');
             assert.equal(res.status, 200);
             assert(res.header['bar-before-all'], 'true');
@@ -208,7 +226,7 @@ describe('Router', () => {
         });
 
         it('GET /bar with parameter overrides', async () => {
-            const request = supertest(app.callback());
+            const request = supertest(app.server.callback());
             const res = await request.get('/bar?sort=-name&limit=1000&offset=50');
             assert.equal(res.status, 200);
             assert(res.header['bar-before-all'], 'true');
@@ -218,7 +236,7 @@ describe('Router', () => {
         });
 
         it('GET /bar with invalid overrides', async () => {
-            const request = supertest(app.callback());
+            const request = supertest(app.server.callback());
             const res = await request.get('/bar?limit=1001');
             assert.equal(res.status, 400);
             assert(res.header['bar-before-all'], 'true');
@@ -228,7 +246,7 @@ describe('Router', () => {
         });
 
         it('GET /bar with extraneous parameters', async () => {
-            const request = supertest(app.callback());
+            const request = supertest(app.server.callback());
             const res = await request.get('/bar?blah=true&bleu=false');
             assert.equal(res.status, 200);
             assert(res.header['bar-before-all'], 'true');
