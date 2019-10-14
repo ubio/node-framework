@@ -36,6 +36,10 @@ export class Application {
         return this.container.get(Logger);
     }
 
+    get config(): Configuration {
+        return this.container.get(Configuration);
+    }
+
     get httpServer(): HttpServer {
         return this.container.get(HttpServer);
     }
