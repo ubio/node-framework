@@ -1,7 +1,8 @@
 import { Container } from 'inversify';
 import { Constructor } from './util';
 import { RequestFactory } from './request';
-import { Logger, StandardLogger } from '@ubio/essentials';
+import { Logger, StandardLogger, Configuration } from '@ubio/essentials';
+import { EnvConfig } from './config';
 
 /**
  * Application provides an IoC container where all modules should be registered
@@ -22,9 +23,11 @@ export class Application {
     constructor() {
         const container = new Container({ skipBaseClassChecks: true });
         this.container = container;
+        // Some default implementations are bound for convenience but can be replaced as fit
+        this.container.bind('RootContainer').toConstantValue(container);
         this.bindSingleton(Logger, StandardLogger);
+        this.bindSingleton(Configuration, EnvConfig);
         this.bind(RequestFactory);
-        // TODO consider adding default environment-based configuration
     }
 
     get logger(): Logger {

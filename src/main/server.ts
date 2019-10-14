@@ -13,7 +13,6 @@ import * as middleware from './middleware';
 import { Exception, Logger, Configuration, numberConfig } from '@ubio/essentials';
 
 const PORT = numberConfig('PORT', 8080);
-const HTTP_SERVER_TIMEOUT = numberConfig('HTTP_SERVER_TIMEOUT', 120000);
 
 @injectable()
 export class HttpServer extends Koa {
@@ -21,13 +20,19 @@ export class HttpServer extends Koa {
     logger!: Logger;
     @inject(Configuration)
     config!: Configuration;
+    @inject('RootContainer')
+    rootContainer!: Container;
 
+    container: Container;
     server: StoppableServer | null = null;
     timeout: number = 120000;
 
     constructor() {
         super();
         this.proxy = true;
+        this.addStandardMiddleware();
+        this.container = new Container({ skipBaseClassChecks: true });
+        // Note: rootContainer is unavailable here, so we'll plug it into container's parent later
     }
 
     getPort() {
@@ -49,6 +54,7 @@ export class HttpServer extends Koa {
         return async (ctx: Context) => {
             // Request container injects 'KoaContext' (by string!)
             // and overrides Logger with RequestLogger.
+            this.container.parent = this.rootContainer;
             const requestContainer = new Container({ skipBaseClassChecks: true });
             requestContainer.parent = this.container;
             requestContainer.bind('KoaContext').toConstantValue(ctx);
