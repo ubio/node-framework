@@ -6,7 +6,7 @@ Application dispatches incoming HTTP requests using Routers. Routers are classes
 - provide meta-information about the response format, so that OpenAPI documentation could be generated,
 - define request parameters specs, which allows framework to automatically extract and validate them from path, query string and JSON body.
 
-Each router should be registered with [application container](./application.md) using `bindRouter` method.
+Each router should be registered with [application container](./application.md) using `bindAll` method.
 
 ## Example
 
@@ -40,17 +40,19 @@ export class StatusRouter extends Router {
 }
 ```
 
-Don't forget to register the `StatusRouter` in `http.ts`:
+Don't forget to register the `StatusRouter` in `app.ts`:
 
 ```ts
-import { Application } from '@ubio/framework';
+import { Application, Router } from '@ubio/framework';
 import { StatusRouter } from './routes/status';
 
-export class MyHttpServer extends Application {
+export class App extends Application {
     constructor() {
-        this.addStandardMiddleware();
         // ...
-        this.bindRouter(StatusRouter);
+        this.bindAll(Router, [
+            StatusRouter,
+            // ...
+        ]);
     }
 }
 
