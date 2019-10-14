@@ -1,8 +1,9 @@
 import { Container } from 'inversify';
-import { Constructor } from './util';
 import { RequestFactory } from './request';
 import { Logger, StandardLogger, Configuration } from '@ubio/essentials';
 import { EnvConfig } from './config';
+import { HttpServer } from './http';
+import { AnyConstructor } from './util';
 
 /**
  * Application provides an IoC container where all modules should be registered
@@ -25,13 +26,18 @@ export class Application {
         this.container = container;
         // Some default implementations are bound for convenience but can be replaced as fit
         this.container.bind('RootContainer').toConstantValue(container);
+        this.bindSingleton(HttpServer);
         this.bindSingleton(Logger, StandardLogger);
         this.bindSingleton(Configuration, EnvConfig);
         this.bind(RequestFactory);
     }
 
     get logger(): Logger {
-        return this.container.get<Logger>(Logger);
+        return this.container.get(Logger);
+    }
+
+    get httpServer(): HttpServer {
+        return this.container.get(HttpServer);
     }
 
     async beforeStart(): Promise<void> {}
@@ -43,26 +49,39 @@ export class Application {
      * database connection pools. Note: it won't be possible to inject request-scoped
      * components into application-scoped ones (which is quite obvious limitation).
      */
-    bindSingleton<T>(constructor: any, impl: Constructor<T> = constructor): this {
-        if (this.container.isBound(constructor)) {
-            this.container.rebind(constructor).to(impl).inSingletonScope();
+    bindSingleton(serviceIdentifier: any, impl: AnyConstructor = serviceIdentifier) {
+        if (this.container.isBound(serviceIdentifier)) {
+            this.container.rebind(serviceIdentifier).to(impl).inSingletonScope();
         } else {
-            this.container.bind(constructor).to(impl).inSingletonScope();
+            this.container.bind(serviceIdentifier).to(impl).inSingletonScope();
         }
         return this;
     }
 
     /**
      * A shortcut for binding/rebinding-if-exists a module to IoC container.
-     * `constructor` is used a service identifier, and typical usage is to simply
+     * A service identifier is typically a class, and a typically usage is to simply
      * bind a constructor to itself. When necessary (e.g. tests) you can rebind
      * a different implementation to this constructor,
      * in this case supply it as a second parameter.
      */
-    bind<T>(constructor: any, impl: Constructor<T> = constructor): this {
+    bind(constructor: any, impl: AnyConstructor = constructor): this {
         if (this.container.isBound(constructor)) {
             this.container.rebind(constructor).to(impl);
         } else {
+            this.container.bind(constructor).to(impl);
+        }
+        return this;
+    }
+
+    /**
+     * Binds all specified implementation classes to `constructor`.
+     */
+    bindAll(constructor: any, impls: AnyConstructor[]): this {
+        if (this.container.isBound(constructor)) {
+            this.container.unbind(constructor);
+        }
+        for (const impl of impls) {
             this.container.bind(constructor).to(impl);
         }
         return this;

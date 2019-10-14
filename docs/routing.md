@@ -40,13 +40,13 @@ export class StatusRouter extends Router {
 }
 ```
 
-Don't forget to register the `StatusRouter` in `app.ts`:
+Don't forget to register the `StatusRouter` in `http.ts`:
 
 ```ts
 import { Application } from '@ubio/framework';
 import { StatusRouter } from './routes/status';
 
-export class App extends Application {
+export class MyHttpServer extends Application {
     constructor() {
         this.addStandardMiddleware();
         // ...

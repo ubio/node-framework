@@ -1,7 +1,7 @@
 import Koa, { Middleware, Context } from 'koa';
 import { Container, injectable, inject } from 'inversify';
 import { RequestLogger } from './logger';
-import { Router, RouterConstructor } from './router';
+import { Router } from './router';
 import http from 'http';
 import https from 'https';
 import stoppable, { StoppableServer } from 'stoppable';
@@ -13,6 +13,7 @@ import * as middleware from './middleware';
 import { Exception, Logger, Configuration, numberConfig } from '@ubio/essentials';
 
 const PORT = numberConfig('PORT', 8080);
+const HTTP_TIMEOUT = numberConfig('HTTP_TIMEOUT', 300000);
 
 @injectable()
 export class HttpServer extends Koa {
@@ -25,7 +26,6 @@ export class HttpServer extends Koa {
 
     container: Container;
     server: StoppableServer | null = null;
-    timeout: number = 120000;
 
     constructor() {
         super();
@@ -39,15 +39,8 @@ export class HttpServer extends Koa {
         return this.config.get(PORT);
     }
 
-    /**
-     * A shortcut to register a router class in IoC container.
-     * Standard routing middleware uses Router constructor
-     * as a service identifier for enlisting all routes, so this
-     * method simply enforces this convention.
-     */
-    bindRouter(routerClass: RouterConstructor): this {
-        this.container.bind(Router).to(routerClass);
-        return this;
+    getTimeout() {
+        return this.config.get(HTTP_TIMEOUT);
     }
 
     createRoutingMiddleware(): Middleware {
@@ -95,39 +88,33 @@ export class HttpServer extends Koa {
         return this;
     }
 
-    async startServer(port: number = this.getPort()) {
+    async startServer() {
         if (this.server) {
             return;
         }
+        const port = this.getPort();
         const server = stoppable(http.createServer(this.callback()), 10000);
         this.server = server;
-        this.server.setTimeout(this.timeout);
+        this.server.setTimeout(this.getTimeout());
         server.listen(port, () => {
             this.logger.info(`Listening on ${port}`);
         });
     }
 
-    async startHttpsServer(port: number = this.getPort(), options: https.ServerOptions = {}) {
+    async startHttpsServer(options: https.ServerOptions = {}) {
         if (this.server) {
             return;
         }
+        const port = this.getPort();
         const server = stoppable(https.createServer(options, this.callback()), 10000);
         this.server = server;
-        this.server.setTimeout(this.timeout);
+        this.server.setTimeout(this.getTimeout());
         server.listen(port, () => {
             this.logger.info(`Listening on ${port}`);
         });
     }
 
     async stopServer() {
-        const server = this.server;
-        if (!server) {
-            return;
-        }
-        await new Promise(r => server.stop(r));
-    }
-
-    async gracefulShutdown() {
         const server = this.server;
         if (!server) {
             return;
@@ -139,7 +126,7 @@ export class HttpServer extends Koa {
             }
             this.logger.info('Graceful shutdown: stop accepting new requests, wait for existing requests to finish');
             if (process.env.NODE_ENV === 'production') {
-                await this.stopServer();
+                await new Promise(r => server.stop(r));
             }
             this.logger.info('Graceful shutdown: complete');
         } catch (error) {
