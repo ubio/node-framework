@@ -43,7 +43,6 @@ import { MyRepository } from './repositories/my';
 
 export class App extends Application {
     constructor() {
-        this.bindSingleton(HttpServer);
         this.bindSingleton(MongoDb);
         this.bind(MyService);
         this.bindAll(Router, [

@@ -1,7 +1,7 @@
 import { Container } from 'inversify';
 import { RequestFactory } from './request';
 import { Logger, StandardLogger, Configuration } from '@ubio/essentials';
-import { EnvConfig } from './config';
+import { EnvConfiguration } from './config';
 import { HttpServer } from './http';
 import { AnyConstructor } from './util';
 
@@ -28,7 +28,7 @@ export class Application {
         this.container.bind('RootContainer').toConstantValue(container);
         this.bindSingleton(HttpServer);
         this.bindSingleton(Logger, StandardLogger);
-        this.bindSingleton(Configuration, EnvConfig);
+        this.bindSingleton(Configuration, EnvConfiguration);
         this.bind(RequestFactory);
     }
 
