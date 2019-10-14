@@ -4,7 +4,7 @@ ubio Microservices Framework uses [Inversion of Control](https://en.wikipedia.or
 
 IoC allows us to achieve loose coupling which helps with keeping modules more focused and simplifies some aspects of unit testing.
 
-To achieve IoC we use [Dependency Injection](https://en.wikipedia.org/wiki/Dependency_injection) library called [Inversify](https://github.com/inversify/InversifyJS) along with some additional guidelines. It is strongly encouraged to familiarize with the essentials of IoC/DI before moving on.
+To achieve IoC we use [Dependency Injection](https://en.wikipedia.org/wiki/Dependency_injection) library called [Inversify](https://github.com/inversify/InversifyJS) along with some additional guidelines. It is strongly encouraged to get familiar with the essentials of IoC/DI before moving on.
 
 ## Modules, Interfaces, Service Identifiers
 
