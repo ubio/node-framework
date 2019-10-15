@@ -25,15 +25,12 @@ export class HttpServer extends Koa {
     @inject('RootContainer')
     rootContainer!: Container;
 
-    container: Container;
     server: StoppableServer | null = null;
 
     constructor() {
         super();
         this.proxy = true;
         this.addStandardMiddleware();
-        this.container = new Container({ skipBaseClassChecks: true });
-        // Note: rootContainer is unavailable here, so we'll plug it into container's parent later
     }
 
     getPort() {
@@ -52,9 +49,8 @@ export class HttpServer extends Koa {
         return async (ctx: Context) => {
             // Request container injects 'KoaContext' (by string!)
             // and overrides Logger with RequestLogger.
-            this.container.parent = this.rootContainer;
             const requestContainer = new Container({ skipBaseClassChecks: true });
-            requestContainer.parent = this.container;
+            requestContainer.parent = this.rootContainer;
             requestContainer.bind('KoaContext').toConstantValue(ctx);
             requestContainer.bind(Logger).to(RequestLogger).inSingletonScope();
             ctx.container = requestContainer;
@@ -135,7 +131,7 @@ export class HttpServer extends Koa {
     // Experimental
     generateEndpointDocs() {
         const container = new Container({ skipBaseClassChecks: true });
-        container.parent = this.container;
+        container.parent = this.rootContainer;
         container.bind('KoaContext').toConstantValue({});
         const routers = container.getAll<Router>(Router);
         const doc = {
