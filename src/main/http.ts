@@ -14,6 +14,7 @@ import { Exception, Logger, Configuration, numberConfig } from '@ubio/essentials
 
 const PORT = numberConfig('PORT', 8080);
 const HTTP_TIMEOUT = numberConfig('HTTP_TIMEOUT', 300000);
+const HTTP_SHUTDOWN_DELAY = numberConfig('HTTP_SHUTDOWN_DELAY', 10000);
 
 @injectable()
 export class HttpServer extends Koa {
@@ -41,6 +42,10 @@ export class HttpServer extends Koa {
 
     getTimeout() {
         return this.config.get(HTTP_TIMEOUT);
+    }
+
+    getShutdownDelay() {
+        return this.config.get(HTTP_SHUTDOWN_DELAY);
     }
 
     createRoutingMiddleware(): Middleware {
@@ -93,7 +98,7 @@ export class HttpServer extends Koa {
             return;
         }
         const port = this.getPort();
-        const server = stoppable(http.createServer(this.callback()), 10000);
+        const server = stoppable(http.createServer(this.callback()), this.getTimeout());
         this.server = server;
         this.server.setTimeout(this.getTimeout());
         server.listen(port, () => {
@@ -106,7 +111,7 @@ export class HttpServer extends Koa {
             return;
         }
         const port = this.getPort();
-        const server = stoppable(https.createServer(options, this.callback()), 10000);
+        const server = stoppable(https.createServer(options, this.callback()), this.getTimeout());
         this.server = server;
         this.server.setTimeout(this.getTimeout());
         server.listen(port, () => {
@@ -119,20 +124,12 @@ export class HttpServer extends Koa {
         if (!server) {
             return;
         }
-        try {
-            if (process.env.NODE_ENV === 'production') {
-                this.logger.info(`Graceful shutdown: wait for traffic to stop being sent`);
-                await new Promise(r => setTimeout(r, 10000));
-            }
-            this.logger.info('Graceful shutdown: stop accepting new requests, wait for existing requests to finish');
-            if (process.env.NODE_ENV === 'production') {
-                await new Promise(r => server.stop(r));
-            }
-            this.logger.info('Graceful shutdown: complete');
-        } catch (error) {
-            this.logger.error('Graceful shutdown: failed', { error });
-            process.exit(1);
+        if (process.env.NODE_ENV === 'production') {
+            this.logger.info(`Graceful shutdown: wait for traffic to stop being sent`);
+            await new Promise(r => setTimeout(r, this.getShutdownDelay()));
         }
+        this.logger.info('Graceful shutdown: stop accepting new requests, wait for existing requests to finish');
+        await new Promise(r => server.stop(r));
     }
 
     // Experimental

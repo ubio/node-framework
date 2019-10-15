@@ -1,3 +1,5 @@
+- feat: add HTTP_SHUTDOWN_DELAY configuration to control the delay between receiving a signal and stopping accepting new http connections
+
 # 2.0.0
 
 - Breaking change: `Application` no longer bundles `HttpServer` (see docs)
