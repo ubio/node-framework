@@ -1,3 +1,5 @@
+- fix: error middleware expose `error.details`
+
 ## 2.1.0
 
 - feat: add HTTP_SHUTDOWN_DELAY configuration to control the delay between receiving a signal and stopping accepting new http connections
