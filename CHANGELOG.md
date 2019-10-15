@@ -1,3 +1,5 @@
+## 2.1.1
+
 - fix: error middleware expose `error.details`
 
 ## 2.1.0
