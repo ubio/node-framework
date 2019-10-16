@@ -92,8 +92,8 @@ export class Application {
     }
 
     async start() {
-        process.once('SIGTERM', () => this.stop());
-        process.once('SIGINT', () => this.stop());
+        process.on('SIGTERM', () => this.stop());
+        process.on('SIGINT', () => this.stop());
         await this.beforeStart();
     }
 
