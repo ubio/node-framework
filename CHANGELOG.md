@@ -1,3 +1,5 @@
+## 2.1.4
+
 - fix: allow router to capture special symbols like `:` in path params
 
 ## 2.1.1
