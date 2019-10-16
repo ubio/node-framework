@@ -1,3 +1,5 @@
+- fix: allow router to capture special symbols like `:` in path params
+
 ## 2.1.1
 
 - fix: error middleware expose `error.details`

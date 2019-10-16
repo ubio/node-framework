@@ -84,6 +84,10 @@ describe('Router', () => {
                 const m = matchPath('/foo/123/bar/345/baz', tokens, true);
                 assert.deepEqual(m, { fooId: '123', barId: '345' });
             });
+            it('match special characters', () => {
+                const m = matchPath('/foo/123:456/bar/345:789/baz', tokens, true);
+                assert.deepEqual(m, { fooId: '123:456', barId: '345:789' });
+            });
             it('no match', () => {
                 const m = matchPath('/foo/123/bar/345/baz', tokens);
                 assert.deepEqual(m, null);
@@ -103,8 +107,6 @@ describe('Router', () => {
             it('no match', () => {
                 const m1 = matchPath('/document.pdf/123', tokens);
                 assert.deepEqual(m1, null);
-                const m2 = matchPath('/document.pdf.', tokens);
-                assert.deepEqual(m2, null);
             });
         });
 

@@ -300,9 +300,9 @@ export function matchPath(
 ): Params | null {
     const params: Params = {};
     const regex = tokens
-        .map(tok => tok.type === 'string' ? escapeRegexp(tok.value) : '([^/\.:]+?)')
+        .map(tok => tok.type === 'string' ? escapeRegexp(tok.value) : '([^/]+?)')
         .join('');
-    const re = new RegExp('^' + regex + (matchStart ? '(?=$|[/\.:])' : '$'));
+    const re = new RegExp('^' + regex + (matchStart ? '(?=$|[/])' : '$'));
     const m = re.exec(path);
     if (m == null) {
         return null;
