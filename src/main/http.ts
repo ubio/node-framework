@@ -66,7 +66,11 @@ export class HttpServer extends Koa {
 
             throw new Exception({
                 name: 'RouteNotFoundError',
-                status: 404
+                status: 404,
+                details: {
+                    method: ctx.method,
+                    path: ctx.path,
+                }
             });
         };
     }
