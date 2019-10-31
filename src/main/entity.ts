@@ -19,7 +19,7 @@ const ajv = new Ajv({
 export type SchemaType = 'string' | 'number' | 'integer' | 'boolean' | 'object' | 'array';
 
 export interface EntitySchema {
-    type: SchemaType;
+    type?: SchemaType;
     items?: EntitySchema;
     [keywords: string]: any;
 }
@@ -280,7 +280,7 @@ export interface FieldSpec {
 function deserializeFieldValue(
     key: string,
     value: any,
-    type: SchemaType,
+    type?: SchemaType,
     // only for objects and arrays
     entityClass: AnyConstructor | null = null,
     items?: EntitySchema
@@ -317,6 +317,9 @@ function deserializeFieldValue(
         }
         case 'integer': {
             return parseInt(value, 10) || 0;
+        }
+        default: {
+            return value;
         }
     }
 }

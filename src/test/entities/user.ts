@@ -26,4 +26,8 @@ export class User extends BaseEntity {
     })
     passwordSha256: string = '';
 
+    @Field({
+        schema: { default: null },
+    })
+    meta: any = { some: { meta: true, data: 'foobar' }, ts: 123 };
 }
