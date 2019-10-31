@@ -9,10 +9,11 @@ describe('Entity', () => {
 
     it('getAllFields return all entity fields, including prototype chain', () => {
         const fields = getAllFields(User);
-        assert.equal(fields.length, 7);
+        assert.equal(fields.length, 8);
         assert.deepEqual(fields.map(_ => _.propertyKey).sort(), [
             'createdAt',
             'id',
+            'meta',
             'object',
             'organizationId',
             'passwordSha256',
@@ -30,6 +31,7 @@ describe('Entity', () => {
             assert.deepEqual(keys, [
                 'createdAt',
                 'id',
+                'meta',
                 'object',
                 'organizationId',
                 'passwordSha256',
@@ -43,6 +45,7 @@ describe('Entity', () => {
             assert.equal(presentation.passwordSha256, '');
             assert.equal(typeof presentation.createdAt, 'number');
             assert.equal(typeof presentation.updatedAt, 'number');
+            assert.deepEqual(presentation.meta, user.meta);
         });
 
         it('public presenter returns only whitelisted fields', () => {
@@ -70,6 +73,7 @@ describe('Entity', () => {
             assert.deepEqual(keys, [
                 'createdAt',
                 'id',
+                'meta',
                 'organizationId',
                 'passwordSha256',
                 'updatedAt',
@@ -112,6 +116,26 @@ describe('Entity', () => {
             assert.equal(user.username, 'hello');
             assert.equal(user.organizationId, '00000000-0000-0000-0000-000000000000');
             assert.equal(user.createdAt, 123123123123);
+        });
+
+        it('reads untyped fields from JSON object', () => {
+            const examples = [
+                null,
+                false,
+                true,
+                {},
+                { foo: 'bar' },
+                [ 'foo', null ],
+                '',
+                'str',
+                0,
+                12.34
+            ];
+
+            for (const e of examples) {
+                const user = User.fromJSON({ meta: e });
+                assert.equal(user.meta, e);
+            }
         });
 
         it('deserializes nested objects and arrays', () => {
