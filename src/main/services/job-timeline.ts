@@ -29,6 +29,24 @@ export abstract class JobTimelineService {
 }
 
 @injectable()
+export class JobTimelineServiceMock extends JobTimelineService {
+    started: boolean = false;
+    events: JobTimelineEvent[] = [];
+
+    add(timelineEvent: JobTimelineEvent) {
+        this.events.push(timelineEvent);
+    }
+
+    async start() {
+        this.started = true;
+    }
+
+    async stop() {
+        this.started = false;
+    }
+}
+
+@injectable()
 export class ApiJobTimelineService extends JobTimelineService {
     @inject(Logger)
     logger!: Logger;

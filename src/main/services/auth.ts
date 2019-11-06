@@ -15,6 +15,11 @@ export abstract class AuthService {
 }
 
 @injectable()
+export class AuthServiceMock extends AuthService {
+    async authorize(ctx: Koa.Context) {}
+}
+
+@injectable()
 export class ForwardRequestHeaderAuthService extends AuthService {
     config: Configuration;
     request: Request;
