@@ -6,9 +6,7 @@
     npm init
     npm install --save @ubio/framework \
         inversify \
-        dotenv @types/dotenv \
-        koa @types/koa \
-        node-fetch @types/node-fetch
+        koa @types/koa
     npm install --save-dev typescript tslint mocha @types/node @ubio/tslint-config
     ```
 
@@ -36,5 +34,3 @@ These libraries include:
 
 - `koa`
 - `inversify`
-- `node-fetch`
-- `dotenv`
