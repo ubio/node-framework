@@ -4,7 +4,11 @@
 
     ```
     npm init
-    npm install --save @ubio/framework dotenv @types/dotenv inversify
+    npm install --save @ubio/framework \
+        inversify \
+        dotenv @types/dotenv \
+        koa @types/koa \
+        node-fetch @types/node-fetch
     npm install --save-dev typescript tslint mocha @types/node @ubio/tslint-config
     ```
 
@@ -23,3 +27,14 @@
         "compile": "npm run clean && tsc"
     }
     ```
+
+### Peer Dependencies
+
+Since framework just combines multiple libraries together, these libraries are left as peer dependencies in an effort to reduce the possibility of version conflicts.
+
+These libraries include:
+
+- `koa`
+- `inversify`
+- `node-fetch`
+- `dotenv`
