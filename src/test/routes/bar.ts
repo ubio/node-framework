@@ -1,4 +1,4 @@
-import { Router, Get, Middleware, QueryParam } from '../../main';
+import { Router, Get, Middleware, QueryParam, Post } from '../../main';
 
 export class BarRouter extends Router {
 
@@ -17,5 +17,20 @@ export class BarRouter extends Router {
         offset: number,
     ) {
         return { sort, limit, offset };
+    }
+
+    @Post({
+        path: '/bar',
+        requestBodySchema: {
+            type: 'object',
+            properties: {
+                str: { type: 'string', minLength: 1 },
+                num: { type: 'number' },
+            },
+            required: ['str', 'num']
+        }
+    })
+    async create() {
+        return this.ctx.request.body;
     }
 }

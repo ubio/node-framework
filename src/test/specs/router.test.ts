@@ -248,6 +248,14 @@ describe('Router', () => {
             assert.deepEqual(res.body, { sort: '+name', limit: 100, offset: 0 });
         });
 
+        it('POST /bar validates body', async () => {
+            const request = supertest(app.httpServer.callback());
+            const res = await request.post('/bar')
+                .send({ invalid: true });
+            assert.equal(res.status, 400);
+            assert.equal(res.body.name, 'RequestBodyValidationError');
+        });
+
     });
 
 });
