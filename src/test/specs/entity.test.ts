@@ -358,4 +358,31 @@ describe('Entity', () => {
 
     });
 
+    describe('clone', () => {
+
+        it('should return an exact copy of an object', () => {
+            const country = Country.fromJSON({
+                code: 'ch',
+                capital: {
+                    name: 'Bern'
+                },
+                cities: [
+                    { name: 'Zurich' },
+                    { name: 'Basel' },
+                    { name: 'Geneva' },
+                    { name: 'Lausanne' },
+                ]
+            });
+            const clone = country.clone();
+            assert.notEqual(country, clone);
+            assert.deepEqual(country.toJSON(), clone.toJSON());
+            assert(clone instanceof Country);
+            assert(clone.capital instanceof City);
+            for (const city of clone.cities) {
+                assert(city instanceof City);
+            }
+        });
+
+    });
+
 });
