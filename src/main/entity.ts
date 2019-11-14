@@ -82,6 +82,10 @@ export class Entity {
         return entity.assign(fields);
     }
 
+    static getSchema(presenter: string = ''): any {
+        return getValidationSchema(this, presenter);
+    }
+
     getValidationSchema(presenter: string = ''): any {
         return getValidationSchema(this.constructor as AnyConstructor, presenter);
     }
@@ -153,6 +157,12 @@ export class Entity {
             result[field.propertyKey] = val instanceof Entity ? val.toJSON() : val;
         }
         return result;
+    }
+
+    clone(): this {
+        const json = this.toJSON();
+        const constructor = this.constructor as (typeof Entity);
+        return constructor.fromJSON(json) as this;
     }
 
 }
