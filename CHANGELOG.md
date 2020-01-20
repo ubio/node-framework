@@ -1,3 +1,5 @@
+## 3.1.1
+
 - fix: child loggers merge data with context (previously their data was sitting in additional `data` key)
 
 ## 2.1.4
