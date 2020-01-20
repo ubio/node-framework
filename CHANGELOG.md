@@ -1,3 +1,5 @@
+- fix: child loggers merge data with context (previously their data was sitting in additional `data` key)
+
 ## 2.1.4
 
 - fix: allow router to capture special symbols like `:` in path params

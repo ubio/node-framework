@@ -54,7 +54,7 @@
     "@types/node-fetch": "^2.5.3",
     "@types/stoppable": "^1.1.0",
     "@types/uuid": "^3.4.4",
-    "@ubio/essentials": "^1.3.1",
+    "@ubio/essentials": "^1.4.1",
     "ajv": "^6.10.0",
     "chalk": "^2.4.2",
     "dotenv": "^7.0.0",
