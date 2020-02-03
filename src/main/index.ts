@@ -5,6 +5,7 @@ export * from './application';
 export * from './request';
 export * from './http';
 export * from './services';
+export * from './metrics';
 import * as env from './env';
 import * as util from './util';
 export * from '@ubio/essentials';

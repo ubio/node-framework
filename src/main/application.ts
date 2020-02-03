@@ -4,6 +4,11 @@ import { Logger, StandardLogger, Configuration } from '@ubio/essentials';
 import { EnvConfiguration } from './config';
 import { HttpServer } from './http';
 import { AnyConstructor } from './util';
+import { MetricsRouter } from './metrics/route';
+import { Router } from './router';
+import { MetricsRegistry } from './metrics';
+import { GlobalMetricsRegistry, getGlobalMetrics } from './metrics/global';
+import { Metric } from './metrics/metric';
 
 /**
  * Application provides an IoC container where all modules should be registered
@@ -30,6 +35,8 @@ export class Application {
         this.bindSingleton(Logger, StandardLogger);
         this.bindSingleton(Configuration, EnvConfiguration);
         this.bind(RequestFactory);
+        this.bindAll(Router, [MetricsRouter]);
+        this.container.bind(MetricsRegistry).toConstantValue(getGlobalMetrics());
     }
 
     get logger(): Logger {
@@ -80,14 +87,31 @@ export class Application {
 
     /**
      * Binds all specified implementation classes to `constructor`.
+     * Use `@multiInject` to resolve them.
      */
     bindAll(constructor: any, impls: AnyConstructor[]): this {
-        if (this.container.isBound(constructor)) {
-            this.container.unbind(constructor);
-        }
         for (const impl of impls) {
             this.container.bind(constructor).to(impl);
         }
+        return this;
+    }
+
+    /**
+     * Unbinds all (if any) implementations previously bound to `constructor`.
+     */
+    unbind(contrstructor: any): this {
+        if (this.container.isBound(contrstructor)) {
+            this.container.unbind(contrstructor);
+        }
+        return this;
+    }
+
+    bindMetrics(constructor: (new(...args: any[]) => MetricsRegistry)): this {
+        // Metrics registries should be bound in sindleton scope,
+        // and same instances must be appended to MetricsRegistry bindings
+        this.container.bind(constructor).toSelf().inSingletonScope();
+        const instance = this.container.get(constructor);
+        this.container.bind(MetricsRegistry).toConstantValue(instance);
         return this;
     }
 
