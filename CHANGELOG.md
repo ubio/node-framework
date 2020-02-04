@@ -1,3 +1,5 @@
+## 3.2.0
+
 - feat: add APIs for Prometheus metrics
 
 ## 3.1.1
