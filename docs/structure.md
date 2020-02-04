@@ -13,6 +13,7 @@ src/                               // TypeScript sources
         services/
         util/                      // Helpers and utilities
         app.ts                     // Application class (IoC composition root)
+        metrics.ts                 // Application metrics
         index.ts                   // Modules exported by application
         ...                        // Database drivers and other modules with global lifecycle
     test/
