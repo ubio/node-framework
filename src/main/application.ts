@@ -7,8 +7,7 @@ import { AnyConstructor } from './util';
 import { MetricsRouter } from './metrics/route';
 import { Router } from './router';
 import { MetricsRegistry } from './metrics';
-import { GlobalMetricsRegistry, getGlobalMetrics } from './metrics/global';
-import { Metric } from './metrics/metric';
+import { getGlobalMetrics } from './metrics/global';
 
 /**
  * Application provides an IoC container where all modules should be registered
@@ -31,11 +30,11 @@ export class Application {
         this.container = container;
         // Some default implementations are bound for convenience but can be replaced as fit
         this.container.bind('RootContainer').toConstantValue(container);
-        this.bindSingleton(HttpServer);
-        this.bindSingleton(Logger, StandardLogger);
-        this.bindSingleton(Configuration, EnvConfiguration);
-        this.bind(RequestFactory);
-        this.bindAll(Router, [MetricsRouter]);
+        this.container.bind(HttpServer).toSelf().inSingletonScope();
+        this.container.bind(Logger).to(StandardLogger).inSingletonScope();
+        this.container.bind(Configuration).to(EnvConfiguration).inSingletonScope();
+        this.container.bind(RequestFactory).toSelf();
+        this.container.bind(Router).to(MetricsRouter);
         this.container.bind(MetricsRegistry).toConstantValue(getGlobalMetrics());
     }
 
@@ -107,11 +106,10 @@ export class Application {
     }
 
     bindMetrics(constructor: (new(...args: any[]) => MetricsRegistry)): this {
-        // Metrics registries should be bound in sindleton scope,
+        // Metrics registries should be bound in singleton scope,
         // and same instances must be appended to MetricsRegistry bindings
         this.container.bind(constructor).toSelf().inSingletonScope();
-        const instance = this.container.get(constructor);
-        this.container.bind(MetricsRegistry).toConstantValue(instance);
+        this.container.bind(MetricsRegistry).toService(constructor);
         return this;
     }
 
