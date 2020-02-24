@@ -1,3 +1,5 @@
+## 3.3.0
+
 - feat: add `bindRouter` method
 - deprecate: `Application.bind`, `Application.unbind`, `Application.bindAll`, `Application.bindSingleton` — use Inversify directly instead.
 
