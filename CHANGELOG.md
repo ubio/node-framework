@@ -1,3 +1,6 @@
+- feat: add `bindRouter` method
+- deprecate: `Application.bind`, `Application.unbind`, `Application.bindAll`, `Application.bindSingleton` — use Inversify directly instead.
+
 ## 3.2.0
 
 - feat: add APIs for Prometheus metrics

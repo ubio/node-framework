@@ -42,9 +42,9 @@ import { Application } from './framework';
 export class App extends Application {
     constructor() {
         // Bind Logger service identifier to MyLogger class
-        this.bind(Logger, MyLogger);
+        this.container.bind(Logger).to(MyLogger);
         // Bind MyService service identifier to the same MyService class
-        this.bind(MyService);
+        this.container.bind(MyService).toSelf();
     }
 }
 ```
@@ -69,10 +69,10 @@ Most application modules will have _transient_ scope. This means that container 
 
 The reason for this default arrangement is to discourage modules from having shared state and relying on it. A notable exception is `logger` which is bound to request scope and therefore will include context data like `requestId` from whatever module calls it.
 
-For some modules that maintain application-wide state (e.g. database connections) this arrangement is not suitable, so these modules must be bound using `bindSingleton` method:
+For some modules that maintain application-wide state (e.g. database connections) this arrangement is not suitable, so these modules must be bound using `inSingletonScope`:
 
 ```ts
-app.bindSingleton(MongoDb);
+app.container.bind(MongoDb).toSelf().inSingletonScope();
 ```
 
 Signletons (for obvious reasons) cannot inject the request scoped modules. As such, the use of singletons should be reduced to minimum, with valid known-so-far use cases being database connectivity modules.
@@ -126,4 +126,3 @@ Q: How do I make request-bound logger in a singleton (e.g. a database driver)?
 A: You can't, because those two modules have incompatible lifecycle (in other words, modules shouldn't live longer than their dependencies). So singletons should only receive application-scoped logger which doesn't include request details.
 
 Instead, consider creating a Repository module which will have shorter life span (thus compatible to request logger) and can still depend on a singleton database driver.
-

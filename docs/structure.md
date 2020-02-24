@@ -44,11 +44,9 @@ import { MyRepository } from './repositories/my';
 
 export class App extends Application {
     constructor() {
-        this.bindSingleton(MongoDb);
-        this.bind(MyService);
-        this.bindAll(Router, [
-            MyRouter,
-        ]);
+        this.container.bind(MongoDb).toSelf().inSingletonScope();
+        this.container.bind(MyService).toSelf();
+        this.bindRouter(MyRouter);
     }
 
     async beforeStart() {

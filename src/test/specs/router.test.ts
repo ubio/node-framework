@@ -117,10 +117,8 @@ describe('Router', () => {
         class App extends Application {
             constructor() {
                 super();
-                this.bindAll(Router, [
-                    FooRouter,
-                    BarRouter
-                ]);
+                this.container.bind(Router).to(FooRouter);
+                this.container.bind(Router).to(BarRouter);
             }
             async beforeStart() {
                 await this.httpServer.startServer();

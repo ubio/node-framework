@@ -49,10 +49,7 @@ import { StatusRouter } from './routes/status';
 export class App extends Application {
     constructor() {
         // ...
-        this.bindAll(Router, [
-            StatusRouter,
-            // ...
-        ]);
+        this.bindRouter(StatusRouter);
     }
 }
 

@@ -113,6 +113,11 @@ export class Application {
         return this;
     }
 
+    bindRouter(constructor: (new(...args: any[]) => Router)): this {
+        this.container.bind(Router).to(constructor);
+        return this;
+    }
+
     async start() {
         process.on('SIGTERM', () => this.stop());
         process.on('SIGINT', () => this.stop());
