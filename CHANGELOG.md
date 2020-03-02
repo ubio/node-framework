@@ -1,3 +1,5 @@
+## 3.4.0
+
 - feat: add `generate-openapi` command
 
 ## 3.3.0
