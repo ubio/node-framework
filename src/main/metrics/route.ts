@@ -13,7 +13,14 @@ export class MetricsRouter extends Router {
     }
 
     @Get({
-        path: '/metrics'
+        path: '/metrics',
+        summary: '(internal) Get current process metrics',
+        responses: {
+            200: {
+                description: 'Prometheus metrics in text-based format',
+                contentType: 'text/plain',
+            }
+        }
     })
     async metrics() {
         this.ctx.type = 'text/plain; version=0.0.4';
