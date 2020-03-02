@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-import Yaml from 'js-yaml';
 import path from 'path';
 import { generateOpenApiSpec } from '../main';
 
@@ -11,7 +10,7 @@ require(appModulePath);
 const packageJson = require(packageJsonPath);
 
 const docs = {
-    openapi: '3.0.0',
+    openapi: '3.1.0',
     info: {
         title: packageJson.name,
         version: packageJson.version,
@@ -19,7 +18,4 @@ const docs = {
     },
     paths: generateOpenApiSpec(),
 };
-process.stdout.write(Yaml.safeDump(docs, {
-    skipInvalid: true,
-    noRefs: true,
-}));
+process.stdout.write(JSON.stringify(docs, null, 2));
