@@ -132,20 +132,4 @@ export class HttpServer extends Koa {
         await new Promise(r => server.stop(r));
     }
 
-    // Experimental
-    generateEndpointDocs() {
-        const container = new Container({ skipBaseClassChecks: true });
-        container.parent = this.rootContainer;
-        container.bind('KoaContext').toConstantValue({});
-        const routers = container.getAll<Router>(Router);
-        const doc = {
-            // TODO add more info
-            paths: {}
-        };
-        for (const router of routers) {
-            Object.assign(doc.paths, router.generateDocs());
-        }
-        return doc;
-    }
-
 }

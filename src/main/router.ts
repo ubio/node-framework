@@ -4,7 +4,7 @@ import escapeRegexp from 'escape-string-regexp';
 import Ajv from 'ajv';
 import { Logger } from '@ubio/essentials';
 import { Constructor, ajvErrorToMessage, AnyConstructor } from './util';
-import { Exception, groupBy, deepClone } from '@ubio/essentials';
+import { Exception, deepClone } from '@ubio/essentials';
 
 const ROUTES_KEY = Symbol('Route');
 const PARAMS_KEY = Symbol('Param');
@@ -58,10 +58,23 @@ function routeDecorator(method: string, spec: RouteSpec, isMiddleware: boolean =
             deprecated = false,
             path = '',
             responses = {},
-            requestBodySchema,
         } = spec;
         const params: ParamDefinition[] = Reflect.getMetadata(PARAMS_KEY, target, methodKey) || [];
+        // const nonBodyParams = params.filter(_ => _.source !== 'body');
+        const bodyParams = params.filter(_ => _.source === 'body');
+        if (spec.requestBodySchema) {
+            if (bodyParams.length > 0) {
+                throw new Exception({
+                    name: 'InvalidRouteDefinition',
+                    message: `${method} ${path}: BodyParams are only supported if requestBodySchema is not specified`
+                });
+            }
+        }
+        const requestBodySchema = spec.requestBodySchema ? ajv.compile(spec.requestBodySchema) :
+            bodyParams.length > 0 ? compileParamsSchema(bodyParams) : undefined;
+        const paramsSchema = compileParamsSchema(params);
         const route: RouteDefinition = {
+            target,
             deprecated,
             methodKey,
             isMiddleware,
@@ -70,22 +83,12 @@ function routeDecorator(method: string, spec: RouteSpec, isMiddleware: boolean =
             path,
             pathTokens: tokenizePath(path),
             params,
-            paramsValidateFn: createParamValidateFn(params),
+            paramsSchema,
             requestBodySchema,
-            responses
+            responses,
         };
-        if (requestBodySchema) {
-            if (params.some(_ => _.source === 'body')) {
-                throw new Exception({
-                    name: 'InvalidRouteDefinition',
-                    message: `${method} ${path}: BodyParams are only supported if requestBodySchema is not specified`
-                });
-            }
-            route.requestBodyValidateFn = ajv.compile(requestBodySchema);
-        } else {
-            // TODO compose request body schema from, for Open API
-        }
         validateRouteDefinition(route);
+        getGlobalRouteRegistry().push(route);
         const routes: RouteDefinition[] = Reflect.getMetadata(ROUTES_KEY, target) || [];
         routes.push(route);
         Reflect.defineMetadata(ROUTES_KEY, routes, target);
@@ -166,9 +169,9 @@ export class Router {
     }
 
     private validateRequestParams(ep: RouteDefinition, paramsObject: { [key: string]: any }) {
-        const valid = ep.paramsValidateFn(paramsObject);
+        const valid = ep.paramsSchema(paramsObject);
         if (!valid) {
-            const messages = ep.paramsValidateFn.errors!.map(e => ajvErrorToMessage(e));
+            const messages = ep.paramsSchema.errors!.map(e => ajvErrorToMessage(e));
             throw new Exception({
                 name: 'RequestParametersValidationError',
                 status: 400,
@@ -180,12 +183,12 @@ export class Router {
     }
 
     private validateRequestBody(ep: RouteDefinition, body: any) {
-        if (!ep.requestBodyValidateFn) {
+        if (!ep.requestBodySchema) {
             return;
         }
-        const valid = ep.requestBodyValidateFn(body);
+        const valid = ep.requestBodySchema(body);
         if (!valid) {
-            const messages = ep.requestBodyValidateFn.errors!.map(e => ajvErrorToMessage(e));
+            const messages = ep.requestBodySchema.errors!.map(e => ajvErrorToMessage(e));
             throw new Exception({
                 name: 'RequestBodyValidationError',
                 status: 400,
@@ -217,10 +220,6 @@ export class Router {
         return paramsObject;
     }
 
-    generateDocs(): object {
-        return generateRouterDocumentation(this.constructor as Constructor<Router>);
-    }
-
 }
 
 function validateRouteDefinition(ep: RouteDefinition) {
@@ -248,7 +247,7 @@ export function matchRoute(
     return matchPath(path, ep.pathTokens, ep.isMiddleware);
 }
 
-function createParamValidateFn(params: ParamDefinition[] = []): Ajv.ValidateFunction {
+function compileParamsSchema(params: ParamDefinition[] = []): Ajv.ValidateFunction {
     const properties: any = {};
     const required: string[] = [];
     for (const p of params) {
@@ -316,6 +315,15 @@ export function matchPath(
 
 // Helpers for accessing metadata and generating docs
 
+export function getGlobalRouteRegistry(): RouteDefinition[] {
+    let registry: RouteDefinition[] = (global as any)[ROUTES_KEY];
+    if (!registry) {
+        registry = [];
+        (global as any)[ROUTES_KEY] = registry;
+    }
+    return registry;
+}
+
 export function getAllRoutes(routerClass: AnyConstructor): RouteDefinition[] {
     return Reflect.getMetadata(ROUTES_KEY, routerClass.prototype) || [];
 }
@@ -326,67 +334,6 @@ export function getMiddlewareRoutes(routerClass: AnyConstructor) {
 
 export function getEndpointRoutes(routerClass: AnyConstructor) {
     return getAllRoutes(routerClass).filter(ep => !ep.isMiddleware);
-}
-
-export function generateRouterDocumentation(routerClass: AnyConstructor) {
-    const doc: any = {};
-    const routes = getEndpointRoutes(routerClass);
-    const groupByPath = groupBy(routes, r => r.path);
-    for (const [path, routes] of groupByPath) {
-        doc[path] = {};
-        for (const route of routes) {
-            const endpoint: any = {
-                summary: route.summary,
-                parameters: generateEndpointParametersDocs(route),
-                responses: generateEndpointResponsesDocs(route),
-            };
-            if (route.requestBodySchema) {
-                endpoint.requestBody = {
-                    'application/json': {
-                        schema: route.requestBodySchema,
-                    },
-                };
-            }
-            doc[path][route.method] = endpoint;
-        }
-    }
-    return doc;
-}
-
-export function generateEndpointParametersDocs(endpoint: RouteDefinition) {
-    const result: any[] = [];
-    for (const p of endpoint.params) {
-        result.push({
-            name: p.name,
-            in: p.source,
-            description: p.description,
-            required: p.required || false,
-            deprecated: p.deprecated || false,
-            schema: p.schema
-        });
-    }
-    return result;
-}
-
-export function generateEndpointResponsesDocs(route: RouteDefinition) {
-    const result: any = {};
-    for (const [status, resp] of Object.entries(route.responses)) {
-        const {
-            contentType = 'application/json',
-            description = '',
-            schema = {},
-        } = resp;
-        const spec = {
-            description,
-            content: {}
-        };
-        const contentTypes = Array.isArray(contentType) ? contentType : [contentType];
-        for (const contentType of contentTypes) {
-            (spec.content as any)[contentType] = { schema };
-        }
-        result[status.toString()] = spec;
-    }
-    return result;
 }
 
 // Type definitions
@@ -403,6 +350,7 @@ export interface PathToken {
 export type ParamSource = 'path' | 'query' | 'body';
 
 export interface RouteDefinition {
+    target: any;
     methodKey: string;
 
     summary: string;
@@ -412,9 +360,8 @@ export interface RouteDefinition {
     path: string;
     pathTokens: PathToken[];
     params: ParamDefinition[];
-    paramsValidateFn: Ajv.ValidateFunction;
-    requestBodySchema?: object;
-    requestBodyValidateFn?: Ajv.ValidateFunction;
+    paramsSchema: Ajv.ValidateFunction;
+    requestBodySchema?: Ajv.ValidateFunction;
     responses: ResponsesSpec;
 }
 

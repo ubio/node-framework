@@ -1,3 +1,5 @@
+- feat: add `generate-openapi` command
+
 ## 3.3.0
 
 - feat: add `bindRouter` method

@@ -4,8 +4,12 @@
   "description": "ubio Microservices Framework",
   "main": "out/main/index.js",
   "files": [
-    "out/main/**/*"
+    "out/main/**/*",
+    "out/bin/**/*"
   ],
+  "bin": {
+    "generate-openapi": "out/bin/generate-openapi.js"
+  },
   "scripts": {
     "dev": "npm run clean && tsc -w",
     "check": "tslint --project ./tsconfig.json",
@@ -46,6 +50,7 @@
   "dependencies": {
     "@koa/cors": "^3.0.0",
     "@types/dotenv": "^6.1.1",
+    "@types/js-yaml": "^3.12.2",
     "@types/koa": "^2.0.52",
     "@types/koa-bodyparser": "^4.2.2",
     "@types/koa-conditional-get": "^2.0.0",
@@ -60,6 +65,7 @@
     "dotenv": "^7.0.0",
     "escape-string-regexp": "^2.0.0",
     "inversify": "^5.0.1",
+    "js-yaml": "^3.13.1",
     "koa": "^2.11.0",
     "koa-bodyparser": "^4.2.1",
     "koa-conditional-get": "^2.0.0",
