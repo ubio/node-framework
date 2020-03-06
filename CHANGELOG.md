@@ -1,4 +1,4 @@
-## 3.4.1
+## 3.5.0
 
 -- chore: merge `@ubio/node-esseentials` into `@ubio/node-framework`.
 
