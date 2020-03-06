@@ -1,6 +1,8 @@
 import Koa, { Middleware, Context } from 'koa';
 import { Container, injectable, inject } from 'inversify';
-import { RequestLogger } from './logger';
+import { Logger, RequestLogger } from './logger';
+import { Exception } from './exception';
+import { Configuration, numberConfig } from './config';
 import { Router } from './router';
 import http from 'http';
 import https from 'https';
@@ -10,7 +12,6 @@ import conditional from 'koa-conditional-get';
 import etag from 'koa-etag';
 import cors from '@koa/cors';
 import * as middleware from './middleware';
-import { Exception, Logger, Configuration, numberConfig } from '@ubio/essentials';
 
 const PORT = numberConfig('PORT', 8080);
 const HTTP_TIMEOUT = numberConfig('HTTP_TIMEOUT', 300000);

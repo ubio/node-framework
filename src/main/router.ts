@@ -2,9 +2,9 @@ import { injectable, inject } from 'inversify';
 import * as koa from 'koa';
 import escapeRegexp from 'escape-string-regexp';
 import Ajv from 'ajv';
-import { Logger } from '@ubio/essentials';
-import { Constructor, ajvErrorToMessage, AnyConstructor } from './util';
-import { Exception, deepClone } from '@ubio/essentials';
+import { Logger } from './logger';
+import { Exception } from './exception';
+import { Constructor, ajvErrorToMessage, AnyConstructor, deepClone } from './util';
 
 const ROUTES_KEY = Symbol('Route');
 const PARAMS_KEY = Symbol('Param');

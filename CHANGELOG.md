@@ -1,3 +1,7 @@
+## 3.4.1
+
+-- chore: merge `@ubio/node-esseentials` into `@ubio/node-framework`.
+
 ## 3.4.0
 
 - feat: add `generate-openapi` command

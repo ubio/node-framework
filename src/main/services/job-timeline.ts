@@ -1,5 +1,6 @@
 import { injectable, inject } from 'inversify';
-import { stringConfig, Configuration, Logger } from '@ubio/essentials';
+import { Configuration, stringConfig } from '../config';
+import { Logger } from '../logger';
 import { RequestFactory, Request } from '../request';
 
 const API_JOB_TIMELINE_URL = stringConfig('API_JOB_TIMELINE_URL',

@@ -1,7 +1,7 @@
 import { Container } from 'inversify';
 import { RequestFactory } from './request';
-import { Logger, StandardLogger, Configuration } from '@ubio/essentials';
-import { EnvConfiguration } from './config';
+import { Logger, StandardLogger } from './logger';
+import { Configuration, EnvConfiguration } from './config';
 import { HttpServer } from './http';
 import { AnyConstructor } from './util';
 import { MetricsRouter } from './metrics/route';
