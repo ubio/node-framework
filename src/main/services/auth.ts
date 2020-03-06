@@ -1,6 +1,8 @@
 import { injectable, inject } from 'inversify';
 import Koa from 'koa';
-import { Logger, Configuration, Exception, stringConfig } from '@ubio/essentials';
+import { Configuration, stringConfig } from '../config';
+import { Logger } from '../logger';
+import { Exception } from '../exception';
 import { RequestFactory, Request } from '../request';
 
 const API_AUTH_URL = stringConfig('API_AUTH_URL', 'http://api-router-internal');

@@ -3,7 +3,7 @@ import { Metric } from './metric';
 import { CounterMetric } from './counter';
 import { GaugeMetric } from './gauge';
 import { HistogramMetric } from './histogram';
-import { Exception } from '@ubio/essentials';
+import { Exception } from '../exception';
 
 @injectable()
 export class MetricsRegistry {

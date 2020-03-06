@@ -1,7 +1,8 @@
 import fetch from 'node-fetch';
 import querystring from 'querystring';
 import { injectable, inject } from 'inversify';
-import { Exception, Logger } from '@ubio/essentials';
+import { Exception } from './exception';
+import { Logger } from './logger';
 
 const NETWORK_ERRORS = [
     'EAI_AGAIN',

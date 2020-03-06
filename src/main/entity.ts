@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import Ajv from 'ajv';
 import { ajvErrorToMessage, AnyConstructor, Constructor } from './util';
 import uuid from 'uuid';
-import { Exception } from '@ubio/essentials';
+import { Exception } from './exception';
 
 const FIELDS_KEY = Symbol('Fields');
 

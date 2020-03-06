@@ -1,5 +1,5 @@
 import { getGlobalRouteRegistry, RouteDefinition } from './router';
-import { groupBy } from '@ubio/essentials';
+import { groupBy } from './util';
 
 export function generateOpenApiSpec() {
     const doc: any = {};
