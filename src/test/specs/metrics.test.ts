@@ -112,34 +112,34 @@ describe('HistogramMetric', () => {
         assert.equal(histogram.report().trim(), `
 # HELP foo Foo help
 # TYPE foo histogram
-foo{lbl="one",le="0.005"} 0
-foo{lbl="one",le="0.01"} 0
-foo{lbl="one",le="0.025"} 0
-foo{lbl="one",le="0.05"} 0
-foo{lbl="one",le="0.1"} 0
-foo{lbl="one",le="0.25"} 4
-foo{lbl="one",le="0.5"} 4
-foo{lbl="one",le="1"} 5
-foo{lbl="one",le="2.5"} 5
-foo{lbl="one",le="5"} 5
-foo{lbl="one",le="10"} 5
-foo{lbl="one",le="+Inf"} 5
-foo{lbl="one"} 1.21
-foo{lbl="one"} 5
-foo{lbl="two",le="0.005"} 0
-foo{lbl="two",le="0.01"} 0
-foo{lbl="two",le="0.025"} 0
-foo{lbl="two",le="0.05"} 0
-foo{lbl="two",le="0.1"} 1
-foo{lbl="two",le="0.25"} 1
-foo{lbl="two",le="0.5"} 1
-foo{lbl="two",le="1"} 4
-foo{lbl="two",le="2.5"} 6
-foo{lbl="two",le="5"} 7
-foo{lbl="two",le="10"} 7
-foo{lbl="two",le="+Inf"} 7
-foo{lbl="two"} 8.65
-foo{lbl="two"} 7
+foo_bucket{lbl="one",le="0.005"} 0
+foo_bucket{lbl="one",le="0.01"} 0
+foo_bucket{lbl="one",le="0.025"} 0
+foo_bucket{lbl="one",le="0.05"} 0
+foo_bucket{lbl="one",le="0.1"} 0
+foo_bucket{lbl="one",le="0.25"} 4
+foo_bucket{lbl="one",le="0.5"} 4
+foo_bucket{lbl="one",le="1"} 5
+foo_bucket{lbl="one",le="2.5"} 5
+foo_bucket{lbl="one",le="5"} 5
+foo_bucket{lbl="one",le="10"} 5
+foo_bucket{lbl="one",le="+Inf"} 5
+foo_sum{lbl="one"} 1.21
+foo_count{lbl="one"} 5
+foo_bucket{lbl="two",le="0.005"} 0
+foo_bucket{lbl="two",le="0.01"} 0
+foo_bucket{lbl="two",le="0.025"} 0
+foo_bucket{lbl="two",le="0.05"} 0
+foo_bucket{lbl="two",le="0.1"} 1
+foo_bucket{lbl="two",le="0.25"} 1
+foo_bucket{lbl="two",le="0.5"} 1
+foo_bucket{lbl="two",le="1"} 4
+foo_bucket{lbl="two",le="2.5"} 6
+foo_bucket{lbl="two",le="5"} 7
+foo_bucket{lbl="two",le="10"} 7
+foo_bucket{lbl="two",le="+Inf"} 7
+foo_sum{lbl="two"} 8.65
+foo_count{lbl="two"} 7
 `.trim());
     });
 

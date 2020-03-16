@@ -14,7 +14,7 @@ export abstract class Metric {
 
     getMetricLineName(labels: MetricLabels, suffix: string = '') {
         const fields = createLabelsKey(labels);
-        return fields ? `${this.name}{${fields}}` : this.name;
+        return fields ? `${this.name}${suffix}{${fields}}` : this.name;
     }
 
     report() {
