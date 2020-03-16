@@ -4,7 +4,7 @@ export interface MetricLabels {
 
 export interface MetricDatum {
     labels: MetricLabels;
-    timestamp: number;
+    timestamp?: number;
     value: number;
 }
 
