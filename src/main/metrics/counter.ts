@@ -12,7 +12,7 @@ export class CounterMetric extends Metric {
         return this.data.get(createLabelsKey(labels));
     }
 
-    incr(value: number = 1, labels: MetricLabels = {}, timestamp: number = Date.now()) {
+    incr(value: number = 1, labels: MetricLabels = {}, timestamp?: number) {
         const key = createLabelsKey(labels);
         const datum = this.data.get(key);
         if (datum) {
@@ -33,7 +33,7 @@ export class CounterMetric extends Metric {
                 this.getMetricLineName(datum.labels),
                 datum.value,
                 datum.timestamp,
-            ].join(' ');
+            ].filter(x => x != null).join(' ');
         }
     }
 

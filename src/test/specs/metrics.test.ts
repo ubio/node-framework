@@ -32,14 +32,14 @@ describe('CounterMetric', () => {
         const counter = new CounterMetric('foo', 'Foo help');
         counter.incr(1, {}, 123123123);
         counter.incr(1, { lbl: 'one' }, 123123123);
-        counter.incr(2, { lbl: 'two' }, 123123123);
+        counter.incr(2, { lbl: 'two' });
         counter.incr(3, { lbl: 'three', foo: '1' }, 123123123);
         assert.equal(counter.report().trim(), `
 # HELP foo Foo help
 # TYPE foo counter
 foo 1 123123123
 foo{lbl="one"} 1 123123123
-foo{lbl="two"} 2 123123123
+foo{lbl="two"} 2
 foo{foo="1",lbl="three"} 3 123123123
         `.trim());
     });
