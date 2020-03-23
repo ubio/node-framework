@@ -2,7 +2,7 @@ import { getGlobalRouteRegistry, RouteDefinition } from './router';
 import { groupBy } from './util';
 
 export function generateMarkdownApiSpec() {
-    const doc = [] as any;
+    const doc: string[] = [];
     const routes = getGlobalRouteRegistry().filter(_ => !_.isMiddleware);
     const groupByPath = groupBy(routes, r => r.path);
     for (const [_path, routes] of groupByPath) {
@@ -63,12 +63,11 @@ function generateParamSpec(endpoint: RouteDefinition) {
             header += ' :' + p.description;
         }
 
-        // extract schema to string spec.
-        const schema = schemaToSpec(p.schema, 2);
+        const spec = schemaToSpec(p.schema, 2);
         if (p.source === 'query') {
-            queryParams.push(header, ...schema);
+            queryParams.push(header, ...spec);
         } else {
-            bodyParams.push(header, ...schema);
+            bodyParams.push(header, ...spec);
         }
     }
 
@@ -91,10 +90,11 @@ function generateResponsesSpec(route: RouteDefinition) {
 
         const contentTypes = Array.isArray(contentType) ? contentType : [contentType];
         for (const contentType of contentTypes) {
-            result.push(...schemaToSpec({
+            const spec = schemaToSpec({
                 contentType,
                 body: schema
-            }));
+            });
+            result.push(...spec);
         }
     }
 
@@ -113,9 +113,7 @@ function schemaToSpec(schema: { [key: string]: any }, paddingNum = 0, required: 
         const suffix = required.includes(k) ? ' (*required*)' : '';
         if (Array.isArray(v)) {
             spec.push(padding + `- ${k}: ${v.toString() || '[]'}` + suffix);
-        }
-        // object
-        else if (typeof v === 'object') {
+        } else if (typeof v === 'object') {
             const { required } = schema;
             const result = schemaToSpec(v,  paddingNum + 2, required);
             spec.push(padding + `- ${k}` + suffix);
