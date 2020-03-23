@@ -9,7 +9,7 @@
   ],
   "bin": {
     "generate-openapi": "out/bin/generate-openapi.js",
-    "generate-md": "out/bin/generate-md.js"
+    "generate-docs": "out/bin/generate-docs.js"
   },
   "scripts": {
     "dev": "npm run clean && tsc -w",

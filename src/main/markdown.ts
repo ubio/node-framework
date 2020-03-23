@@ -14,11 +14,8 @@ export function generateMarkdownApiSpec() {
 }
 
 function generateEndpointSpec(endpoint: RouteDefinition): string[] {
-    const method = endpoint.method.toUpperCase();
-    let header = `## ${method} ${endpoint.path}`;
-    if (endpoint.deprecated) {
-        header += ' **(deprecated)**';
-    }
+    const name = endpoint.method.toUpperCase() + ' ' + endpoint.path;
+    const header = buildHeader('##', name, endpoint.deprecated);
 
     const { queryParams, bodyParams } = generateParamSpec(endpoint);
     const responses = generateResponsesSpec(endpoint);
@@ -49,18 +46,18 @@ function generateParamSpec(endpoint: RouteDefinition) {
     const queryParams: string[] = [];
 
     for (const p of endpoint.params) {
-        let header = '- ' + p.name;
-
-        if (p.required) {
-            header += ' (*required*)';
+        let header = buildHeader('-', p.name, p.deprecated);
+        const { type = '' } = p.schema as any;
+        if (type) {
+            header += ': ' + type.toString();
         }
 
-        if (p.deprecated) {
-            header += ' (*deprecated*)';
+        if (!p.required) {
+            header += ' (optional)';
         }
 
         if (p.description) {
-            header += ' :' + p.description;
+            header += ' - ' + p.description;
         }
 
         const spec = schemaToSpec(p.schema, 2);
@@ -101,28 +98,39 @@ function generateResponsesSpec(route: RouteDefinition) {
     return result;
 }
 
-function schemaToSpec(schema: { [key: string]: any }, paddingNum = 0, required: string[] = []) {
+function schemaToSpec(schema: { [key: string]: any }, paddingNum = 0, requiredArray?: string[]) {
     const spec: string[] = [];
     const padding = ' '.repeat(paddingNum);
 
-    for (const [k, v] of Object.entries(schema)) {
-        if (k === 'required' || k === 'additionalProperties') {
-            continue;
-        }
+    if (schema?.type === 'object') {
+        // if v has "type" and type is object
+        // extract type required additionalProperties, and run schemaToSpec using properties
+        const { required, properties = {} } = schema;
+        const result = schemaToSpec(properties,  paddingNum, required);
+        spec.push(...result);
+    } else {
+        for (const [k, v = null] of Object.entries(schema)) {
+            if (k === 'type') {
+                continue;
+            }
 
-        const suffix = required.includes(k) ? ' (*required*)' : '';
-        if (Array.isArray(v)) {
-            spec.push(padding + `- ${k}: ${v.toString() || '[]'}` + suffix);
-        } else if (typeof v === 'object') {
-            const { required } = schema;
-            const result = schemaToSpec(v,  paddingNum + 2, required);
-            spec.push(padding + `- ${k}` + suffix);
-            spec.push(...result);
-        } else {
-            // 'string', 'boolean', 'number'
-            spec.push(padding + `- ${k}: ${v}` + suffix);
+            const optional = requiredArray && !requiredArray.includes(k) ? '(optional)' : '';
+            if (v == null || ['string', 'boolean', 'number'].includes(typeof v)) {
+                spec.push(padding + `- ${k}: ${v}` + optional);
+            } else if (Array.isArray(v)) {
+                spec.push(padding + `- ${k}: ${v.toString() || '[]'}` + optional);
+            } else {
+                const { type, required } = v;
+                const result = schemaToSpec(v,  paddingNum + 2, required);
+                spec.push(padding + `- ${k}: ${type || '{}'}` + optional); // duck tape for schema doesn't contain type
+                spec.push(...result);
+            }
         }
     }
 
     return spec;
+}
+
+function buildHeader(symbol: string, name: string, deprecated: boolean) {
+    return symbol + (deprecated ? ' (**deprecated**)' : ' ') + name;
 }
