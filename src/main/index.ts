@@ -7,6 +7,7 @@ export * from './http';
 export * from './services';
 export * from './metrics';
 export * from './openapi';
+export * from './markdown';
 export * from './config';
 export * from './logger';
 export * from './exception';

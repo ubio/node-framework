@@ -8,7 +8,8 @@
     "out/bin/**/*"
   ],
   "bin": {
-    "generate-openapi": "out/bin/generate-openapi.js"
+    "generate-openapi": "out/bin/generate-openapi.js",
+    "generate-md": "out/bin/generate-md.js"
   },
   "scripts": {
     "dev": "npm run clean && tsc -w",
