@@ -21,8 +21,8 @@ export class MetricsRegistry {
         return gauge;
     }
 
-    histogram(name: string, help: string) {
-        const histogram = new HistogramMetric(name, help);
+    histogram(name: string, help: string, buckets?: number[]) {
+        const histogram = new HistogramMetric(name, help, buckets);
         this.register(histogram);
         return histogram;
     }
