@@ -22,6 +22,10 @@ export function groupBy<T, K>(items: T[], fn: (item: T, index: number) => K): Ar
     return [...map.entries()];
 }
 
+export function sortBy<T, K>(items: T[], fn: (item: T) => K): T[] {
+    return items.slice().sort((a, b) => fn(a) > fn(b) ? 1 : -1);
+}
+
 export function ajvErrorToMessage(e: Ajv.ErrorObject): string {
     const msgs = [];
     if (e.keyword === 'additionalProperties') {

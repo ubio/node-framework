@@ -1,6 +1,8 @@
+- feat: add `sortBy`
+
 ## 3.5.0
 
--- chore: merge `@ubio/node-esseentials` into `@ubio/node-framework`.
+- chore: merge `@ubio/node-esseentials` into `@ubio/node-framework`.
 
 ## 3.4.0
 
