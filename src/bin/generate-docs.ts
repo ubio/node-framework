@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import path from 'path';
-import { generateMarkdownApiSpec } from '../main';
+import { generateEndpointDocSpec } from '../main';
 
 const packageJsonPath = path.join(process.cwd(), 'package.json');
 const appModulePath = path.join(process.cwd(), 'out/main/app');
@@ -13,6 +13,6 @@ const intro = [
     `# ${packageJson.name} (${packageJson.version})`,
     packageJson.description,
 ];
-const docs = generateMarkdownApiSpec();
+const docs = generateEndpointDocSpec();
 const md = intro.concat(docs);
 process.stdout.write(md.join('\n'));

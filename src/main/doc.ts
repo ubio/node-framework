@@ -1,7 +1,7 @@
 import { getGlobalRouteRegistry, RouteDefinition } from './router';
 import { groupBy } from './util';
 
-export function generateMarkdownApiSpec() {
+export function generateEndpointDocSpec() {
     const doc: string[] = [];
     const routes = getGlobalRouteRegistry().filter(_ => !_.isMiddleware);
     const groupByPath = groupBy(routes, r => r.path);
