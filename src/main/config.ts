@@ -99,17 +99,17 @@ export class Configuration {
     }
 
     setAll(object: { [key: string]: string | null | undefined }) {
-        for (const k of getConfigDeclarations().keys()) {
-            const v = object[k];
-            if (v != null) {
-                this.values.set(k, v);
+        for (const [key, value] of Object.entries(object)) {
+            // Note: empty strings should still be set
+            if (value != null) {
+                this.values.set(key, value);
             }
         }
     }
 
     getMissingConfigs(): Array<PropertyDecl<any>> {
         const missing = [];
-        for (const [k, decl] of getConfigDeclarations().entries()) {
+        for (const decl of getConfigDeclarations().values()) {
             if (this.resolve(decl) == null) {
                 missing.push(decl);
             }
