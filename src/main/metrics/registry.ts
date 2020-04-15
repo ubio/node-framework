@@ -33,7 +33,7 @@ export class MetricsRegistry {
         if (existing) {
             throw new Exception({
                 name: 'MetricAlreadyDefined',
-                message: `Metric ${name} is already defined; please store a reference to a metric instance`
+                message: `Metric ${metric.name} is already defined; please store a reference to a metric instance`
             });
         }
         this.registry.set(metric.name, metric);

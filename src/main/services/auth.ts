@@ -18,7 +18,7 @@ export abstract class AuthService {
 
 @injectable()
 export class AuthServiceMock extends AuthService {
-    async authorize(ctx: Koa.Context) {}
+    async authorize(_ctx: Koa.Context) {}
 }
 
 @injectable()

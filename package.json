@@ -1,77 +1,79 @@
 {
-  "name": "@ubio/framework",
-  "version": "4.0.0",
-  "description": "ubio Microservices Framework",
-  "main": "out/main/index.js",
-  "files": [
-    "out/main/**/*",
-    "out/bin/**/*"
-  ],
-  "bin": {
-    "generate-openapi": "out/bin/generate-openapi.js",
-    "generate-docs": "out/bin/generate-docs.js"
-  },
-  "scripts": {
-    "dev": "npm run clean && tsc -w",
-    "check": "tslint --project ./tsconfig.json",
-    "test": "NODE_ENV=test mocha --opts ./mocha.opts",
-    "clean": "rm -rf out",
-    "compile": "npm run clean && tsc",
-    "changelog": "node ./changelog",
-    "preversion": "npm run compile && npm run check && npm run test",
-    "version": "npm run changelog && git add CHANGELOG.md",
-    "postversion": "npm publish --access public && git push origin master --tags"
-  },
-  "pre-commmit": [
-    "check"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+ssh://git@github.com/universalbasket/node-framework.git"
-  },
-  "author": "ubio",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/universalbasket/node-framework/issues"
-  },
-  "homepage": "https://github.com/universalbasket/node-framework#readme",
-  "devDependencies": {
-    "@types/chalk": "^2.2.0",
-    "@types/mocha": "^5.2.6",
-    "@types/node": "^12.7.3",
-    "@types/supertest": "^2.0.7",
-    "@ubio/tslint-config": "^1.0.0",
-    "mocha": "^6.1.4",
-    "npm-run-all": "^4.1.5",
-    "pre-commit": "^1.2.2",
-    "supertest": "^4.0.2",
-    "theredoc": "^1.0.0",
-    "tslint": "^5.19.0",
-    "typescript": "^3.7.5"
-  },
-  "dependencies": {
-    "@koa/cors": "^3.0.0",
-    "@types/dotenv": "^6.1.1",
-    "@types/koa": "^2.0.52",
-    "@types/koa-bodyparser": "^4.2.2",
-    "@types/koa-conditional-get": "^2.0.0",
-    "@types/koa-etag": "^3.0.0",
-    "@types/koa__cors": "^2.2.3",
-    "@types/node-fetch": "^2.5.3",
-    "@types/stoppable": "^1.1.0",
-    "@types/uuid": "^3.4.4",
-    "ajv": "^6.10.0",
-    "chalk": "^2.4.2",
-    "dotenv": "^7.0.0",
-    "escape-string-regexp": "^2.0.0",
-    "inversify": "^5.0.1",
-    "koa": "^2.11.0",
-    "koa-bodyparser": "^4.2.1",
-    "koa-conditional-get": "^2.0.0",
-    "koa-etag": "^3.0.0",
-    "node-fetch": "^2.6.0",
-    "stoppable": "^1.1.0",
-    "reflect-metadata": "^0.1.13",
-    "uuid": "^3.3.2"
-  }
+    "name": "@ubio/framework",
+    "version": "4.0.0",
+    "description": "ubio Microservices Framework",
+    "main": "out/main/index.js",
+    "files": [
+        "out/main/**/*",
+        "out/bin/**/*"
+    ],
+    "bin": {
+        "generate-openapi": "out/bin/generate-openapi.js",
+        "generate-docs": "out/bin/generate-docs.js"
+    },
+    "scripts": {
+        "dev": "npm run clean && tsc -w",
+        "lint": "eslint --ext=.js,.ts --cache .",
+        "test": "NODE_ENV=test mocha --opts ./mocha.opts",
+        "clean": "rm -rf out",
+        "compile": "npm run clean && tsc",
+        "changelog": "node ./changelog",
+        "preversion": "npm run compile && npm run lint && npm run test",
+        "version": "npm run changelog && git add CHANGELOG.md",
+        "postversion": "npm publish --access public && git push origin master --tags"
+    },
+    "pre-commmit": [
+        "lint"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git+ssh://git@github.com/universalbasket/node-framework.git"
+    },
+    "author": "ubio",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/universalbasket/node-framework/issues"
+    },
+    "homepage": "https://github.com/universalbasket/node-framework#readme",
+    "devDependencies": {
+        "@types/chalk": "^2.2.0",
+        "@types/mocha": "^5.2.6",
+        "@types/node": "^12.7.3",
+        "@types/supertest": "^2.0.7",
+        "@typescript-eslint/eslint-plugin": "^2.28.0",
+        "@typescript-eslint/parser": "^2.28.0",
+        "eslint": "^6.8.0",
+        "eslint-config-recommended": "^4.0.0",
+        "mocha": "^6.1.4",
+        "npm-run-all": "^4.1.5",
+        "pre-commit": "^1.2.2",
+        "supertest": "^4.0.2",
+        "theredoc": "^1.0.0",
+        "typescript": "^3.7.5"
+    },
+    "dependencies": {
+        "@koa/cors": "^3.0.0",
+        "@types/dotenv": "^6.1.1",
+        "@types/koa": "^2.0.52",
+        "@types/koa-bodyparser": "^4.2.2",
+        "@types/koa-conditional-get": "^2.0.0",
+        "@types/koa-etag": "^3.0.0",
+        "@types/koa__cors": "^2.2.3",
+        "@types/node-fetch": "^2.5.3",
+        "@types/stoppable": "^1.1.0",
+        "@types/uuid": "^3.4.4",
+        "ajv": "^6.10.0",
+        "chalk": "^2.4.2",
+        "dotenv": "^7.0.0",
+        "escape-string-regexp": "^2.0.0",
+        "inversify": "^5.0.1",
+        "koa": "^2.11.0",
+        "koa-bodyparser": "^4.2.1",
+        "koa-conditional-get": "^2.0.0",
+        "koa-etag": "^3.0.0",
+        "node-fetch": "^2.6.0",
+        "stoppable": "^1.1.0",
+        "reflect-metadata": "^0.1.13",
+        "uuid": "^3.3.2"
+    }
 }

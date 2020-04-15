@@ -12,7 +12,7 @@ import assert from 'assert';
 
 describe('ForwardRequestHeaderAuthService', () => {
     let container: Container;
-    let requestSent: boolean = false;
+    let requestSent = false;
     let requestHeaders: any = {};
 
     beforeEach(() => {

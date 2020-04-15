@@ -27,6 +27,7 @@ export function MeasureAsync() {
                 method: propertyKey,
             });
             try {
+                // eslint-disable-next-line prefer-rest-params
                 return await originalMethod.apply(this, arguments);
             } finally {
                 end();

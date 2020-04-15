@@ -3,7 +3,6 @@ import { RequestFactory } from './request';
 import { Logger, StandardLogger } from './logger';
 import { Configuration, EnvConfiguration } from './config';
 import { HttpServer } from './http';
-import { AnyConstructor } from './util';
 import { MetricsRouter } from './metrics/route';
 import { Router } from './router';
 import { MetricsRegistry } from './metrics';

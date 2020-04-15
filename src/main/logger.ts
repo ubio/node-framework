@@ -68,6 +68,7 @@ export class ConsoleLogger extends Logger {
 
     protected write(level: LogLevel, message: string, details: object): void {
         if (level === 'info' || level === 'debug' || level === 'warn' || level === 'error') {
+            // eslint-disable-next-line no-console
             console[level](message, { ...this.contextData, ...details });
         }
     }
@@ -103,7 +104,7 @@ export class StandardLogger extends Logger {
     }
 
     protected logStructured(level: LogLevel, message: string, details: object) {
-        const [seconds, nanos] = process.hrtime();
+        const [_seconds, nanos] = process.hrtime();
         // Note: this format seems to not be supported for the time being
         // const timestamp = { seconds, nanos };
         const timestamp = new Date().toISOString().split('.')[0] + nanos + 'Z';

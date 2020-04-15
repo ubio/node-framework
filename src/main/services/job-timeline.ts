@@ -15,10 +15,10 @@ export interface JobTimelineEvent {
     jobId: string;
     executionId?: string | null;
     initiator?: {
-        type: string,
-        id: string,
-        name: string,
-        details?: object
+        type: string;
+        id: string;
+        name: string;
+        details?: object;
     };
     details: object;
 }
