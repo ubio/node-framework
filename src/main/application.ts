@@ -53,58 +53,6 @@ export class Application {
     async beforeStart(): Promise<void> {}
     async afterStop(): Promise<void> {}
 
-    /**
-     * A shortcut to bind a singleton.
-     * Only use that to bind components which maintain application-wide state like
-     * database connection pools. Note: it won't be possible to inject request-scoped
-     * components into application-scoped ones (which is quite obvious limitation).
-     */
-    bindSingleton(serviceIdentifier: any, impl: AnyConstructor = serviceIdentifier) {
-        if (this.container.isBound(serviceIdentifier)) {
-            this.container.rebind(serviceIdentifier).to(impl).inSingletonScope();
-        } else {
-            this.container.bind(serviceIdentifier).to(impl).inSingletonScope();
-        }
-        return this;
-    }
-
-    /**
-     * A shortcut for binding/rebinding-if-exists a module to IoC container.
-     * A service identifier is typically a class, and a typically usage is to simply
-     * bind a constructor to itself. When necessary (e.g. tests) you can rebind
-     * a different implementation to this constructor,
-     * in this case supply it as a second parameter.
-     */
-    bind(constructor: any, impl: AnyConstructor = constructor): this {
-        if (this.container.isBound(constructor)) {
-            this.container.rebind(constructor).to(impl);
-        } else {
-            this.container.bind(constructor).to(impl);
-        }
-        return this;
-    }
-
-    /**
-     * Binds all specified implementation classes to `constructor`.
-     * Use `@multiInject` to resolve them.
-     */
-    bindAll(constructor: any, impls: AnyConstructor[]): this {
-        for (const impl of impls) {
-            this.container.bind(constructor).to(impl);
-        }
-        return this;
-    }
-
-    /**
-     * Unbinds all (if any) implementations previously bound to `constructor`.
-     */
-    unbind(contrstructor: any): this {
-        if (this.container.isBound(contrstructor)) {
-            this.container.unbind(contrstructor);
-        }
-        return this;
-    }
-
     bindMetrics(constructor: (new(...args: any[]) => MetricsRegistry)): this {
         // Metrics registries should be bound in singleton scope,
         // and same instances must be appended to MetricsRegistry bindings

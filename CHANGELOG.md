@@ -1,3 +1,5 @@
+- BREAKING CHANGE: drop `.bind`, `.bindAll`, `.bindSingleton`, `.unbind` from Application
+
 ## 3.6.0
 
 - feat: add `sortBy`
