@@ -1,3 +1,5 @@
+## 4.0.0
+
 - BREAKING CHANGE: drop `.bind`, `.bindAll`, `.bindSingleton`, `.unbind` from Application
 
 ## 3.6.0
