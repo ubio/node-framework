@@ -1,4 +1,4 @@
-import fetch from 'node-fetch';
+import fetch, { Response } from 'node-fetch';
 import querystring from 'querystring';
 import { injectable, inject } from 'inversify';
 import { Exception } from './exception';
@@ -71,14 +71,28 @@ export class Request {
         return await this.send('delete', url, options);
     }
 
-    async send(method: string, url: string, options: RequestOptions = {}): Promise<any> {
+    async sendJson(method: string, url: string, options: RequestOptions = {}): Promise<any> {
+        const res = await this.send(method, url, options);
+        const { status } = res;
+        if (status === 204) {
+            // No response
+            return null;
+        }
+        if (!res.ok) {
+            throw await this.createErrorFromResponse(method, url, res);
+        }
+        const json = await res.json();
+        return json;
+    }
+
+    async send(method: string, url: string, options: RequestOptions = {}): Promise<Response> {
         const { baseUrl, authKey } = this.config;
         // Prepare headers
         const authorization = authKey ? 'Basic ' + Buffer.from(authKey + ':').toString('base64') : undefined;
         const headers = this.mergeHeaders({ authorization }, this.config.headers || {}, options.headers || {});
         // Prepare body
         let body = options.body || null;
-        if (body) {
+        if(body) {
             headers['Content-Type'] = 'application/json';
             body = JSON.stringify(body);
         }
@@ -86,21 +100,10 @@ export class Request {
         const qs = querystring.stringify(options.query || {});
         const fullUrl = baseUrl + url + (qs ? '?' + qs : '');
         // Send request
-        const res = await this.fetchWithRetry(fullUrl, { method, headers, body });
-        const { status } = res;
-        if (status === 204) {
-            // No response
-            return null;
-        }
-        if (!res.ok) {
-            const text = await res.text();
-            throw this.createErrorFromResponse(method, url, fullUrl, status, text);
-        }
-        const json = await res.json();
-        return json;
+        return await this.fetchWithRetry(fullUrl, { method, headers, body });
     }
 
-    async fetchWithRetry(fullUrl: string, fetchOptions: any): Promise<any> {
+    async fetchWithRetry(fullUrl: string, fetchOptions: any): Promise<Response> {
         const { retryAttempts = 20, retryDelay = 1000 } = this.config;
         let attempted = 0;
         let lastError = null;
@@ -120,7 +123,7 @@ export class Request {
         throw lastError;
     }
 
-    mergeHeaders(...headers: RequestHeaders[]) {
+    protected mergeHeaders(...headers: RequestHeaders[]) {
         const result: { [key: string]: string } = {};
         for (const hdrs of headers) {
             for (const [k, v] of Object.entries(hdrs)) {
@@ -133,29 +136,28 @@ export class Request {
         return result;
     }
 
-    createErrorFromResponse(
+    protected async createErrorFromResponse(
         method: string,
         url: string,
-        fullUrl: string,
-        status: number,
-        responseText: string
-    ): Error {
+        res: Response,
+    ): Promise<Error> {
+        const responseText = await res.text();
         try {
             const json = JSON.parse(responseText);
             return new Exception({
                 name: json.name,
                 message: json.message,
                 details: json.details,
-                status
+                status: res.status,
             });
         } catch (err) {
             this.logger.warn(`Request failed: unable to parse response JSON`, {
                 details: {
                     method,
                     url,
-                    fullUrl,
-                    status,
-                    responseText
+                    fullUrl: res.url,
+                    status: res.status,
+                    responseText,
                 },
                 error: {
                     name: err.name,
@@ -164,7 +166,7 @@ export class Request {
             });
             return new Exception({
                 name: 'InternalError',
-                message: 'The request cannot be processed'
+                message: 'The request cannot be processed',
             });
         }
     }
