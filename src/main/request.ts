@@ -56,19 +56,19 @@ export class Request {
     }
 
     async get(url: string, options: RequestOptions = {}): Promise<any> {
-        return await this.send('get', url, options);
+        return await this.sendJson('get', url, options);
     }
 
     async post(url: string, options: RequestOptions = {}): Promise<any> {
-        return await this.send('post', url, options);
+        return await this.sendJson('post', url, options);
     }
 
     async put(url: string, options: RequestOptions = {}): Promise<any> {
-        return await this.send('put', url, options);
+        return await this.sendJson('put', url, options);
     }
 
     async delete(url: string, options: RequestOptions = {}): Promise<any> {
-        return await this.send('delete', url, options);
+        return await this.sendJson('delete', url, options);
     }
 
     async sendJson(method: string, url: string, options: RequestOptions = {}): Promise<any> {
