@@ -2,6 +2,11 @@ import { MetricsRegistry } from './registry';
 
 const METRICS_GLOBAL_KEY = Symbol.for('@ubio/framework:globalMetrics');
 
+export class GlobalMetricsRegistry extends MetricsRegistry {
+    methodLatencies = this.histogram('app_method_latencies_seconds',
+        'Application performance measurements');
+}
+
 export function getGlobalMetrics(): GlobalMetricsRegistry {
     let registry = (global as any)[METRICS_GLOBAL_KEY];
     if (!(registry instanceof GlobalMetricsRegistry)) {
@@ -9,11 +14,6 @@ export function getGlobalMetrics(): GlobalMetricsRegistry {
         (global as any)[METRICS_GLOBAL_KEY] = registry;
     }
     return registry;
-}
-
-export class GlobalMetricsRegistry extends MetricsRegistry {
-    methodLatencies = this.histogram('app_method_latencies_seconds',
-        'Application performance measurements');
 }
 
 export function MeasureAsync() {

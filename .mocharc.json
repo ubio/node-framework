@@ -1,0 +1,6 @@
+{
+    "require": ["reflect-metadata", "./out/test/dotenv"],
+    "reporter": "spec",
+    "exit": true,
+    "spec": "./out/**/*.test.js"
+}

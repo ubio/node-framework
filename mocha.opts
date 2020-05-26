@@ -1,5 +1,0 @@
--r reflect-metadata
--r ./out/test/dotenv
--R spec
---exit
-./out/**/*.test.js
