@@ -6,7 +6,8 @@ import {
     AuthService,
     Logger,
     ConsoleLogger,
-    RequestOptions
+    RequestOptions,
+    JWTAuthService,
 } from '../../../main';
 import assert from 'assert';
 
@@ -84,6 +85,39 @@ describe('ForwardRequestHeaderAuthService', () => {
             } catch (err) {
                 assert.equal(err.code, 'AuthenticationError');
                 assert.equal(requestSent, false);
+            }
+        });
+
+    });
+
+});
+
+describe('JWTAuthService', () => {
+    let container: Container;
+
+    beforeEach(() => {
+        container = new Container({ skipBaseClassChecks: true });
+        container.bind(Configuration).toSelf();
+        container.bind(Logger).to(ConsoleLogger);
+        container.bind(AuthService).to(JWTAuthService);
+
+        // created dummy signed jwt
+    });
+
+    it('gets actorModel and actorId from token');
+
+    it('throws error when unexpected actor is decoded');
+
+    context('authorization header does not exist', () => {
+
+        it('throws AuthenticationError', async () => {
+            const authService = container.get(AuthService);
+            const ctx: any = { req: { headers: {} } };
+            try {
+                await authService.authorize(ctx);
+                throw new Error('Unexpected success');
+            } catch (err) {
+                assert.equal(err.code, 'AuthenticationError');
             }
         });
 
