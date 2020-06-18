@@ -1,4 +1,7 @@
 import assert from 'assert';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 export const missingKeys: string[] = [];
 

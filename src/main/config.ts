@@ -125,6 +125,8 @@ export class EnvConfiguration extends Configuration {
     constructor() {
         super();
         this.setAll(process.env);
+        // eslint-disable-next-line no-console
+        console.warn('Configuration is deprecated; please refer to env.md for replacement.');
     }
 
 }
