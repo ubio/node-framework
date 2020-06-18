@@ -8,25 +8,25 @@ Such configuration may include http ports, database connection specifications an
 Application-wide environment variables are defined in `src/main/env.ts`:
 
 ```ts
-import dotenv from 'dotenv';
 import { env } from '@ubio/framework';
 
-dotenv.config();
+export class Env {
+    PORT = env.readNumber('PORT');
+    GCLOUD_KEYFILE = env.readString('GCLOUD_KEYFILE');
+    BUCKET_NAME = env.readString('BUCKET_NAME', 'default-bucket-name');
 
-export const PORT = env.readNumber('PORT');
-export const GCLOUD_KEYFILE = env.readString('GCLOUD_KEYFILE');
-export const BUCKET_NAME = env.readString('BUCKET_NAME', 'default-bucket-name');
-
-environment.assertEnv();
+    constructor() {
+        // Including this will throw an error if at least one of the envs
+        // is undefined at application start
+        env.assertEnv();
+    }
+}
 ```
 
-To consume environment variables from other modules:
+The class should be bound to application container, and consumed as usual.
+This allows for greater flexibility over globals
+(i.e. when you want to include tests for different envs).
 
-```ts
-import { PORT } from '../env';
-
-console.log(PORT);
-```
 
 ## Key concepts
 
