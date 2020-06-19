@@ -4,14 +4,10 @@ import { Configuration, stringConfig } from '../config';
 import { Logger } from '../logger';
 import { Exception } from '../exception';
 import { RequestFactory, Request } from '../request';
-import * as jwt from '../jwt';
+import { JWT, DecodedJWT } from '../jwt';
 
 const API_AUTH_URL = stringConfig('API_AUTH_URL', 'http://api-router-internal');
 const API_AUTH_ENDPOINT = stringConfig('API_AUTH_ENDPOINT', '/private/access');
-
-const KEYCLOAK_ISSUER = stringConfig('KEYCLOAK_ISSUER', '');
-const KEYCLOAK_JWKS_URI = stringConfig('KEYCLOAK_JWKS_URI', '');
-const KEYCLOAK_AUDIENCE = stringConfig('KEYCLOAK_AUDIENCE', '');
 
 @injectable()
 export abstract class AuthService {
@@ -64,27 +60,11 @@ export class ForwardRequestHeaderAuthService extends AuthService {
 
 @injectable()
 export class JWTAuthService extends AuthService {
-    protected jwtConfig: jwt.IssuerConfig;
     constructor(
-        @inject(Configuration)
-        protected config: Configuration,
+        @inject(JWT)
+        protected jwt: JWT,
     ) {
         super();
-        this.config = config;
-
-        const issuer = config.get(KEYCLOAK_ISSUER);
-        const jwksUri = config.get(KEYCLOAK_JWKS_URI);
-        const audiences = config.get(KEYCLOAK_AUDIENCE);
-
-        if (!(issuer && jwksUri && audiences)) {
-            throw new Exception({ name: 'ConfigurationError', message: 'JWTAuthService requires KEYCLOAK_ISSUER, KEYCLOAK_JWKS_URI and KEYCLOAK_AUDIENCE env values' });
-        }
-
-        this.jwtConfig = {
-            issuer,
-            jwksUri,
-            audiences,
-        };
     }
 
     async authorize(ctx: Koa.Context): Promise<void> {
@@ -96,10 +76,12 @@ export class JWTAuthService extends AuthService {
         }
 
         try {
-            const { actorId, actorModel, organisationId } = await jwt.decodeAndVerify(token, this.jwtConfig);
-            ctx.set('organisationId', organisationId);
-            ctx.set('actorModel', actorModel);
-            ctx.set('actorId', actorId);
+            const payload = await this.jwt.decodeAndVerify(token);
+
+            const { organisationId, actorModel, actorId } = this.getActorMeta(payload);
+            ctx.organisationId = organisationId;
+            ctx.actorModel = actorModel;
+            ctx.actorId = actorId;
         } catch (error) {
             throw new Exception({
                 name: 'AuthenticationError',
@@ -108,6 +90,35 @@ export class JWTAuthService extends AuthService {
                 details: error
             });
         }
+    }
+
+    getActorMeta(payload: DecodedJWT) {
+        let actorModel: string | null = null;
+        let actorId: string | null = null;
+
+        const toString = (val: string | number | boolean | undefined) => {
+            if (typeof val === 'string') return val;
+            return '';
+        };
+
+        if (payload.serviceUserId) {
+            actorModel = 'ServiceUser';
+            actorId = toString(payload.serviceUserId);
+        } else if (payload.userId) {
+            actorModel = 'User';
+            actorId = toString(payload.userId);
+        } else if (payload.clientId) {
+            actorModel = 'Client';
+            actorId = toString(payload.clientId);
+        } else {
+            throw new Exception({ name: 'InvalidJWTData' });
+        }
+
+        return {
+            actorModel,
+            actorId,
+            organisationId: toString(payload.organisationId),
+        };
     }
 
 }

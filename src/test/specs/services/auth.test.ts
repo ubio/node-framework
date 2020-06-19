@@ -10,6 +10,7 @@ import {
     JWTAuthService,
 } from '../../../main';
 import assert from 'assert';
+import { JWT, KeycloakJWTMock } from '../../../main/jwt';
 
 describe('ForwardRequestHeaderAuthService', () => {
     let container: Container;
@@ -94,19 +95,41 @@ describe('ForwardRequestHeaderAuthService', () => {
 
 describe('JWTAuthService', () => {
     let container: Container;
+    let jwtMock: KeycloakJWTMock;
 
     beforeEach(() => {
         container = new Container({ skipBaseClassChecks: true });
         container.bind(Configuration).toSelf();
         container.bind(Logger).to(ConsoleLogger);
-        container.bind(AuthService).to(JWTAuthService);
-
-        // created dummy signed jwt
+        container.bind(KeycloakJWTMock).toSelf().inSingletonScope();
+        container.bind(JWT).toService(KeycloakJWTMock);
+        container.bind(AuthService).to(JWTAuthService).inSingletonScope();
+        jwtMock = container.get(KeycloakJWTMock);
     });
 
-    it('gets actorModel and actorId from token');
+    it('gets actorModel and actorId from token', async () => {
+        const authService = container.get(AuthService);
+        const token = jwtMock.createToken({ userId: 'some-user', organisationId: 'some-user-org-id' });
+        const ctx: any = { req: { headers: { authorization: 'Bearer ' + token } } };
+        await authService.authorize(ctx);
 
-    it('throws error when unexpected actor is decoded');
+        assert.equal(ctx.actorModel, 'User');
+        assert.equal(ctx.actorId, 'some-user');
+        assert.equal(ctx.organisationId, 'some-user-org-id');
+    });
+
+    it('throws error when unexpected actor is decoded', async () => {
+        const authService = container.get(AuthService);
+        const token = jwtMock.createToken({ randomActor: 'some-user' });
+
+        const ctx: any = { req: { headers: { authorization: 'Bearer ' + token } } };
+        try {
+            await authService.authorize(ctx);
+            throw new Error('Unexpected success');
+        } catch (err) {
+            assert.equal(err.code, 'AuthenticationError');
+        }
+    });
 
     context('authorization header does not exist', () => {
 
