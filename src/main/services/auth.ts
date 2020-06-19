@@ -4,7 +4,7 @@ import { Configuration, stringConfig } from '../config';
 import { Logger } from '../logger';
 import { Exception } from '../exception';
 import { RequestFactory, Request } from '../request';
-import { JWT, DecodedJWT } from '../jwt';
+import { Jwt, DecodedJwt } from '../jwt';
 
 const API_AUTH_URL = stringConfig('API_AUTH_URL', 'http://api-router-internal');
 const API_AUTH_ENDPOINT = stringConfig('API_AUTH_ENDPOINT', '/private/access');
@@ -59,10 +59,10 @@ export class ForwardRequestHeaderAuthService extends AuthService {
 }
 
 @injectable()
-export class JWTAuthService extends AuthService {
+export class JwtAuthService extends AuthService {
     constructor(
-        @inject(JWT)
-        protected jwt: JWT,
+        @inject(Jwt)
+        protected jwt: Jwt,
     ) {
         super();
     }
@@ -94,7 +94,7 @@ export class JWTAuthService extends AuthService {
         }
     }
 
-    getActorMeta(payload: DecodedJWT) {
+    getActorMeta(payload: DecodedJwt) {
         let model: string | null = null;
         let id: string | null = null;
 
@@ -113,7 +113,7 @@ export class JWTAuthService extends AuthService {
             model = 'Client';
             id = toString(payload.clientId);
         } else {
-            throw new Exception({ name: 'InvalidJWTData' });
+            throw new Exception({ name: 'InvalidJwtData' });
         }
 
         return {

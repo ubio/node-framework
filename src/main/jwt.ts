@@ -1,5 +1,4 @@
 import assert from 'assert';
-import util from 'util';
 import jsonwebtoken from 'jsonwebtoken';
 import jwksClient from 'jwks-rsa';
 import { injectable, inject } from 'inversify';
@@ -10,45 +9,45 @@ const KEYCLOAK_ISSUER = stringConfig('KEYCLOAK_ISSUER', '');
 const KEYCLOAK_JWKS_URI = stringConfig('KEYCLOAK_JWKS_URI', '');
 const KEYCLOAK_AUDIENCE = stringConfig('KEYCLOAK_AUDIENCE', '');
 
-export type DecodedJWT = {
+export type DecodedJwt = {
     [key: string]: any;
 };
 
-export type IssuerConfig = {
-    issuer: string;
-    jwksUri: string;
-    audiences: string;
+@injectable()
+export abstract class Jwt {
+    abstract async decodeAndVerify(token: string): Promise<DecodedJwt>;
 }
 
 @injectable()
-export abstract class JWT {
-    abstract async decodeAndVerify(token: string): Promise<DecodedJWT>;
-}
+export class KeycloakJwt extends Jwt {
+    client: jwksClient.JwksClient;
 
-@injectable()
-export class KeycloakJWT extends JWT {
     constructor(
         @inject(Configuration)
         protected config: Configuration
     ) {
         super();
+        this.client = jwksClient({
+            cache: true,
+            rateLimit: true,
+            cacheMaxEntries: 5,
+            cacheMaxAge: 10 * 24 * 60 * 60 * 1000, // 10h
+            jwksRequestsPerMinute: 10,
+            jwksUri: config.get(KEYCLOAK_JWKS_URI),
+        });
     }
 
-    getIssuerConfig() {
-        const issuer = this.config.get(KEYCLOAK_ISSUER);
-        const jwksUri = this.config.get(KEYCLOAK_JWKS_URI);
-        const audiences = this.config.get(KEYCLOAK_AUDIENCE);
-        return {
-            issuer,
-            jwksUri,
-            audiences,
-        };
+    get issuer() {
+        return this.config.get(KEYCLOAK_ISSUER);
+    }
+
+    get audiences() {
+        return this.config.get(KEYCLOAK_AUDIENCE);
     }
 
     async decodeAndVerify(token: string) {
         const decoded = this.decode(token);
-        const config = this.getIssuerConfig();
-        return await this.verify(token, decoded, config);
+        return await this.verify(token, decoded);
     }
 
     decode(token: string) {
@@ -56,39 +55,35 @@ export class KeycloakJWT extends JWT {
         return decoded && typeof decoded === 'object' ? decoded : {};
     }
 
-    async verify(token: string, decoded: DecodedJWT, config: IssuerConfig): Promise<DecodedJWT> {
-        assert(config.issuer !== decoded?.payload?.iss, 'Invalid JWT issuer');
+    async verify(token: string, decoded: DecodedJwt): Promise<DecodedJwt> {
+        assert(this.issuer === decoded?.payload?.iss, 'Invalid Jwt issuer');
 
-        const cert = await this.getSigningKey(decoded, config);
-        const audience = config.audiences.split(',').map((str) => str.trim());
+        const cert = await this.getSigningKey(decoded);
+        const audience = this.audiences.split(',').map((str) => str.trim());
 
-        const verified = jsonwebtoken.verify(token, cert, { audience, issuer: config.issuer });
+        const verified = jsonwebtoken.verify(token, cert, { audience, issuer: this.issuer });
 
         return verified && typeof verified === 'object' ? verified : {};
     }
 
-    async getSigningKey(decoded: DecodedJWT, config: IssuerConfig) {
-        const kid = decoded?.header?.kid;
-        assert(kid, '.kid expected in jwt.header');
+    async getSigningKey(decoded: DecodedJwt): Promise<string> {
+        return new Promise((resolve, reject) => {
+            const kid = decoded?.header?.kid;
+            assert(kid, '.kid expected in jwt.header');
 
-        const client = jwksClient({
-            cache: true,
-            cacheMaxEntries: 5,
-            cacheMaxAge: 10 * 24 * 60 * 60 * 1000, // 10h
-            jwksRequestsPerMinute: 10,
-            jwksUri: config.jwksUri,
+            this.client.getSigningKey(kid, (err, key) => {
+                if (err) {
+                    return reject(err);
+                }
+                resolve(key.getPublicKey());
+            });
         });
-
-        const jwtGetSigningKey = util.promisify(client.getSigningKey);
-        const key = await jwtGetSigningKey(kid);
-
-        return key.getPublicKey();
     }
 
 }
 
 @injectable()
-export class KeycloakJWTMock extends KeycloakJWT {
+export class KeycloakJwtMock extends KeycloakJwt {
     secrets: Map<string, string> = new Map();
 
     createToken(payload: { [key: string]: string }) {

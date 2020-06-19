@@ -7,10 +7,10 @@ import {
     Logger,
     ConsoleLogger,
     RequestOptions,
-    JWTAuthService,
+    JwtAuthService,
 } from '../../../main';
 import assert from 'assert';
-import { JWT, KeycloakJWTMock } from '../../../main/jwt';
+import { Jwt, KeycloakJwtMock } from '../../../main/jwt';
 
 describe('ForwardRequestHeaderAuthService', () => {
     let container: Container;
@@ -93,18 +93,18 @@ describe('ForwardRequestHeaderAuthService', () => {
 
 });
 
-describe('JWTAuthService', () => {
+describe('JwtAuthService', () => {
     let container: Container;
-    let jwtMock: KeycloakJWTMock;
+    let jwtMock: KeycloakJwtMock;
 
     beforeEach(() => {
         container = new Container({ skipBaseClassChecks: true });
         container.bind(Configuration).toSelf();
         container.bind(Logger).to(ConsoleLogger);
-        container.bind(KeycloakJWTMock).toSelf().inSingletonScope();
-        container.bind(JWT).toService(KeycloakJWTMock);
-        container.bind(AuthService).to(JWTAuthService).inSingletonScope();
-        jwtMock = container.get(KeycloakJWTMock);
+        container.bind(KeycloakJwtMock).toSelf().inSingletonScope();
+        container.bind(Jwt).toService(KeycloakJwtMock);
+        container.bind(AuthService).to(JwtAuthService).inSingletonScope();
+        jwtMock = container.get(KeycloakJwtMock);
     });
 
     it('gets actorModel and actorId from token', async () => {
@@ -113,9 +113,9 @@ describe('JWTAuthService', () => {
         const ctx: any = { req: { headers: { authorization: 'Bearer ' + token } } };
         await authService.authorize(ctx);
 
-        assert.equal(ctx.actorModel, 'User');
-        assert.equal(ctx.actorId, 'some-user');
-        assert.equal(ctx.organisationId, 'some-user-org-id');
+        assert.equal(ctx.state.actorModel, 'User');
+        assert.equal(ctx.state.actorId, 'some-user');
+        assert.equal(ctx.state.organisationId, 'some-user-org-id');
     });
 
     it('throws error when unexpected actor is decoded', async () => {
