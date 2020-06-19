@@ -78,10 +78,12 @@ export class JWTAuthService extends AuthService {
         try {
             const payload = await this.jwt.decodeAndVerify(token);
 
-            const { organisationId, actorModel, actorId } = this.getActorMeta(payload);
-            ctx.organisationId = organisationId;
-            ctx.actorModel = actorModel;
-            ctx.actorId = actorId;
+            const actor = this.getActorMeta(payload);
+            ctx.state = {
+                actorModel: actor.model,
+                actorId: actor.id,
+                organisationId: actor.organisationId,
+            };
         } catch (error) {
             throw new Exception({
                 name: 'AuthenticationError',
@@ -93,8 +95,8 @@ export class JWTAuthService extends AuthService {
     }
 
     getActorMeta(payload: DecodedJWT) {
-        let actorModel: string | null = null;
-        let actorId: string | null = null;
+        let model: string | null = null;
+        let id: string | null = null;
 
         const toString = (val: string | number | boolean | undefined) => {
             if (typeof val === 'string') return val;
@@ -102,21 +104,21 @@ export class JWTAuthService extends AuthService {
         };
 
         if (payload.serviceUserId) {
-            actorModel = 'ServiceUser';
-            actorId = toString(payload.serviceUserId);
+            model = 'ServiceUser';
+            id = toString(payload.serviceUserId);
         } else if (payload.userId) {
-            actorModel = 'User';
-            actorId = toString(payload.userId);
+            model = 'User';
+            id = toString(payload.userId);
         } else if (payload.clientId) {
-            actorModel = 'Client';
-            actorId = toString(payload.clientId);
+            model = 'Client';
+            id = toString(payload.clientId);
         } else {
             throw new Exception({ name: 'InvalidJWTData' });
         }
 
         return {
-            actorModel,
-            actorId,
+            id,
+            model,
             organisationId: toString(payload.organisationId),
         };
     }
