@@ -1,13 +1,9 @@
+import { injectable } from 'inversify';
 import assert from 'assert';
 import jsonwebtoken from 'jsonwebtoken';
 import jwksClient from 'jwks-rsa';
-import { injectable, inject } from 'inversify';
-import { Configuration, stringConfig } from './config';
 import uuid from 'uuid';
-
-const KEYCLOAK_ISSUER = stringConfig('KEYCLOAK_ISSUER', '');
-const KEYCLOAK_JWKS_URI = stringConfig('KEYCLOAK_JWKS_URI', '');
-const KEYCLOAK_AUDIENCE = stringConfig('KEYCLOAK_AUDIENCE', '');
+import * as env from './env';
 
 export type DecodedJwt = {
     [key: string]: any;
@@ -22,27 +18,24 @@ export abstract class Jwt {
 export class KeycloakJwt extends Jwt {
     client: jwksClient.JwksClient;
 
-    constructor(
-        @inject(Configuration)
-        protected config: Configuration
-    ) {
+    constructor() {
         super();
         this.client = jwksClient({
             cache: true,
             rateLimit: true,
-            cacheMaxEntries: 5,
+            cacheMaxEntries: 2,
             cacheMaxAge: 10 * 24 * 60 * 60 * 1000, // 10h
             jwksRequestsPerMinute: 10,
-            jwksUri: config.get(KEYCLOAK_JWKS_URI),
+            jwksUri: env.readString('KEYCLOAK_JWKS_URI'),
         });
     }
 
     get issuer() {
-        return this.config.get(KEYCLOAK_ISSUER);
+        return env.readString('KEYCLOAK_ISSUER');
     }
 
     get audiences() {
-        return this.config.get(KEYCLOAK_AUDIENCE);
+        return env.readString('KEYCLOAK_AUDIENCE');
     }
 
     async decodeAndVerify(token: string) {
