@@ -6,9 +6,11 @@ import {
     AuthService,
     Logger,
     ConsoleLogger,
-    RequestOptions
+    RequestOptions,
+    JwtAuthService,
 } from '../../../main';
 import assert from 'assert';
+import { Jwt, KeycloakJwtMock } from '../../../main/jwt';
 
 describe('ForwardRequestHeaderAuthService', () => {
     let container: Container;
@@ -84,6 +86,61 @@ describe('ForwardRequestHeaderAuthService', () => {
             } catch (err) {
                 assert.equal(err.code, 'AuthenticationError');
                 assert.equal(requestSent, false);
+            }
+        });
+
+    });
+
+});
+
+describe('JwtAuthService', () => {
+    let container: Container;
+    let jwtMock: KeycloakJwtMock;
+
+    beforeEach(() => {
+        container = new Container({ skipBaseClassChecks: true });
+        container.bind(Configuration).toSelf();
+        container.bind(Logger).to(ConsoleLogger);
+        container.bind(KeycloakJwtMock).toSelf().inSingletonScope();
+        container.bind(Jwt).toService(KeycloakJwtMock);
+        container.bind(AuthService).to(JwtAuthService).inSingletonScope();
+        jwtMock = container.get(KeycloakJwtMock);
+    });
+
+    it('gets actorModel and actorId from token', async () => {
+        const authService = container.get(AuthService);
+        const token = jwtMock.createToken({ userId: 'some-user', organisationId: 'some-user-org-id' });
+        const ctx: any = { req: { headers: { authorization: 'Bearer ' + token } } };
+        await authService.authorize(ctx);
+
+        assert.equal(ctx.state.actorModel, 'User');
+        assert.equal(ctx.state.actorId, 'some-user');
+        assert.equal(ctx.state.organisationId, 'some-user-org-id');
+    });
+
+    it('throws error when unexpected actor is decoded', async () => {
+        const authService = container.get(AuthService);
+        const token = jwtMock.createToken({ randomActor: 'some-user' });
+
+        const ctx: any = { req: { headers: { authorization: 'Bearer ' + token } } };
+        try {
+            await authService.authorize(ctx);
+            throw new Error('Unexpected success');
+        } catch (err) {
+            assert.equal(err.code, 'AuthenticationError');
+        }
+    });
+
+    context('authorization header does not exist', () => {
+
+        it('throws AuthenticationError', async () => {
+            const authService = container.get(AuthService);
+            const ctx: any = { req: { headers: {} } };
+            try {
+                await authService.authorize(ctx);
+                throw new Error('Unexpected success');
+            } catch (err) {
+                assert.equal(err.code, 'AuthenticationError');
             }
         });
 

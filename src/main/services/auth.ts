@@ -4,6 +4,7 @@ import { Configuration, stringConfig } from '../config';
 import { Logger } from '../logger';
 import { Exception } from '../exception';
 import { RequestFactory, Request } from '../request';
+import { Jwt, DecodedJwt } from '../jwt';
 
 const API_AUTH_URL = stringConfig('API_AUTH_URL', 'http://api-router-internal');
 const API_AUTH_ENDPOINT = stringConfig('API_AUTH_ENDPOINT', '/private/access');
@@ -23,7 +24,6 @@ export class AuthServiceMock extends AuthService {
 
 @injectable()
 export class ForwardRequestHeaderAuthService extends AuthService {
-    config: Configuration;
     request: Request;
 
     cacheTtl: number = 60000;
@@ -31,7 +31,7 @@ export class ForwardRequestHeaderAuthService extends AuthService {
 
     constructor(
         @inject(Configuration)
-        config: Configuration,
+        protected config: Configuration,
         @inject(RequestFactory)
         requestFactory: RequestFactory,
     ) {
@@ -56,4 +56,71 @@ export class ForwardRequestHeaderAuthService extends AuthService {
             this.authorizedCache.set(authorization, Date.now());
         }
     }
+}
+
+@injectable()
+export class JwtAuthService extends AuthService {
+    constructor(
+        @inject(Jwt)
+        protected jwt: Jwt,
+    ) {
+        super();
+    }
+
+    async authorize(ctx: Koa.Context): Promise<void> {
+        const { authorization } = ctx.req.headers;
+        const token = authorization && authorization.split(' ')[0] === 'Bearer' && authorization.split(' ')[1];
+
+        if (!token) {
+            throw new Exception({ name: 'AuthenticationError', status: 401 });
+        }
+
+        try {
+            const payload = await this.jwt.decodeAndVerify(token);
+
+            const actor = this.getActorMeta(payload);
+            ctx.state = {
+                actorModel: actor.model,
+                actorId: actor.id,
+                organisationId: actor.organisationId,
+            };
+        } catch (error) {
+            throw new Exception({
+                name: 'AuthenticationError',
+                status: 401,
+                message: error.message,
+                details: error
+            });
+        }
+    }
+
+    getActorMeta(payload: DecodedJwt) {
+        let model: string | null = null;
+        let id: string | null = null;
+
+        const toString = (val: string | number | boolean | undefined) => {
+            if (typeof val === 'string') return val;
+            return '';
+        };
+
+        if (payload.serviceUserId) {
+            model = 'ServiceUser';
+            id = toString(payload.serviceUserId);
+        } else if (payload.userId) {
+            model = 'User';
+            id = toString(payload.userId);
+        } else if (payload.clientId) {
+            model = 'Client';
+            id = toString(payload.clientId);
+        } else {
+            throw new Exception({ name: 'InvalidJwtData' });
+        }
+
+        return {
+            id,
+            model,
+            organisationId: toString(payload.organisationId),
+        };
+    }
+
 }
