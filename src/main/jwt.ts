@@ -1,4 +1,5 @@
 import { injectable } from 'inversify';
+import util from 'util';
 import assert from 'assert';
 import jsonwebtoken from 'jsonwebtoken';
 import jwksClient from 'jwks-rsa';
@@ -60,17 +61,12 @@ export class KeycloakJwt extends Jwt {
     }
 
     async getSigningKey(decoded: DecodedJwt): Promise<string> {
-        return new Promise((resolve, reject) => {
-            const kid = decoded?.header?.kid;
-            assert(kid, '.kid expected in jwt.header');
+        const kid = decoded?.header?.kid;
+        assert(kid, '.kid expected in jwt.header');
 
-            this.client.getSigningKey(kid, (err, key) => {
-                if (err) {
-                    return reject(err);
-                }
-                resolve(key.getPublicKey());
-            });
-        });
+        const getSigningKey = util.promisify(this.client.getSigningKey);
+        const key = await getSigningKey(kid);
+        return key.getPublicKey();
     }
 
 }
