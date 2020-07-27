@@ -4,10 +4,9 @@ import { ajvErrorToMessage, AnyConstructor, Constructor } from './util';
 import uuid from 'uuid';
 import { Exception } from './exception';
 
-const FIELDS_KEY = Symbol('Fields');
-
-const validationSchemaCache: Map<string, object> = new Map();
-const validationFnCache: Map<string, Ajv.ValidateFunction> = new Map();
+const FIELDS_KEY = Symbol('Entity:fields');
+const SCHEMA_KEY = Symbol('Entity:schema');
+const VALIDATOR_KEY = Symbol('Entity:validator');
 
 const ajv = new Ajv({
     allErrors: true,
@@ -187,8 +186,8 @@ export function getFieldsForPresenter(entityClass: AnyConstructor, presenter: st
 }
 
 export function getValidationSchema(entityClass: AnyConstructor, presenter: string = ''): object {
-    const schemaId = entityClass.name + ':' + presenter;
-    const cached = validationSchemaCache.get(schemaId);
+    const cache: Map<string, object> = Reflect.getOwnMetadata(SCHEMA_KEY, entityClass.prototype) || new Map();
+    const cached = cache.get(presenter);
     if (cached) {
         return cached;
     }
@@ -222,7 +221,8 @@ export function getValidationSchema(entityClass: AnyConstructor, presenter: stri
         required,
         additionalProperties: true,
     };
-    validationSchemaCache.set(schemaId, schema);
+    cache.set(presenter, schema);
+    Reflect.defineMetadata(SCHEMA_KEY, cache, entityClass.prototype);
     return schema;
 }
 
@@ -265,13 +265,14 @@ export function createListSchema(entityClass: AnyConstructor, presenter: string 
 }
 
 export function getValidateFunction(entityClass: AnyConstructor, presenter: string = ''): Ajv.ValidateFunction {
-    const schemaId = entityClass.name + ':' + presenter;
-    const cached = validationFnCache.get(schemaId);
+    const cache: Map<string, any> = Reflect.getOwnMetadata(VALIDATOR_KEY, entityClass.prototype) || new Map();
+    const cached = cache.get(presenter);
     if (cached) {
         return cached;
     }
     const fn = ajv.compile(getValidationSchema(entityClass, presenter));
-    validationFnCache.set(schemaId, fn);
+    cache.set(presenter, fn);
+    Reflect.defineMetadata(VALIDATOR_KEY, cache, entityClass.prototype);
     return fn;
 }
 
