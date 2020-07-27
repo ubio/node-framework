@@ -58,7 +58,7 @@ export function Field(spec: FieldSpec) {
             serialized,
             deprecated
         };
-        const fields: FieldDefinition[] = Reflect.getMetadata(FIELDS_KEY, prototype) || [];
+        const fields: FieldDefinition[] = Reflect.getOwnMetadata(FIELDS_KEY, prototype) || [];
         fields.push(field);
         Reflect.defineMetadata(FIELDS_KEY, fields, prototype);
     };
@@ -168,7 +168,17 @@ export class Entity {
 }
 
 export function getAllFields(entityClass: AnyConstructor): FieldDefinition[] {
-    return Reflect.getMetadata(FIELDS_KEY, entityClass.prototype) || [];
+    let fields: FieldDefinition[] = [];
+    let proto = entityClass.prototype;
+    while (proto !== Object.prototype) {
+        const ownFields: FieldDefinition[] = Reflect.getOwnMetadata(FIELDS_KEY, proto) || [];
+        // eslint-disable-next-line no-loop-func
+        const filteredParams = ownFields.filter(param =>
+            !fields.some(p => p.propertyKey === param.propertyKey));
+        fields = filteredParams.concat(fields);
+        proto = Object.getPrototypeOf(proto);
+    }
+    return fields;
 }
 
 export function getFieldsForPresenter(entityClass: AnyConstructor, presenter: string = '') {
