@@ -172,6 +172,7 @@ export function getAllFields(entityClass: AnyConstructor): FieldDefinition[] {
     let proto = entityClass.prototype;
     while (proto !== Object.prototype) {
         const ownFields: FieldDefinition[] = Reflect.getOwnMetadata(FIELDS_KEY, proto) || [];
+        // eslint-disable-next-line no-loop-func
         const filteredParams = ownFields.filter(param =>
             !fields.some(p => p.propertyKey === param.propertyKey));
         fields = filteredParams.concat(fields);
