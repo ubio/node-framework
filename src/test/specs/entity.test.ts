@@ -4,6 +4,7 @@ import { User } from '../entities/user';
 import { Country, City } from '../entities/nested';
 import { TypeKit, Foo } from '../entities/typekit';
 import expectedTypeKitSchema from '../entities/typekit-schema.json';
+import { Teacher, Student } from '../entities/inherited';
 
 describe('Entity', () => {
 
@@ -381,6 +382,17 @@ describe('Entity', () => {
             for (const city of clone.cities) {
                 assert(city instanceof City);
             }
+        });
+
+    });
+
+    describe('inherited entities', () => {
+
+        it('have inherited fields', () => {
+            const teacherFields = getAllFields(Teacher).map(_ => _.propertyKey);
+            const studentFields = getAllFields(Student).map(_ => _.propertyKey);
+            assert.deepEqual(teacherFields, ['name', 'major']);
+            assert.deepEqual(studentFields, ['name', 'gpa']);
         });
 
     });
