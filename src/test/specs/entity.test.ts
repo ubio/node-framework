@@ -63,6 +63,18 @@ describe('Entity', () => {
             ]);
         });
 
+        it('uses presenter for nested entities', () => {
+            const country = new Country();
+            country.cities.push(City.fromJSON({ name: 'city name'}));
+            const presentation = country.present();
+
+            assert.deepEqual(presentation, {
+                code: '',
+                capital: { name: '' },
+                cities: [ { name: 'city name' } ],
+                languages: []
+            })
+        })
     });
 
     describe('serialization', () => {

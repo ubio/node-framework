@@ -117,11 +117,15 @@ export class Entity {
         const object: { [key: string]: any } = {};
         const fields = getFieldsForPresenter(this.constructor as AnyConstructor, presenter);
         for (const field of fields) {
-            let value = (this as any)[field.propertyKey];
-            if (value && value instanceof Entity) {
-                value = value.present(presenter);
-            }
-            object[field.propertyKey] = value;
+            const value = (this as any)[field.propertyKey];
+            object[field.propertyKey] = presentFieldValue(
+                presenter,
+                field.propertyKey,
+                value,
+                field.schema.type,
+                field.entityClass,
+                field.schema.items
+            );
         }
         return object;
     }
@@ -296,6 +300,42 @@ export interface FieldSpec {
     deprecated?: boolean;
     entity?: Constructor<Entity>;
     presenters?: string[];
+}
+
+function presentFieldValue(
+    presenter: string,
+    key: string,
+    value: any,
+    type?: SchemaType,
+    // only for objects and arrays
+    entityClass: AnyConstructor | null = null,
+    items?: EntitySchema
+): any {
+    switch (type) {
+        case 'array': {
+            if (Array.isArray(value)) {
+                if (entityClass) {
+                    return value.map(v => v.present(presenter));
+                }
+                if (items) {
+                    return value.map(v => presentFieldValue(presenter, key, v, items.type));
+                }
+            }
+            throw new Exception({
+                name: 'SerializationError',
+                message: `Cannot serialize array ${key}`,
+            });
+        }
+        case 'object': {
+            if (value && entityClass) {
+                return value.present(presenter);
+            }
+            return value;
+        }
+        default: {
+            return value;
+        }
+    }
 }
 
 function deserializeFieldValue(
