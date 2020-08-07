@@ -30,4 +30,6 @@ export class User extends BaseEntity {
         schema: { default: null },
     })
     meta: any = { some: { meta: true, data: 'foobar' }, ts: 123 };
+
+    notExposed = 'notExposed';
 }

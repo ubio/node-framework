@@ -7,6 +7,7 @@ export class City extends Entity {
     })
     name: string = '';
 
+    notExposed = 'notExposed';
 }
 
 export class Country extends Entity {
@@ -33,4 +34,5 @@ export class Country extends Entity {
     })
     languages: string[] = [];
 
+    notExposed = 'notExposed';
 }
