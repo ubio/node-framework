@@ -118,14 +118,18 @@ export class Entity {
         const fields = getFieldsForPresenter(this.constructor as AnyConstructor, presenter);
         for (const field of fields) {
             const value = (this as any)[field.propertyKey];
-            object[field.propertyKey] = presentFieldValue(
-                presenter,
-                field.propertyKey,
-                value,
-                field.schema.type,
-                field.entityClass,
-                field.schema.items
-            );
+            if (value == null && !field.required) {
+                object[field.propertyKey] = null;
+            } else {
+                object[field.propertyKey] = presentFieldValue(
+                    presenter,
+                    field.propertyKey,
+                    value,
+                    field.schema.type,
+                    field.entityClass,
+                    field.schema.items
+                );
+            }
         }
         return object;
     }
