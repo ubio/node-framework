@@ -1,5 +1,4 @@
 import { Container } from 'inversify';
-import { RequestFactory } from './request';
 import { Logger, StandardLogger } from './logger';
 import { Configuration, EnvConfiguration } from './config';
 import { HttpServer } from './http';
@@ -32,7 +31,6 @@ export class Application {
         this.container.bind(HttpServer).toSelf().inSingletonScope();
         this.container.bind(Logger).to(StandardLogger).inSingletonScope();
         this.container.bind(Configuration).to(EnvConfiguration).inSingletonScope();
-        this.container.bind(RequestFactory).toSelf();
         this.container.bind(Router).to(MetricsRouter);
         this.container.bind(MetricsRegistry).toConstantValue(getGlobalMetrics());
     }
