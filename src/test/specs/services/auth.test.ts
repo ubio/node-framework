@@ -2,7 +2,6 @@ import { Container } from 'inversify';
 import jsonwebtoken from 'jsonwebtoken';
 import assert from 'assert';
 import {
-    Configuration,
     AuthService,
     Logger,
     ConsoleLogger,
@@ -30,7 +29,6 @@ describe('AutomationCloudAuthService', () => {
         }
 
         container = new Container({ skipBaseClassChecks: true });
-        container.bind(Configuration).toSelf();
         container.bind(Logger).to(ConsoleLogger);
         container.bind(AuthService).to(AutomationCloudAuthService);
         container.bind(Jwt).to(AutomationCloudJwtMock).inSingletonScope();

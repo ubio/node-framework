@@ -1,6 +1,5 @@
 import { Container } from 'inversify';
 import { Logger, StandardLogger } from './logger';
-import { Configuration, EnvConfiguration } from './config';
 import { HttpServer } from './http';
 import { MetricsRouter } from './metrics/route';
 import { Router } from './router';
@@ -30,17 +29,12 @@ export class Application {
         this.container.bind('RootContainer').toConstantValue(container);
         this.container.bind(HttpServer).toSelf().inSingletonScope();
         this.container.bind(Logger).to(StandardLogger).inSingletonScope();
-        this.container.bind(Configuration).to(EnvConfiguration).inSingletonScope();
         this.container.bind(Router).to(MetricsRouter);
         this.container.bind(MetricsRegistry).toConstantValue(getGlobalMetrics());
     }
 
     get logger(): Logger {
         return this.container.get(Logger);
-    }
-
-    get config(): Configuration {
-        return this.container.get(Configuration);
     }
 
     get httpServer(): HttpServer {
