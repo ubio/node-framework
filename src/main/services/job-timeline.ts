@@ -1,7 +1,7 @@
 import { injectable, inject } from 'inversify';
 import { Configuration, stringConfig } from '../config';
 import { Logger } from '../logger';
-import { RequestFactory, Request } from '../request';
+import { RequestFactory, Request, BasicAuthAgent } from '../request';
 
 const API_JOB_TIMELINE_URL = stringConfig('API_JOB_TIMELINE_URL',
     'http://api-job-timeline');
@@ -70,7 +70,8 @@ export class ApiJobTimelineService extends JobTimelineService {
         super();
         const baseUrl = config.get(API_JOB_TIMELINE_URL);
         const authKey = config.get(API_JOB_TIMELINE_KEY);
-        this.request = requestFactory.create({ baseUrl, authKey });
+        const auth = new BasicAuthAgent({ username: authKey });
+        this.request = requestFactory.create({ baseUrl, auth });
     }
 
     add(timelineEvent: JobTimelineEvent) {

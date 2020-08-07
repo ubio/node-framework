@@ -1,4 +1,6 @@
 import { Container } from 'inversify';
+import jsonwebtoken from 'jsonwebtoken';
+import assert from 'assert';
 import {
     Configuration,
     ForwardRequestHeaderAuthService,
@@ -7,10 +9,11 @@ import {
     Logger,
     ConsoleLogger,
     RequestOptions,
-    JwtAuthService,
+    AutomationCloudAuthService,
+    Jwt,
+    AutomationCloudJwtMock,
+    AutomationCloudDecodedJwt,
 } from '../../../main';
-import assert from 'assert';
-import { Jwt, KeycloakJwtMock } from '../../../main/jwt';
 
 describe('ForwardRequestHeaderAuthService', () => {
     let container: Container;
@@ -93,42 +96,80 @@ describe('ForwardRequestHeaderAuthService', () => {
 
 });
 
-describe('JwtAuthService', () => {
+describe('AutomationCloudAuthService', () => {
     let container: Container;
-    let jwtMock: KeycloakJwtMock;
+    let requestSent = false;
+    let requestHeaders: any = {};
 
     beforeEach(() => {
+        requestSent = false;
+        requestHeaders = {};
+        const request: any = {
+            get(url: string, options: RequestOptions) {
+                requestSent = true;
+                requestHeaders = options.headers;
+            }
+        };
+
         container = new Container({ skipBaseClassChecks: true });
         container.bind(Configuration).toSelf();
         container.bind(Logger).to(ConsoleLogger);
-        container.bind(KeycloakJwtMock).toSelf().inSingletonScope();
-        container.bind(Jwt).toService(KeycloakJwtMock);
-        container.bind(AuthService).to(JwtAuthService).inSingletonScope();
-        jwtMock = container.get(KeycloakJwtMock);
+        container.bind(AuthService).to(AutomationCloudAuthService);
+        container.bind(Jwt).to(AutomationCloudJwtMock).inSingletonScope();
+        container.bind(RequestFactory).to(class extends RequestFactory {
+            create() {
+                return request;
+            }
+        });
     });
 
-    it('gets actorModel and actorId from token', async () => {
-        const authService = container.get(AuthService);
-        const token = jwtMock.createToken({ userId: 'some-user', organisationId: 'some-user-org-id' });
-        const ctx: any = { req: { headers: { authorization: 'Bearer ' + token } } };
-        await authService.authorize(ctx);
+    context('ctx.headers[AC_AUTH_HEADER] exists', () => {
+        let authService: AuthService;
+        const authHeader = process.env.AC_AUTH_HEADER || 'authorisation-hs256';
+        const payload: AutomationCloudDecodedJwt = {
+            context: {
+                user_id: 'some-user',
+                organisation_id: 'some-user-org-id',
+            },
+            authorization: {},
+            authentication: {
+                mechanism: 'client_credentials'
+            },
+        };
 
-        assert.equal(ctx.state.actorModel, 'User');
-        assert.equal(ctx.state.actorId, 'some-user');
-        assert.equal(ctx.state.organisationId, 'some-user-org-id');
-    });
+        beforeEach(async () => {
+            authService = container.get(AuthService);
+            const secret = 'El62YCP5XEaBRY3oVAefGQ';
+            const token = jsonwebtoken.sign(payload, secret, { algorithm: 'HS256' });
+            const headers = {} as any;
+            headers[authHeader] = 'Bearer ' + token;
+            const ctx: any = { req: { headers } };
 
-    it('throws error when unexpected actor is decoded', async () => {
-        const authService = container.get(AuthService);
-        const token = jwtMock.createToken({ randomActor: 'some-user' });
-
-        const ctx: any = { req: { headers: { authorization: 'Bearer ' + token } } };
-        try {
             await authService.authorize(ctx);
-            throw new Error('Unexpected success');
-        } catch (err) {
-            assert.equal(err.code, 'AuthenticationError');
-        }
+        })
+
+        it('gets organisation_id from token', async () => {
+            const organisationId = authService.getOrganisationId();
+            assert.equal(organisationId, 'some-user-org-id');
+        });
+
+        it('does not send request', async () => {
+            assert.equal(requestSent, false);
+        });
+
+    });
+
+    context('authorization header exist', () => {
+
+        it('sends a request with Authorization header', async () => {
+            const authService = container.get(AuthService);
+            const ctx: any = { req: { headers: { authorization: 'AUTH' } } };
+            assert.equal(requestSent, false);
+            await authService.authorize(ctx);
+            assert.equal(requestSent, true);
+            assert.equal(requestHeaders.authorization, 'AUTH');
+        });
+
     });
 
     context('authorization header does not exist', () => {
