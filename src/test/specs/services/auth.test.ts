@@ -1,5 +1,5 @@
 import { Container } from 'inversify';
-import jsonwebtoken from 'jsonwebtoken';
+import { RequestOptions, Response } from '@automationcloud/request';
 import assert from 'assert';
 import {
     AuthService,
@@ -7,11 +7,8 @@ import {
     ConsoleLogger,
     AutomationCloudAuthService,
     Jwt,
-    AutomationCloudJwtMock,
-    AutomationCloudDecodedJwt,
+    AutomationCloudJwt,
 } from '../../../main';
-import { RequestOptions } from '@automationcloud/request';
-import { Response } from 'node-fetch';
 
 describe('AutomationCloudAuthService', () => {
     let container: Container;
@@ -31,30 +28,33 @@ describe('AutomationCloudAuthService', () => {
         container = new Container({ skipBaseClassChecks: true });
         container.bind(Logger).to(ConsoleLogger);
         container.bind(AuthService).to(AutomationCloudAuthService);
-        container.bind(Jwt).to(AutomationCloudJwtMock).inSingletonScope();
+        container.bind(Jwt).to(AutomationCloudJwt).inSingletonScope();
         authService = container.get(AuthService) as AutomationCloudAuthService;
         authService.request.config.fetch = fetchMock;
     });
 
     context('ctx.headers[AC_AUTH_HEADER] exists', () => {
-        const authHeader = process.env.AC_AUTH_HEADER || 'authorisation-hs256';
-        const payload: AutomationCloudDecodedJwt = {
-            context: {
-                user_id: 'some-user',
-                organisation_id: 'some-user-org-id',
-            },
-            authorization: {},
-            authentication: {
-                mechanism: 'client_credentials'
-            },
-        };
-
         beforeEach(async () => {
+            // mock decodeAndVerify
+            const jwt = container.get(Jwt) as AutomationCloudJwt;
+            jwt.decodeAndVerify = async (_token: string) => {
+                return {
+                    context: {
+                        user_id: 'some-user',
+                        organisation_id: 'some-user-org-id',
+                    },
+                    authorization: {},
+                    authentication: {
+                        mechanism: 'client_credentials'
+                    },
+                }
+            };
+
+            const authHeader = process.env.AC_AUTH_HEADER!;
             authService = container.get(AuthService) as AutomationCloudAuthService;
-            const secret = 'El62YCP5XEaBRY3oVAefGQ';
-            const token = jsonwebtoken.sign(payload, secret, { algorithm: 'HS256' });
             const headers = {} as any;
-            headers[authHeader] = 'Bearer ' + token;
+
+            headers[authHeader] = 'Bearer jwt-token-here';
             const ctx: any = { req: { headers } };
 
             await authService.authorize(ctx);
@@ -65,7 +65,7 @@ describe('AutomationCloudAuthService', () => {
             assert.equal(organisationId, 'some-user-org-id');
         });
 
-        it('does not send request', async () => {
+        it('does not send request to s-api', async () => {
             assert.equal(requestSent, false);
         });
 

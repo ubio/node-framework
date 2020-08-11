@@ -11,7 +11,6 @@ export * from './logger';
 export * from './exception';
 export * from './util';
 export * from './jwt';
-// export * from '@automationcloud/request';
 import * as env from './env';
 import * as util from './util';
 

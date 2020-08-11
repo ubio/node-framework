@@ -1,8 +1,8 @@
 import { injectable } from 'inversify';
-import assert from 'assert';
 import jsonwebtoken from 'jsonwebtoken';
-import { JwksClient, JwksClientMock } from './jwks';
+import { JwksClient } from './jwks';
 import * as env from './env';
+import { Exception } from './exception';
 
 @injectable()
 export abstract class Jwt {
@@ -17,8 +17,12 @@ export class AutomationCloudJwt extends Jwt {
         const JWKS_URL = env.readString('AC_JWKS_URL');
         const JWKS_ALGORITHM = env.readString('AC_JWKS_ALGORITHM');
 
-        assert(JWKS_URL, 'env AC_JWKS_URL is missing');
-        assert(JWKS_ALGORITHM, 'env AC_JWKS_ALGORITHM is missing');
+        if (!JWKS_URL || !JWKS_ALGORITHM) {
+            throw new Exception({
+                name: 'ConfigurationError',
+                message: 'AC_JWKS_URL and AC_JWKS_ALGORITHM is required for AutomationCloudJwt',
+            })
+        }
 
         this.client = new JwksClient({
             url: JWKS_URL,
@@ -27,23 +31,13 @@ export class AutomationCloudJwt extends Jwt {
         });
     }
 
+    get jwksClient() { return this.client; }
+
     async decodeAndVerify(token: string): Promise<DecodedJwt> {
         const secret = await this.client.getSigningKey();
         const verified = jsonwebtoken.verify(token, secret);
 
         return verified && typeof verified === 'object' ? verified : {};
-    }
-}
-
-@injectable()
-export class AutomationCloudJwtMock extends AutomationCloudJwt {
-    constructor() {
-        super();
-        this.client = new JwksClientMock({
-            url: env.readString('AC_JWKS_URL'),
-            algorithm: env.readString('AC_JWKS_ALGORITHM'),
-            retryAttempts: 3,
-        });
     }
 }
 

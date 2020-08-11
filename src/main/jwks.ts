@@ -1,17 +1,28 @@
-import { Request } from '@automationcloud/request';
-import assert from 'assert';
+import Ajv from 'ajv';
+import { Request, FetchOptions, Response } from '@automationcloud/request';
 import { Exception } from './exception';
-import { Response } from 'node-fetch';
+import { ajvErrorToMessage } from './util';
+
+const ajv = new Ajv({
+    allErrors: true,
+    useDefaults: true,
+    jsonPointers: true,
+    format: 'full',
+});
+
+// eslint-disable-next-line import/no-commonjs
+const validateFunction = ajv.compile(require('../../schema/ac-jwks.json'));
 
 export class JwksClient {
     protected _cache: Map<string, JwksCache> = new Map();
+    request: Request;
 
-    constructor(protected options: JwksOptions) {}
-
-    protected get request() {
-        return new Request({
+    constructor(protected options: JwksOptions) {
+        this.options = options;
+        this.request = new Request({
             baseUrl: this.options.url,
             retryAttempts: this.options.retryAttempts ?? 3,
+            fetch: this.options.fetch,
         });
     }
 
@@ -23,18 +34,18 @@ export class JwksClient {
         }
 
         const res = await this.request.get('');
-        const keys = this.decodeKeys(res);
-        const key = keys.find(k => k.alg === this.options.algorithm);
-        if (!key) {
+        const { keys } = this.validateResponse(res);
+        const matchingKey = keys.find(k => k.alg === this.options.algorithm);
+        if (!matchingKey) {
             throw new Exception({
                 name: 'SigningKeyNotFoundError',
                 message: 'Expected signing key not found from response',
             });
         }
 
-        this.cache.set(key.alg, key.k);
+        this.cache.set(matchingKey.alg, matchingKey.k);
 
-        return key.k;
+        return matchingKey.k;
     }
 
     get cache() {
@@ -64,42 +75,19 @@ export class JwksClient {
         }
     }
 
-    protected decodeKeys(res: { [k: string]: any }): AcSigningKey[] {
-        const { keys } = res;
-        assert(res.keys && Array.isArray(keys), '\'keys\' expected to be array');
-        const decodedKeys: AcSigningKey[] = [];
-        for (const key of keys) {
-            if (key.alg && key.k) {
-                decodedKeys.push({
-                    use: key.use,
-                    kty: key.kty,
-                    kid: key.kid,
-                    alg: key.alg,
-                    k: key.k,
-                });
-            }
+    protected validateResponse(res: { [k: string]: any }): AcSigningKeySets {
+        if (validateFunction(res) === true) {
+            return res as AcSigningKeySets;
         }
 
-        return decodedKeys;
-    }
-}
+        const errors = validateFunction.errors || [];
+        const messages = errors.map(e => ajvErrorToMessage(e));
 
-export class JwksClientMock extends JwksClient {
-    protected get request() {
-        return new Request({
-            fetch: () => {
-                const keys = [
-                    {
-                        "use": "enc",
-                        "kty": "oct",
-                        "kid": "services",
-                        "alg": "HS256",
-                        "k": "El62YCP5XEaBRY3oVAefGQ"
-                    }
-                ];
-
-                const response = new Response(JSON.stringify({ keys }));
-                return Promise.resolve(response);
+        throw new Exception({
+            name: 'JwksValidationError',
+            message: `Automation cloud jwks response validation failed`,
+            details: {
+                messages,
             }
         });
     }
@@ -108,8 +96,14 @@ export class JwksClientMock extends JwksClient {
 export interface JwksOptions {
     url: string;
     algorithm: string;
-    retryAttempts?: number;
     cacheMaxAge?: number;
+
+    retryAttempts?: number;
+    fetch?: (url: string, fetchOptions: FetchOptions) => Promise<Response>; //Request.config.fetch
+}
+
+export interface AcSigningKeySets {
+    keys: AcSigningKey[]
 }
 
 export interface AcSigningKey {

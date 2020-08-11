@@ -1,53 +1,44 @@
-import nock from 'nock';
+import { fetchMock, FetchMock } from '@automationcloud/request';
 import assert from 'assert';
 import { JwksClient } from '../../main/jwks';
 
 describe('JwksClient', () => {
     describe('getSigningKey', () => {
-        let scope: nock.Scope;
         let jwksClient: JwksClient;
-
+        let fetch: FetchMock;
         const mockUrl = 'http://auth.example.com';
         const algorithm = 'HS256';
-        const mockResponse = {
-            keys: [
-                {
-                    "use": "enc",
-                    "kty": "oct",
-                    "kid": "services",
-                    "alg": "HS256",
-                    "k": "El62YCP5XEaBRY3oVAefGQ"
-                },
-            ]
+        const happyKey = {
+            alg: algorithm,
+            use: 'enc',
+            kty: 'oct',
+            kid: 'services',
+            k: 'i-am-some-key',
         };
 
         beforeEach(async () => {
+            fetch = fetchMock({ status: 200 }, { keys: [happyKey] });
             jwksClient = new JwksClient({
                 url: mockUrl,
                 retryAttempts: 1,
                 algorithm,
+                fetch,
             });
 
-            scope = nock('http://auth.example.com')
-                .get('/')
-                .reply(200, mockResponse);
-        });
+            jwksClient.cache.clear();
 
-        afterEach(() => {
-            nock.cleanAll();
         });
 
         it('fetches the key from the jwks endpoint', async () => {
             await jwksClient.getSigningKey();
-            assert.ok(scope.isDone());
         });
 
         it('retrieves the key from cache when called for the second time', async () => {
             await jwksClient.getSigningKey();
-            assert.ok(scope.isDone());
-
-            // nock throws an error if it sends requests again
             await jwksClient.getSigningKey();
+
+            assert.ok(fetch.spy.called);
+            assert.equal(fetch.spy.calledCount, 1);
         });
 
         context('value in cache is stale', () => {
@@ -58,12 +49,72 @@ describe('JwksClient', () => {
             it('sends request', async () => {
                 const key = await jwksClient.getSigningKey();
                 assert.notEqual(key, 'i-am-stale');
-                assert.ok(scope.isDone());
+                assert.ok(fetch.spy.called);
             });
 
             it('sets new key in cache', async () => {
                 const key = await jwksClient.getSigningKey();
                 assert.equal(key, jwksClient.cache.get(algorithm));
+            });
+        });
+
+        context('response is invalid', () => {
+            it('throws when matching alg not found', async () => {
+                const wrongAlg = { ...happyKey, alg: 'ES256' };
+                jwksClient.request.config.fetch = fetchMock({ status: 200 }, { keys: [wrongAlg] });
+
+               try {
+                    await jwksClient.getSigningKey();
+                    assert(true, 'unexpected success');
+                } catch (error) {
+                    assert.equal(error.name, 'SigningKeyNotFoundError');
+                }
+            });
+
+            it('throws when .alg is missing', async () => {
+                const noAlg = { ...happyKey, alg: undefined };
+                jwksClient.request.config.fetch = fetchMock({ status: 200 }, { keys: [noAlg] });
+
+               try {
+                    await jwksClient.getSigningKey();
+                    assert(true, 'unexpected success');
+                } catch (error) {
+                    assert.equal(error.name, 'JwksValidationError');
+                    assert.ok(error.details.messages[0].includes('alg'));
+                }
+            });
+
+            it('throws when .k is missing', async () => {
+                const noK = { ...happyKey, k: undefined };
+                const fetch = fetchMock({ status: 200 }, { keys: [noK] });
+                jwksClient.request.config.fetch = fetch;
+
+               try {
+                    await jwksClient.getSigningKey();
+                    assert(true, 'unexpected success');
+                } catch (error) {
+                    assert.equal(error.name, 'JwksValidationError');
+                    assert.ok(error.details.messages[0].includes('k'));
+                }
+            });
+
+            it('does not throws when optional field is missing', async () => {
+                const noOptional = {
+                    ...happyKey,
+                    use: undefined,
+                    kty: undefined,
+                    kid: undefined,
+                };
+
+                jwksClient.request.config.fetch = fetchMock({ status: 200 }, { keys: [noOptional] });
+
+               try {
+                    await jwksClient.getSigningKey();
+                    assert(true, 'unexpected success');
+                } catch (error) {
+                    assert.equal(error.name, 'JwksValidationError');
+                    assert.ok(error.details.messages[0].includes('k'));
+                }
             });
         });
     });
