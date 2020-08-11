@@ -4,7 +4,7 @@ import { Request } from '@automationcloud/request';
 import { Logger } from '../logger';
 import { Exception } from '../exception';
 import { Jwt, DecodedJwt } from '../jwt';
-import * as env from '../env';
+import { FrameworkEnv } from '../env';
 
 @injectable()
 export abstract class AuthService {
@@ -31,9 +31,11 @@ export class AutomationCloudAuthService extends AuthService {
     constructor(
         @inject(Jwt)
         protected jwt: Jwt,
+        @inject(FrameworkEnv)
+        protected env: FrameworkEnv
     ) {
         super();
-        const baseUrl = env.readString('API_AUTH_URL', 'http://api-router-internal');
+        const baseUrl = this.env.API_AUTH_URL;
         this.request = new Request({ baseUrl });
     }
 
@@ -46,7 +48,7 @@ export class AutomationCloudAuthService extends AuthService {
     }
 
     async authorize(ctx: Koa.Context) {
-        const authHeaderName = env.readString('AC_AUTH_HEADER', '');
+        const authHeaderName = this.env.AC_AUTH_HEADER_NAME;
         const authorization = ctx.req.headers[authHeaderName] || '';
         // check auth header(jwt) supplied by gateway
         if (authorization) {
@@ -85,7 +87,7 @@ export class AutomationCloudAuthService extends AuthService {
         const expired = authorizedAt + this.cacheTtl < Date.now();
 
         if (expired) {
-            const endpoint = env.readString('API_AUTH_ENDPOINT', '/private/access');
+            const endpoint = this.env.API_AUTH_ENDPOINT;
             await this.request.get(endpoint, { headers: { authorization } });
             this.authorizedCache.set(authorization, Date.now());
         }

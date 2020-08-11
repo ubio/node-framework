@@ -9,6 +9,7 @@ import {
     Jwt,
     AutomationCloudJwt,
 } from '../../../main';
+import { FrameworkEnv } from '../../../main/env';
 
 describe('AutomationCloudAuthService', () => {
     let container: Container;
@@ -29,6 +30,7 @@ describe('AutomationCloudAuthService', () => {
         container.bind(Logger).to(ConsoleLogger);
         container.bind(AuthService).to(AutomationCloudAuthService);
         container.bind(Jwt).to(AutomationCloudJwt).inSingletonScope();
+        container.bind(FrameworkEnv).toSelf().inSingletonScope();
         authService = container.get(AuthService) as AutomationCloudAuthService;
         authService.request.config.fetch = fetchMock;
     });
@@ -50,13 +52,12 @@ describe('AutomationCloudAuthService', () => {
                 }
             };
 
-            const authHeader = process.env.AC_AUTH_HEADER!;
-            authService = container.get(AuthService) as AutomationCloudAuthService;
+            const authHeader = container.get(FrameworkEnv).AC_AUTH_HEADER_NAME;
             const headers = {} as any;
-
             headers[authHeader] = 'Bearer jwt-token-here';
             const ctx: any = { req: { headers } };
 
+            authService = container.get(AuthService) as AutomationCloudAuthService;
             await authService.authorize(ctx);
         })
 

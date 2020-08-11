@@ -1,5 +1,6 @@
 import assert from 'assert';
 import dotenv from 'dotenv';
+import { injectable } from 'inversify';
 
 dotenv.config();
 
@@ -36,4 +37,21 @@ export function assertEnv() {
 
 export function resetEnv() {
     missingKeys.splice(0, missingKeys.length);
+}
+
+@injectable()
+export class FrameworkEnv {
+    PORT = readNumber('PORT', 8080);
+    HTTP_TIMEOUT = readNumber('HTTP_TIMEOUT', 300000);
+    HTTP_SHUTDOWN_DELAY = readNumber('HTTP_SHUTDOWN_DELAY', 10000);
+    API_JOB_TIMELINE_URL = readString('API_JOB_TIMELINE_URL', 'http://api-job-timeline');
+    API_JOB_TIMELINE_KEY = readString('API_JOB_TIMELINE_KEY');
+    AC_JWKS_URL = readString('AC_JWKS_URL', /* to be provided */);
+    AC_SIGNING_KEY_ALGORITHM = readString('SIGNING_KEY_ALGORITHM', 'HS256');
+    // temporary config for new auth compatibility
+    AC_AUTH_HEADER_NAME = readString('AC_AUTH_HEADER_NAME', 'authorization-hs256');
+    // <!-- deprecated, remove after migrating to new auth
+    API_AUTH_URL = readString('API_AUTH_URL', 'http://api-router-internal');
+    API_AUTH_ENDPOINT = readString('API_AUTH_ENDPOINT', '/private/access');
+    // deprecated -->
 }

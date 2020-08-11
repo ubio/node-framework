@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import uuid from 'uuid';
 
 import { AutomationCloudJwt } from '../../main/jwt';
+import { FrameworkEnv } from '../../main/env';
 
 describe('AutomationCloudJwt', () => {
     describe('decodeAndVerify', () => {
@@ -21,7 +22,8 @@ describe('AutomationCloudJwt', () => {
         };
 
         beforeEach(async () => {
-            jwtService = new AutomationCloudJwt();
+            const env = new FrameworkEnv();
+            jwtService = new AutomationCloudJwt(env);
             secretKey = getSecretKey();
             jwtService.jwksClient.getSigningKey = async () => secretKey;
         });

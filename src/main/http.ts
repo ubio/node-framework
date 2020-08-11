@@ -11,7 +11,7 @@ import conditional from 'koa-conditional-get';
 import etag from 'koa-etag';
 import cors from '@koa/cors';
 import * as middleware from './middleware';
-import * as env from './env';
+import { FrameworkEnv } from './env';
 
 @injectable()
 export class HttpServer extends Koa {
@@ -19,6 +19,8 @@ export class HttpServer extends Koa {
     logger!: Logger;
     @inject('RootContainer')
     rootContainer!: Container;
+    @inject(FrameworkEnv)
+    frameworkEnv!: FrameworkEnv; // env is used by Koa
 
     server: StoppableServer | null = null;
 
@@ -29,15 +31,15 @@ export class HttpServer extends Koa {
     }
 
     getPort() {
-        return env.readNumber('PORT', 8080);
+        return this.frameworkEnv.PORT;
     }
 
     getTimeout() {
-        return env.readNumber('HTTP_TIMEOUT', 300000);
+        return this.frameworkEnv.HTTP_TIMEOUT;
     }
 
     getShutdownDelay() {
-        return env.readNumber('HTTP_SHUTDOWN_DELAY', 10000);
+        return this.frameworkEnv.HTTP_SHUTDOWN_DELAY;
     }
 
     createRoutingMiddleware(): Middleware {

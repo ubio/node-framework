@@ -5,6 +5,7 @@ import { MetricsRouter } from './metrics/route';
 import { Router } from './router';
 import { MetricsRegistry } from './metrics';
 import { getGlobalMetrics } from './metrics/global';
+import { FrameworkEnv } from './env';
 
 /**
  * Application provides an IoC container where all modules should be registered
@@ -31,6 +32,7 @@ export class Application {
         this.container.bind(Logger).to(StandardLogger).inSingletonScope();
         this.container.bind(Router).to(MetricsRouter);
         this.container.bind(MetricsRegistry).toConstantValue(getGlobalMetrics());
+        this.container.bind(FrameworkEnv).toSelf().inSingletonScope();
     }
 
     get logger(): Logger {
