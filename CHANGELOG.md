@@ -1,3 +1,5 @@
+## 5.0.0
+
 - BREAKING CHANGE: drop `RequestFactory`, `Request`, use @automationcloud/request instead
 - BREAKING CHANGE: drop `Configuration`, see `env.md` for replacement
 - BREAKING CHANGE: drop `ForwardRequestHeaderAuthService`, use `AutomationCloudAuthService` instead
