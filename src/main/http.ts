@@ -2,7 +2,6 @@ import Koa, { Middleware, Context } from 'koa';
 import { Container, injectable, inject } from 'inversify';
 import { Logger, RequestLogger } from './logger';
 import { Exception } from './exception';
-import { Configuration, numberConfig } from './config';
 import { Router } from './router';
 import http from 'http';
 import https from 'https';
@@ -12,38 +11,35 @@ import conditional from 'koa-conditional-get';
 import etag from 'koa-etag';
 import cors from '@koa/cors';
 import * as middleware from './middleware';
-
-const PORT = numberConfig('PORT', 8080);
-const HTTP_TIMEOUT = numberConfig('HTTP_TIMEOUT', 300000);
-const HTTP_SHUTDOWN_DELAY = numberConfig('HTTP_SHUTDOWN_DELAY', 10000);
+import { FrameworkEnv } from './env';
 
 @injectable()
 export class HttpServer extends Koa {
-    @inject(Logger)
-    logger!: Logger;
-    @inject(Configuration)
-    config!: Configuration;
-    @inject('RootContainer')
-    rootContainer!: Container;
-
     server: StoppableServer | null = null;
 
-    constructor() {
+    constructor(
+        @inject(Logger)
+        protected logger: Logger,
+        @inject('RootContainer')
+        protected rootContainer: Container,
+        @inject(FrameworkEnv)
+        protected frameworkEnv: FrameworkEnv, // env is used by Koa
+    ) {
         super();
         this.proxy = true;
         this.addStandardMiddleware();
     }
 
     getPort() {
-        return this.config.get(PORT);
+        return this.frameworkEnv.PORT;
     }
 
     getTimeout() {
-        return this.config.get(HTTP_TIMEOUT);
+        return this.frameworkEnv.HTTP_TIMEOUT;
     }
 
     getShutdownDelay() {
-        return this.config.get(HTTP_SHUTDOWN_DELAY);
+        return this.frameworkEnv.HTTP_SHUTDOWN_DELAY;
     }
 
     createRoutingMiddleware(): Middleware {

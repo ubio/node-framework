@@ -1,3 +1,8 @@
+- BREAKING CHANGE: drop `RequestFactory`, `Request`, use @automationcloud/request instead
+- BREAKING CHANGE: drop `Configuration`, see `env.md` for replacement
+- BREAKING CHANGE: drop `ForwardRequestHeaderAuthService`, use `AutomationCloudAuthService` instead
+- feat: add `AutomationCloudAuthService` to support both old and new auth
+
 ## 4.0.0
 
 - BREAKING CHANGE: drop `.bind`, `.bindAll`, `.bindSingleton`, `.unbind` from Application

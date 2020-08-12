@@ -1,11 +1,7 @@
 import { injectable, inject } from 'inversify';
-import { Configuration, stringConfig } from '../config';
 import { Logger } from '../logger';
-import { RequestFactory, Request } from '../request';
-
-const API_JOB_TIMELINE_URL = stringConfig('API_JOB_TIMELINE_URL',
-    'http://api-job-timeline');
-const API_JOB_TIMELINE_KEY = stringConfig('API_JOB_TIMELINE_KEY');
+import { Request, BasicAuthAgent } from '@automationcloud/request';
+import { FrameworkEnv } from '../env';
 
 export interface JobTimelineEvent {
     namespace: string;
@@ -49,8 +45,6 @@ export class JobTimelineServiceMock extends JobTimelineService {
 
 @injectable()
 export class ApiJobTimelineService extends JobTimelineService {
-    @inject(Logger)
-    logger!: Logger;
     private request: Request;
 
     private buffer: JobTimelineEvent[] = [];
@@ -62,15 +56,17 @@ export class ApiJobTimelineService extends JobTimelineService {
     private autoFlushPromise: Promise<void> | null = null;
 
     constructor(
-        @inject(Configuration)
-        config: Configuration,
-        @inject(RequestFactory)
-        requestFactory: RequestFactory,
+        @inject(Logger)
+        protected logger: Logger,
+        @inject(FrameworkEnv)
+        protected env: FrameworkEnv,
     ) {
         super();
-        const baseUrl = config.get(API_JOB_TIMELINE_URL);
-        const authKey = config.get(API_JOB_TIMELINE_KEY);
-        this.request = requestFactory.create({ baseUrl, authKey });
+        const baseUrl = this.env.API_JOB_TIMELINE_URL;
+        // subject to change the auth afterwards?
+        const authKey = this.env.API_JOB_TIMELINE_KEY;
+        const auth = new BasicAuthAgent({ username: authKey });
+        this.request = new Request({ baseUrl, auth });
     }
 
     add(timelineEvent: JobTimelineEvent) {
