@@ -1,5 +1,5 @@
 import Ajv from 'ajv';
-import { Request, FetchOptions, Response } from '@automationcloud/request';
+import { Request, Fetch } from '@automationcloud/request';
 import { Exception } from './exception';
 import { ajvErrorToMessage } from './util';
 
@@ -14,7 +14,7 @@ const ajv = new Ajv({
 const validateFunction = ajv.compile(require('../../schema/ac-jwks.json'));
 
 export class JwksClient {
-    protected _cache: Map<string, JwksCache> = new Map();
+    protected _cache: JwksCache | null = null;
     request: Request;
 
     constructor(protected options: JwksOptions) {
@@ -27,15 +27,9 @@ export class JwksClient {
     }
 
     async getSigningKey(): Promise<string> {
+        const keys = await this.getSigningKeys();
         const alg = this.options.algorithm;
-        const cached = this.cache.get(alg);
-        if (cached) {
-            return cached;
-        }
-
-        const res = await this.request.get('');
-        const { keys } = this.validateResponse(res);
-        const matchingKey = keys.find(k => k.alg === this.options.algorithm);
+        const matchingKey = keys.find(k => k.alg === alg);
         if (!matchingKey) {
             throw new Exception({
                 name: 'SigningKeyNotFoundError',
@@ -43,41 +37,42 @@ export class JwksClient {
             });
         }
 
-        this.cache.set(matchingKey.alg, matchingKey.k);
-
         return matchingKey.k;
     }
 
-    get cache() {
-        return {
-            get: (key: string) => {
-                const v = this._cache.get(key);
-                if (!v || v.expiresAt < Date.now()) {
-                    this._cache.delete(key);
-                    return null;
-                }
-
-                return v.value;
-            },
-
-            set: (key: string, value: string, maxAge?: number) => {
-                const ttl = maxAge ??
-                    this.options.cacheMaxAge ??
-                    60 * 1000;
-
-                const expiresAt = Date.now() + ttl;
-                this._cache.set(key, { expiresAt, value });
-            },
-
-            clear: () => {
-                this._cache = new Map();
-            }
+    async getSigningKeys(): Promise<SigningKey[]> {
+        const { keys, validUntil = 0 } = this._cache || {};
+        if (keys && Date.now() < validUntil) {
+            return keys;
         }
+
+        const res = await this.request.get('');
+        const validRes = this.validateResponse(res);
+        this.setCache(validRes.keys);
+
+        return validRes.keys;
     }
 
-    protected validateResponse(res: { [k: string]: any }): AcSigningKeySets {
+    getCache() {
+        return this._cache == null ? null : { ...this._cache };
+    }
+
+    setCache(keys: SigningKey[], maxAge?: number) {
+        const ttl = maxAge ??
+            this.options.cacheMaxAge ??
+            60 * 1000;
+
+        const validUntil = Date.now() + ttl;
+        this._cache = { keys, validUntil };
+    }
+
+    clearCache() {
+        this._cache = null;
+    }
+
+    protected validateResponse(res: { [k: string]: any }): SigningKeySets {
         if (validateFunction(res) === true) {
-            return res as AcSigningKeySets;
+            return res as SigningKeySets;
         }
 
         const errors = validateFunction.errors || [];
@@ -85,7 +80,7 @@ export class JwksClient {
 
         throw new Exception({
             name: 'JwksValidationError',
-            message: `Automation cloud jwks response validation failed`,
+            message: 'Automation cloud jwks response validation failed',
             details: {
                 messages,
             }
@@ -99,22 +94,19 @@ export interface JwksOptions {
     cacheMaxAge?: number;
 
     retryAttempts?: number;
-    fetch?: (url: string, fetchOptions: FetchOptions) => Promise<Response>; //Request.config.fetch
+    fetch?: Fetch;
 }
 
-export interface AcSigningKeySets {
-    keys: AcSigningKey[]
+export type JwksCache = SigningKeySets & { validUntil: number }
+
+export interface SigningKeySets {
+    keys: SigningKey[]
 }
 
-export interface AcSigningKey {
+export interface SigningKey {
     use?: string;
     kty?: string;
     kid?: string;
     alg: string;
     k: string;
-}
-
-interface JwksCache {
-    expiresAt: number,
-    value: string,
 }

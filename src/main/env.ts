@@ -50,8 +50,7 @@ export class FrameworkEnv {
     AC_SIGNING_KEY_ALGORITHM = readString('SIGNING_KEY_ALGORITHM', 'HS256');
     // temporary config for new auth compatibility
     AC_AUTH_HEADER_NAME = readString('AC_AUTH_HEADER_NAME', 'authorization-hs256');
-    // <!-- deprecated, remove after migrating to new auth
+    // deprecated, remove after migrating to new auth
     API_AUTH_URL = readString('API_AUTH_URL', 'http://api-router-internal');
     API_AUTH_ENDPOINT = readString('API_AUTH_ENDPOINT', '/private/access');
-    // deprecated -->
 }

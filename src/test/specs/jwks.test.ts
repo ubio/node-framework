@@ -25,7 +25,7 @@ describe('JwksClient', () => {
                 fetch,
             });
 
-            jwksClient.cache.clear();
+            jwksClient.clearCache();
 
         });
 
@@ -43,7 +43,12 @@ describe('JwksClient', () => {
 
         context('value in cache is stale', () => {
             beforeEach(() => {
-                jwksClient.cache.set(algorithm, 'i-am-stale', -1000);
+                const keys = [{
+                    alg: algorithm,
+                    k: 'i-am-stale',
+                }];
+
+                jwksClient.setCache(keys, -1000);
             });
 
             it('sends request', async () => {
@@ -54,7 +59,9 @@ describe('JwksClient', () => {
 
             it('sets new key in cache', async () => {
                 const key = await jwksClient.getSigningKey();
-                assert.equal(key, jwksClient.cache.get(algorithm));
+                const cache = jwksClient.getCache();
+                const cachedKey = cache?.keys.find(_ => _.k === key);
+                assert.equal(key, cachedKey?.k);
             });
         });
 

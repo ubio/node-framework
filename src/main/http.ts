@@ -15,16 +15,16 @@ import { FrameworkEnv } from './env';
 
 @injectable()
 export class HttpServer extends Koa {
-    @inject(Logger)
-    logger!: Logger;
-    @inject('RootContainer')
-    rootContainer!: Container;
-    @inject(FrameworkEnv)
-    frameworkEnv!: FrameworkEnv; // env is used by Koa
-
     server: StoppableServer | null = null;
 
-    constructor() {
+    constructor(
+        @inject(Logger)
+        protected logger: Logger,
+        @inject('RootContainer')
+        protected rootContainer: Container,
+        @inject(FrameworkEnv)
+        protected frameworkEnv: FrameworkEnv, // env is used by Koa
+    ) {
         super();
         this.proxy = true;
         this.addStandardMiddleware();
