@@ -44,6 +44,7 @@
         "no-useless-constructor": 0, // in favor of @typescript-eslint/no-useless-constructor
         "no-warning-comments": 0,
         "operator-assignment": 0,
+        "semi": 2,
         // Node specific
         "no-process-exit": 0,
         "no-sync": 0,

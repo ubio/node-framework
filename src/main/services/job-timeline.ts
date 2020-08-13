@@ -68,7 +68,7 @@ export class ApiJobTimelineService extends JobTimelineService {
         if (!baseUrl || !authKey) {
             throw new Exception({
                 name: 'ConfigurationError',
-                message: 'Check Environment: API_JOB_TIMELINE_URL, API_JOB_TIMELINE_KEY'
+                message: 'Check Environment: API_JOB_TIMELINE_URL, API_JOB_TIMELINE_KEY',
             });
         }
 

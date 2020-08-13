@@ -20,7 +20,7 @@ export class AuthServiceMock extends AuthService {
     protected organisationId: string | null = null;
     async authorize(_ctx: Koa.Context) {}
     getOrganisationId() { return this.organisationId; }
-    setOrganisationId(id: string) { this.organisationId = id }
+    setOrganisationId(id: string) { this.organisationId = id; }
 }
 
 @injectable()
