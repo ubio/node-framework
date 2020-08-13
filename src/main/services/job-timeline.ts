@@ -2,6 +2,7 @@ import { injectable, inject } from 'inversify';
 import { Logger } from '../logger';
 import { Request, BasicAuthAgent } from '@automationcloud/request';
 import { FrameworkEnv } from '../env';
+import { Exception } from '../exception';
 
 export interface JobTimelineEvent {
     namespace: string;
@@ -63,8 +64,15 @@ export class ApiJobTimelineService extends JobTimelineService {
     ) {
         super();
         const baseUrl = this.env.API_JOB_TIMELINE_URL;
-        // subject to change the auth afterwards?
         const authKey = this.env.API_JOB_TIMELINE_KEY;
+        if (!baseUrl || !authKey) {
+            throw new Exception({
+                name: 'ConfigurationError',
+                message: 'Check Environment: API_JOB_TIMELINE_URL, API_JOB_TIMELINE_KEY'
+            });
+        }
+
+        // subject to change the auth afterwards?
         const auth = new BasicAuthAgent({ username: authKey });
         this.request = new Request({ baseUrl, auth });
     }

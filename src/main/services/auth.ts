@@ -17,8 +17,10 @@ export abstract class AuthService {
 
 @injectable()
 export class AuthServiceMock extends AuthService {
+    protected organisationId: string | null = null;
     async authorize(_ctx: Koa.Context) {}
-    getOrganisationId() { return null; }
+    getOrganisationId() { return this.organisationId; }
+    setOrganisationId(id: string) { this.organisationId = id }
 }
 
 @injectable()
@@ -32,7 +34,7 @@ export class AutomationCloudAuthService extends AuthService {
         @inject(Jwt)
         protected jwt: Jwt,
         @inject(FrameworkEnv)
-        protected env: FrameworkEnv
+        protected env: FrameworkEnv,
     ) {
         super();
         const baseUrl = this.env.API_AUTH_URL;

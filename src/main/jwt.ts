@@ -23,8 +23,8 @@ export class AutomationCloudJwt extends Jwt {
         if (!url || !algorithm) {
             throw new Exception({
                 name: 'ConfigurationError',
-                message: 'AC_JWKS_URL and AC_SIGNING_KEY_ALGORITHM is required for AutomationCloudJwt service',
-            })
+                message: 'Check Environment: AC_JWKS_URL, AC_SIGNING_KEY_ALGORITHM',
+            });
         }
 
         this.client = new JwksClient({
