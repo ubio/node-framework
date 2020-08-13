@@ -24,7 +24,7 @@ describe('AutomationCloudAuthService', () => {
             requestSent = true;
             requestHeaders = options.headers;
             return Promise.resolve(new Response('{}'));
-        }
+        };
 
         container = new Container({ skipBaseClassChecks: true });
         container.bind(Logger).to(ConsoleLogger);
@@ -49,7 +49,7 @@ describe('AutomationCloudAuthService', () => {
                     authentication: {
                         mechanism: 'client_credentials'
                     },
-                }
+                };
             };
 
             const authHeader = container.get(FrameworkEnv).AC_AUTH_HEADER_NAME;
@@ -59,7 +59,7 @@ describe('AutomationCloudAuthService', () => {
 
             authService = container.get(AuthService) as AutomationCloudAuthService;
             await authService.authorize(ctx);
-        })
+        });
 
         it('gets organisation_id from token', async () => {
             const organisationId = authService.getOrganisationId();

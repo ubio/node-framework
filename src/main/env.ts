@@ -45,8 +45,8 @@ export class FrameworkEnv {
     HTTP_TIMEOUT = readNumber('HTTP_TIMEOUT', 300000);
     HTTP_SHUTDOWN_DELAY = readNumber('HTTP_SHUTDOWN_DELAY', 10000);
     API_JOB_TIMELINE_URL = readString('API_JOB_TIMELINE_URL', 'http://api-job-timeline');
-    API_JOB_TIMELINE_KEY = readString('API_JOB_TIMELINE_KEY');
-    AC_JWKS_URL = readString('AC_JWKS_URL', /* to be provided */);
+    API_JOB_TIMELINE_KEY = readString('API_JOB_TIMELINE_KEY', ''); // to avoid assert error when not used
+    AC_JWKS_URL = readString('AC_JWKS_URL', ''); // set default once available
     AC_SIGNING_KEY_ALGORITHM = readString('SIGNING_KEY_ALGORITHM', 'HS256');
     // temporary config for new auth compatibility
     AC_AUTH_HEADER_NAME = readString('AC_AUTH_HEADER_NAME', 'authorization-hs256');

@@ -5,7 +5,8 @@
     "main": "out/main/index.js",
     "files": [
         "out/main/**/*",
-        "out/bin/**/*"
+        "out/bin/**/*",
+        "schema/**/*"
     ],
     "bin": {
         "generate-openapi": "out/bin/generate-openapi.js",

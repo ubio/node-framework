@@ -73,8 +73,9 @@ describe('Entity', () => {
                 capital: { name: '' },
                 cities: [ { name: 'city name' } ],
                 languages: []
-            })
-        })
+            });
+        });
+
     });
 
     describe('serialization', () => {
