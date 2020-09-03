@@ -74,7 +74,8 @@ export class HttpServer extends Koa {
 
     addStandardMiddleware(): this {
         this.use(bodyParser({
-            enableTypes: ['json']
+            enableTypes: ['json'],
+            jsonLimit: this.frameworkEnv.HTTP_JSON_LIMIT
         }));
         this.use(conditional());
         this.use(etag());

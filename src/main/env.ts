@@ -43,6 +43,7 @@ export function resetEnv() {
 export class FrameworkEnv {
     PORT = readNumber('PORT', 8080);
     HTTP_TIMEOUT = readNumber('HTTP_TIMEOUT', 300000);
+    HTTP_JSON_LIMIT = readString('HTTP_JSON_LIMIT', '1mb');
     HTTP_SHUTDOWN_DELAY = readNumber('HTTP_SHUTDOWN_DELAY', 10000);
     API_JOB_TIMELINE_URL = readString('API_JOB_TIMELINE_URL', 'http://api-job-timeline');
     API_JOB_TIMELINE_KEY = readString('API_JOB_TIMELINE_KEY', ''); // to avoid assert error when not used
