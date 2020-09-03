@@ -37,8 +37,11 @@ export class AutomationCloudAuthService extends AuthService {
         protected env: FrameworkEnv,
     ) {
         super();
-        const baseUrl = this.env.API_AUTH_URL;
-        this.request = new Request({ baseUrl });
+        const baseUrl = this.env.API_AUTH_URL; // for forwardRequestHeader
+        this.request = new Request({
+            baseUrl,
+            retryAttempts: 3,
+        });
     }
 
     getOrganisationId() {
@@ -54,10 +57,8 @@ export class AutomationCloudAuthService extends AuthService {
         const authorization = ctx.req.headers[authHeaderName] || '';
         // check auth header(jwt) supplied by gateway
         if (authorization) {
-            this.logger.info('[auth-service] internal auth header detected');
             this.payload = await this.decodeJwt(Array.isArray(authorization) ? authorization[0] : authorization);
         } else {
-            this.logger.info('[auth-service] using legacy auth');
             await this.forwardRequestHeader(ctx);
             this.payload = null;
         }

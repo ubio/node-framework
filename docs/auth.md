@@ -1,8 +1,8 @@
 # Auth service
 
 You can use `AutomationCloudAuthService` to authenticate requests made to automation cloud, It will try to parse the header injected by Gateway, then try to forward the auth header to s-api if the header is not present(for backward compatibility).
+If you were using `ForwardRequestHeaderAuthService`, use `AutomationCloudAuthService` instead (as described here.)
 
-The class should be bound to application container, also `AutomationCloudJwt` should be bound as a singleton(to use jwks cache properly).
 
 ## Example
 ```ts
@@ -11,15 +11,12 @@ import {
     Application,
     AuthService,
     AutomationCloudAuthService,
-    Jwt,
-    AutomationCloudJwt,
 } from '@ubio/framework';
 
 export class App extends Application {
 
     constructor() {
         super();
-        this.container.bind(Jwt).to(AutomationCloudJwt).inSingletonScope();
         this.container.bind(AuthService).to(AutomationCloudAuthService);
         ...
     }
@@ -44,4 +41,4 @@ export class MyRouter extends Router {
     }
 
 ```
-Keep in mind that organisationId is _not_ always available (It will not be available if authenticated by forwarding auth header, the traditional way)
+Keep in mind that you need to provide `AC_JWKS_URL`  in your application if you are aiming to use Ubio's AutomationCloud Auth Service (infrastructure).
