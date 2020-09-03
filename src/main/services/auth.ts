@@ -54,8 +54,10 @@ export class AutomationCloudAuthService extends AuthService {
         const authorization = ctx.req.headers[authHeaderName] || '';
         // check auth header(jwt) supplied by gateway
         if (authorization) {
+            this.logger.info('[auth-service] internal auth header detected');
             this.payload = await this.decodeJwt(Array.isArray(authorization) ? authorization[0] : authorization);
         } else {
+            this.logger.info('[auth-service] using legacy auth');
             await this.forwardRequestHeader(ctx);
             this.payload = null;
         }
