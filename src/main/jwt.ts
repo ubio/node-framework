@@ -2,7 +2,7 @@ import { injectable, inject } from 'inversify';
 import jsonwebtoken from 'jsonwebtoken';
 import { JwksClient } from './jwks';
 import { FrameworkEnv } from './env';
-import { Exception } from './exception';
+import { Logger } from './logger';
 
 @injectable()
 export abstract class Jwt {
@@ -15,16 +15,15 @@ export class AutomationCloudJwt extends Jwt {
     constructor(
         @inject(FrameworkEnv)
         protected env: FrameworkEnv,
+        @inject(Logger)
+        protected logger: Logger,
     ) {
         super();
         const url = this.env.AC_JWKS_URL;
         const algorithm = this.env.AC_SIGNING_KEY_ALGORITHM;
 
-        if (!url || !algorithm) {
-            throw new Exception({
-                name: 'ConfigurationError',
-                message: 'Check Environment: AC_JWKS_URL, AC_SIGNING_KEY_ALGORITHM',
-            });
+        if (!url) {
+            this.logger.warn('`AC_JWKS_URL` is missing, Supplying it to be compatible with both auth flow');
         }
 
         this.client = new JwksClient({

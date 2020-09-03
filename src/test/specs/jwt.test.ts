@@ -5,6 +5,7 @@ import uuid from 'uuid';
 
 import { AutomationCloudJwt } from '../../main/jwt';
 import { FrameworkEnv } from '../../main/env';
+import { ConsoleLogger } from '../../main';
 
 describe('AutomationCloudJwt', () => {
     describe('decodeAndVerify', () => {
@@ -23,7 +24,7 @@ describe('AutomationCloudJwt', () => {
 
         beforeEach(async () => {
             const env = new FrameworkEnv();
-            jwtService = new AutomationCloudJwt(env);
+            jwtService = new AutomationCloudJwt(env, new ConsoleLogger());
             secretKey = getSecretKey();
             jwtService.jwksClient.getSigningKey = async () => secretKey;
         });
