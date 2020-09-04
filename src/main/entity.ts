@@ -267,7 +267,7 @@ export function createListSchema(entityClass: AnyConstructor, presenter: string 
         properties: {
             object: { type: 'string', const: 'list' },
             count: { type: 'integer' },
-            data: getValidationSchema(entityClass, presenter)
+            data: { type: 'array', items: { type: getValidationSchema(entityClass, presenter) } }
         }
     };
 }
