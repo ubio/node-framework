@@ -20,7 +20,6 @@ export class JwksClient {
     constructor(protected options: JwksOptions) {
         this.options = options;
         this.request = new Request({
-            baseUrl: this.options.url,
             retryAttempts: this.options.retryAttempts ?? 3,
             fetch: this.options.fetch,
         });
@@ -29,7 +28,7 @@ export class JwksClient {
     async getSigningKey(): Promise<string> {
         const keys = await this.getSigningKeys();
         const alg = this.options.algorithm;
-        const matchingKey = keys.find(k => k.alg === alg);
+        const matchingKey = keys.find(k => k.alg === alg && k.kid === 'services');
         if (!matchingKey) {
             throw new Exception({
                 name: 'SigningKeyNotFoundError',
@@ -46,7 +45,7 @@ export class JwksClient {
             return keys;
         }
 
-        const res = await this.request.get('');
+        const res = await this.request.get(this.options.url);
         const validRes = this.validateResponse(res);
         this.setCache(validRes.keys);
 
@@ -106,7 +105,7 @@ export interface SigningKeySets {
 export interface SigningKey {
     use?: string;
     kty?: string;
-    kid?: string;
+    kid: string;
     alg: string;
     k: string;
 }
