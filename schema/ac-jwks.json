@@ -29,7 +29,7 @@
                         "type": "string"
                     }
                 },
-                "required": ["alg", "k"]
+                "required": ["alg", "k", "kid"]
             }
         }
     },

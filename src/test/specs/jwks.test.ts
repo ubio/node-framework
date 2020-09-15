@@ -46,6 +46,7 @@ describe('JwksClient', () => {
                 const keys = [{
                     alg: algorithm,
                     k: 'i-am-stale',
+                    kid: 'services',
                 }];
 
                 jwksClient.setCache(keys, -1000);
@@ -69,6 +70,19 @@ describe('JwksClient', () => {
             it('throws when matching alg not found', async () => {
                 const wrongAlg = { ...happyKey, alg: 'ES256' };
                 jwksClient.request.config.fetch = fetchMock({ status: 200 }, { keys: [wrongAlg] });
+
+               try {
+                    await jwksClient.getSigningKey();
+                    assert(true, 'unexpected success');
+                } catch (error) {
+                    assert.equal(error.name, 'SigningKeyNotFoundError');
+                }
+            });
+
+            it('throws when kid !== services', async () => {
+                const wrongKid = { ...happyKey, kid: 'some-other-kid' };
+                const fetch = fetchMock({ status: 200 }, { keys: [wrongKid] });
+                jwksClient.request.config.fetch = fetch;
 
                try {
                     await jwksClient.getSigningKey();
@@ -105,12 +119,25 @@ describe('JwksClient', () => {
                 }
             });
 
+            it('throws when .kid is missing', async () => {
+                const noKid = { ...happyKey, kid: undefined };
+                const fetch = fetchMock({ status: 200 }, { keys: [noKid] });
+                jwksClient.request.config.fetch = fetch;
+
+               try {
+                    await jwksClient.getSigningKey();
+                    assert(true, 'unexpected success');
+                } catch (error) {
+                    assert.equal(error.name, 'JwksValidationError');
+                    assert.ok(error.details.messages[0].includes('k'));
+                }
+            });
+
             it('does not throws when optional field is missing', async () => {
                 const noOptional = {
                     ...happyKey,
                     use: undefined,
                     kty: undefined,
-                    kid: undefined,
                 };
 
                 jwksClient.request.config.fetch = fetchMock({ status: 200 }, { keys: [noOptional] });
