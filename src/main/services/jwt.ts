@@ -1,17 +1,18 @@
 import { injectable, inject } from 'inversify';
 import jsonwebtoken from 'jsonwebtoken';
-import { JwksClient } from './jwks';
-import { FrameworkEnv } from './env';
-import { Logger } from './logger';
+import { JwksClient } from '../jwks';
+import { FrameworkEnv } from '../env';
+import { Logger } from '../logger';
 
 @injectable()
-export abstract class Jwt {
+export abstract class JwtService {
     abstract async decodeAndVerify(token: string): Promise<DecodedJwt>;
 }
 
 @injectable()
-export class AutomationCloudJwt extends Jwt {
-    protected client: JwksClient;
+export class AutomationCloudJwtService extends JwtService {
+    protected jwksClient: JwksClient;
+
     constructor(
         @inject(FrameworkEnv)
         protected env: FrameworkEnv,
@@ -21,24 +22,16 @@ export class AutomationCloudJwt extends Jwt {
         super();
         const url = this.env.AC_JWKS_URL;
         const algorithm = this.env.AC_SIGNING_KEY_ALGORITHM;
-
-        if (!url) {
-            this.logger.warn('`AC_JWKS_URL` is missing, Supplying it to be compatible with both auth flow');
-        }
-
-        this.client = new JwksClient({
+        this.jwksClient = new JwksClient({
             url,
             algorithm,
             retryAttempts: 3,
         });
     }
 
-    get jwksClient() { return this.client; }
-
     async decodeAndVerify(token: string): Promise<DecodedJwt> {
-        const secret = await this.client.getSigningKey();
+        const secret = await this.jwksClient.getSigningKey();
         const verified = jsonwebtoken.verify(token, secret);
-
         return verified && typeof verified === 'object' ? verified : {};
     }
 }

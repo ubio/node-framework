@@ -3,13 +3,12 @@ import jsonwebtoken from 'jsonwebtoken';
 import crypto from 'crypto';
 import uuid from 'uuid';
 
-import { AutomationCloudJwt } from '../../main/jwt';
 import { FrameworkEnv } from '../../main/env';
-import { ConsoleLogger } from '../../main';
+import { ConsoleLogger, AutomationCloudJwtService } from '../../main';
 
 describe('AutomationCloudJwt', () => {
     describe('decodeAndVerify', () => {
-        let jwtService: AutomationCloudJwt;
+        let jwtService: AutomationCloudJwtService;
         let secretKey: string;
         const payload = {
             context: {
@@ -24,9 +23,9 @@ describe('AutomationCloudJwt', () => {
 
         beforeEach(async () => {
             const env = new FrameworkEnv();
-            jwtService = new AutomationCloudJwt(env, new ConsoleLogger());
+            jwtService = new AutomationCloudJwtService(env, new ConsoleLogger());
             secretKey = getSecretKey();
-            jwtService.jwksClient.getSigningKey = async () => secretKey;
+            (jwtService as any).jwksClient.getSigningKey = async () => secretKey;
         });
 
         it('decodes data with given token', async () => {
