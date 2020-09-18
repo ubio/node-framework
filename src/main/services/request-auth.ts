@@ -1,10 +1,14 @@
 import { injectable, inject } from 'inversify';
 import Koa from 'koa';
+import Ajv from 'ajv';
 import { Request } from '@automationcloud/request';
 import { Exception } from '../exception';
-import { JwtService } from './jwt';
+import { JwtService, AutomationCloudDecodedJwt } from './jwt';
 import { FrameworkEnv } from '../env';
 import { AutomationCloudContext } from '../ac-context';
+import { ajvErrorToMessage } from '../util';
+
+const ajv = new Ajv({ messages: true });
 
 @injectable()
 export abstract class RequestAuthService {
@@ -64,10 +68,11 @@ export class AutomationCloudAuthService extends RequestAuthService {
         }
         try {
             const jwt = await this.jwt.decodeAndVerify(token);
+            this.validateJwt(jwt);
             this.acContext.set({
                 authenticated: true,
-                organisationId: jwt.context?.organisation_id ?? null,
-                // TODO extract more stuff
+                organisationId: jwt.context.organisation_id ?? null,
+                jwt,
             });
         } catch (error) {
             throw new Exception({
@@ -104,7 +109,50 @@ export class AutomationCloudAuthService extends RequestAuthService {
         this.acContext.set({
             authenticated: true,
             organisationId: null,
+            jwt: null,
         });
     }
 
+    protected validateJwt(value: any): asserts value is AutomationCloudDecodedJwt {
+        const validator = ajv.compile(acDecodedJwtSchema);
+        const valid = validator(value);
+        if (!valid) {
+            throw new Exception({
+                name: 'JwtValidationError',
+                message: 'jwt payload does not conform to schema',
+                details: {
+                    messages: validator.errors?.map(e => ajvErrorToMessage(e)),
+                },
+            });
+        }
+    }
 }
+
+const acDecodedJwtSchema = {
+    type: 'object',
+    required: ['context', 'authentication', 'authorization'],
+    properties: {
+        context: {
+            type: 'object',
+            properties: {
+                organisation_id: { type: 'string' },
+                user_id:  { type: 'string' },
+                job_id:  { type: 'string' },
+                client_id:  { type: 'string' },
+                service_user_id:  { type: 'string' },
+                service_user_name:  { type: 'string' },
+            }
+        },
+        authentication: {
+            type: 'object',
+            properties: {
+                mechanism:  { type: 'string' },
+                service:  { type: 'string' },
+            }
+        },
+        authorization: {
+            type: 'object',
+            properties: {}
+        }
+    }
+};

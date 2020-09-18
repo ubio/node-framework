@@ -1,20 +1,18 @@
 import { Exception } from './exception';
+import { AutomationCloudDecodedJwt } from './services/jwt';
 
 export class AutomationCloudContext {
     protected authenticated: boolean = false;
     protected organisationId: string | null = null;
+    protected jwt: AutomationCloudDecodedJwt | null = null;
 
     isAuthenticated() {
         return this.authenticated;
     }
 
-    checkAutheticated(): void {
+    checkAuthenticated(): void {
         if (!this.authenticated) {
-            throw new Exception({
-                name: 'AuthenticationError',
-                message: 'Authentication is required',
-                status: 401,
-            });
+            throw AuthenticationError('Authentication is required');
         }
     }
 
@@ -24,20 +22,37 @@ export class AutomationCloudContext {
 
     requireOrganisationId(): string {
         if (!this.organisationId) {
-            throw new Exception({
-                name: 'AuthenticationError',
-                message: 'OrganisationId is required',
-                status: 401,
-            });
+            throw AuthenticationError('OrganisationId is required');
         }
         return this.organisationId;
+    }
+
+    getJwt() {
+        return this.jwt;
+    }
+
+    requireJwt(): AutomationCloudDecodedJwt {
+        if (!this.jwt) {
+            throw AuthenticationError('Jwt is required');
+        }
+        return this.jwt;
     }
 
     set(details: {
         authenticated: boolean;
         organisationId: string | null;
+        jwt: AutomationCloudDecodedJwt | null;
     }) {
         Object.assign(this, details);
     }
 
+}
+
+function AuthenticationError(message: string, details?: any) {
+    return new Exception({
+        name: 'AuthenticationError',
+        status: 401,
+        message,
+        details,
+    });
 }

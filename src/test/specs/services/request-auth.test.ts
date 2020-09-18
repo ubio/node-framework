@@ -18,6 +18,7 @@ describe('RequestAuthService', () => {
     let requestHeaders: any = {};
     let acContext: AutomationCloudContext;
     let authService: AutomationCloudAuthService;
+    let jwt: any = {};
 
     beforeEach(() => {
         requestSent = false;
@@ -41,7 +42,23 @@ describe('RequestAuthService', () => {
                         status: 400,
                     });
                 }
-                return {
+                return jwt;
+            }
+        });
+
+        container.bind(FrameworkEnv).toSelf().inSingletonScope();
+        authService = container.get(AutomationCloudAuthService);
+        authService.clientRequest.config.fetch = fetchMock;
+    });
+
+    afterEach(() => {
+       jwt = {};
+    });
+
+    context('new auth header exists', () => {
+        describe('happy cases', () => {
+            beforeEach(async () => {
+                jwt = {
                     context: {
                         user_id: 'some-user',
                         organisation_id: 'some-user-org-id',
@@ -51,30 +68,40 @@ describe('RequestAuthService', () => {
                         mechanism: 'client_credentials'
                     },
                 };
-            }
-        });
-        container.bind(FrameworkEnv).toSelf().inSingletonScope();
-        authService = container.get(AutomationCloudAuthService);
-        authService.clientRequest.config.fetch = fetchMock;
-    });
 
-    context('new auth header exists', () => {
-        beforeEach(async () => {
-            const authHeader = container.get(FrameworkEnv).AC_AUTH_HEADER_NAME;
-            const headers = {} as any;
-            headers[authHeader] = 'Bearer jwt-token-here';
-            const ctx: any = { req: { headers } };
-            await authService.check(ctx);
-        });
+                const authHeader = container.get(FrameworkEnv).AC_AUTH_HEADER_NAME;
+                const headers = {} as any;
+                headers[authHeader] = 'Bearer jwt-token-here';
+                const ctx: any = { req: { headers } };
+                await authService.check(ctx);
+            });
 
-        it('gets organisation_id from token', async () => {
-            const organisationId = acContext.getOrganisationId();
-            assert.equal(organisationId, 'some-user-org-id');
+            it('gets organisation_id from token', async () => {
+                const organisationId = acContext.getOrganisationId();
+                assert.equal(organisationId, 'some-user-org-id');
+            });
+
+            it('does not send request to s-api', async () => {
+                assert.equal(requestSent, false);
+            });
         });
 
-        it('does not send request to s-api', async () => {
-            assert.equal(requestSent, false);
+        describe('unhappy cases', () => {
+            it('throws if decoded jwt is not valid', async () => {
+                jwt = { unknown: null };
+                const authHeader = container.get(FrameworkEnv).AC_AUTH_HEADER_NAME;
+                const headers = { [authHeader]: 'Bearer jwt-token-here' };
+                const ctx: any = { req: { headers } };
+                try {
+                    await authService.check(ctx);
+                } catch (err) {
+                    assert.equal(acContext.isAuthenticated(), false);
+                    assert.equal(err.name, 'AuthenticationError');
+                    assert.equal(err.message, 'jwt payload does not conform to schema');
+                }
+            });
         });
+
     });
 
     context('legacy auth header exist & valid', () => {
@@ -113,8 +140,19 @@ describe('RequestAuthService', () => {
             assert.equal(acContext.isAuthenticated(), true);
         });
 
-        // TODO test this
-        it('throws 401 if upstream request fails');
+        it('throws 401 if upstream request fails', async () => {
+            authService = container.get(AutomationCloudAuthService);
+            authService.clientRequest.config.fetch = () => { throw new Error('RequestFailed'); };
+            const ctx: any = { req: { headers: { authorization: 'AUTH' } } };
+            assert.equal(requestSent, false);
+            try {
+                await authService.check(ctx);
+                assert.ok(false, 'unexpected success');
+            } catch(err) {
+                assert.equal(err.status, 401);
+                assert.equal(acContext.isAuthenticated(), false);
+            }
+        });
 
     });
 

@@ -45,9 +45,12 @@ export type AutomationCloudDecodedJwt = {
         organisation_id?: string;
         user_id?: string;
         job_id?: string;
+        client_id?: string;
+        service_user_id?: string;
+        service_user_name?: string;
     },
     authentication: {
-        mechanism: string;
+        mechanism?: string;
         service?: string;
     },
     authorization: unknown;
