@@ -39,19 +39,3 @@ export class AutomationCloudJwtService extends JwtService {
 export type DecodedJwt = {
     [key: string]: any;
 }
-
-export type AutomationCloudDecodedJwt = {
-    context: {
-        organisation_id?: string;
-        user_id?: string;
-        job_id?: string;
-        client_id?: string;
-        service_user_id?: string;
-        service_user_name?: string;
-    },
-    authentication: {
-        mechanism?: string;
-        service?: string;
-    },
-    authorization: unknown;
-}

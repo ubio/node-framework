@@ -1,10 +1,9 @@
 import { Exception } from './exception';
-import { AutomationCloudDecodedJwt } from './services/jwt';
 
 export class AutomationCloudContext {
     protected authenticated: boolean = false;
     protected organisationId: string | null = null;
-    protected jwt: AutomationCloudDecodedJwt | null = null;
+    protected serviceUserAccount: string | null = null;
 
     isAuthenticated() {
         return this.authenticated;
@@ -12,7 +11,11 @@ export class AutomationCloudContext {
 
     checkAuthenticated(): void {
         if (!this.authenticated) {
-            throw AuthenticationError('Authentication is required');
+            throw new Exception({
+                status: 401,
+                name: 'AuthenticationError',
+                message: 'Authentication is required',
+            });
         }
     }
 
@@ -22,37 +25,36 @@ export class AutomationCloudContext {
 
     requireOrganisationId(): string {
         if (!this.organisationId) {
-            throw AuthenticationError('OrganisationId is required');
+            throw new Exception({
+                status: 403,
+                name: 'Forbidden',
+                message: 'OrganisationId is required',
+            });
         }
         return this.organisationId;
     }
 
-    getJwt() {
-        return this.jwt;
+    getServiceUserAccount(): string | null {
+        return this.serviceUserAccount;
     }
 
-    requireJwt(): AutomationCloudDecodedJwt {
-        if (!this.jwt) {
-            throw AuthenticationError('Jwt is required');
+    requireServiceUserAccount(): string {
+        if (!this.serviceUserAccount) {
+            throw new Exception({
+                status: 403,
+                name: 'Forbidden',
+                message: 'ServiceUserAccount is required',
+            });
         }
-        return this.jwt;
+        return this.serviceUserAccount;
     }
 
     set(details: {
         authenticated: boolean;
         organisationId: string | null;
-        jwt: AutomationCloudDecodedJwt | null;
+        serviceUserAccount: string | null;
     }) {
         Object.assign(this, details);
     }
 
-}
-
-function AuthenticationError(message: string, details?: any) {
-    return new Exception({
-        name: 'AuthenticationError',
-        status: 401,
-        message,
-        details,
-    });
 }

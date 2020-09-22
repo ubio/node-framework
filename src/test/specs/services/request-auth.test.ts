@@ -60,12 +60,8 @@ describe('RequestAuthService', () => {
             beforeEach(async () => {
                 jwt = {
                     context: {
-                        user_id: 'some-user',
                         organisation_id: 'some-user-org-id',
-                    },
-                    authorization: {},
-                    authentication: {
-                        mechanism: 'client_credentials'
+                        service_user_id: 'some-service-user-id',
                     },
                 };
 
@@ -76,9 +72,14 @@ describe('RequestAuthService', () => {
                 await authService.check(ctx);
             });
 
-            it('gets organisation_id from token', async () => {
+            it('returns organisationId from acContext', async () => {
                 const organisationId = acContext.getOrganisationId();
                 assert.equal(organisationId, 'some-user-org-id');
+            });
+
+            it('returns serviceAccount from acContext', async () => {
+                const serviceUserId = acContext.getServiceUserAccount();
+                assert.equal(serviceUserId, 'some-service-user-id');
             });
 
             it('does not send request to s-api', async () => {
@@ -87,17 +88,17 @@ describe('RequestAuthService', () => {
         });
 
         describe('unhappy cases', () => {
-            it('throws if decoded jwt is not valid', async () => {
-                jwt = { unknown: null };
+            it('throws when jwt is not valid', async () => {
+                jwt = { context: {} };
                 const authHeader = container.get(FrameworkEnv).AC_AUTH_HEADER_NAME;
-                const headers = { [authHeader]: 'Bearer jwt-token-here' };
+                const headers = { [authHeader]: 'Bearer unknown-jwt-token' };
                 const ctx: any = { req: { headers } };
                 try {
                     await authService.check(ctx);
-                } catch (err) {
+                    assert(false, 'Unexpected success');
+                } catch(err) {
                     assert.equal(acContext.isAuthenticated(), false);
                     assert.equal(err.name, 'AuthenticationError');
-                    assert.equal(err.message, 'jwt payload does not conform to schema');
                 }
             });
         });

@@ -46,8 +46,19 @@ describe('AutomationCloudJwt', () => {
                 assert.equal(err.name, 'JsonWebTokenError');
                 assert.equal(err.message, 'invalid signature');
             }
-
         });
+
+        it('throws when jwt is expired', async () => {
+            const token = jsonwebtoken.sign(payload, secretKey, { algorithm: 'HS256', expiresIn: '-1h' });
+            try {
+                await jwtService.decodeAndVerify(token);
+                assert.ok(true, 'Unexpected success');
+            } catch (err) {
+                assert.equal(err.name, 'TokenExpiredError');
+                assert.equal(err.message, 'jwt expired');
+            }
+        });
+
     });
 });
 
