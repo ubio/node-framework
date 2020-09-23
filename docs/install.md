@@ -4,24 +4,40 @@
 
     ```
     npm init
-    npm install --save @ubio/framework \
+    npm install --save \
+        @ubio/framework \
         inversify \
-        koa @types/koa
-    npm install --save-dev typescript tslint mocha @types/node @ubio/tslint-config
+        koa \
+        @types/koa \
+        dotenv
+    npm install --save-dev \
+        typescript \
+        @types/node \
+        npm-run-all \
+        mocha \
+        eslint \
+        @typescript-eslint/eslint-plugin \
+        @typescript-eslint/parser \
+        eslint-config-recommended
     ```
 
-- Configure TypeScript and TSLint (you may copy [tsconfig.json](../tsconfig.json) and [tslint.json](../tslint.json) from this repo).
+- Configure TypeScript and ESLint (you may copy [tsconfig.json](../tsconfig.json) and [.eslintrc.json](../.eslintrc.json) from this repo).
 
 - Add following common metadata to `package.json`:
 
     ```json
-    "main": "out/main",
+    "main": "out/bin/serve.js",
     "scripts": {
         "start": "node out/bin/serve",
         "dev": "npm run clean && tsc -w",
-        "check": "tslint --project ./tsconfig.json",
-        "test": "NODE_ENV=test mocha --opts ./mocha.opts",
-        "clean": "rm -rf out/",
-        "compile": "npm run clean && tsc"
+        "lint": "eslint --ext=.js,.ts --cache .",
+        "clean": "rm -rf out",
+        "compile": "npm run clean && tsc",
+        "test": "NODE_ENV=test mocha",
+        "docs": "npm run docs:openapi && npm run docs:api",
+        "docs:openapi": "generate-openapi > openapi.json",
+        "docs:api": "generate-docs > API.md",
+        "preversion": "npm run lint && npm run compile && npm run docs && git add openapi.json API.md",
+        "postversion": "git push origin $(git rev-parse --abbrev-ref HEAD) --tags"
     }
     ```
