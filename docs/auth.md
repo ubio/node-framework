@@ -15,7 +15,8 @@ The authentication (`RequestAuthService.check(ctx)`) is checked behind the scene
 @injectable()
 export class MyRouter extends Router {
     constructor(
-        // tip: no need to bind the RequestAuthService
+        @inject(AutomationCloudContext)
+        acContext: AutomationCloudContext
     )
 
     @Middleware()
@@ -40,7 +41,7 @@ export class MyRouter extends Router {
     })
     async helloServiceAccount() {
         // it throws 403 when serviceAccount info is not found in acContext
-        const serviceAccount = this.acContext.requireServiceAccountId();
+        const serviceAccountId = this.acContext.requireServiceAccountId();
         return { message: '👋hello ' + serviceAccountId };
     }
 ```

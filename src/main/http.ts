@@ -106,8 +106,6 @@ export class HttpServer extends Koa {
 
     protected createRequestContainerMiddleware(): Middleware {
         return async (ctx: Koa.Context, next: Koa.Next) => {
-            // Request container injects 'Koa.Context' (by string!)
-            // and overrides Logger with RequestLogger.
             const requestContainer = new Container({ skipBaseClassChecks: true });
             const acContext = new AutomationCloudContext();
             requestContainer.parent = this.rootContainer;

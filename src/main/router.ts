@@ -3,7 +3,6 @@ import * as koa from 'koa';
 import escapeRegexp from 'escape-string-regexp';
 import Ajv from 'ajv';
 import { Logger } from './logger';
-import { AutomationCloudContext } from './ac-context';
 import { Exception } from './exception';
 import { Constructor, ajvErrorToMessage, AnyConstructor, deepClone } from './util';
 
@@ -127,8 +126,6 @@ export class Router {
     logger!: Logger;
     @inject('KoaContext')
     ctx!: koa.Context;
-    @inject(AutomationCloudContext)
-    acContext!: AutomationCloudContext;
 
     params: Params = {};
 
