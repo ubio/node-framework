@@ -56,34 +56,55 @@ describe('RequestAuthService', () => {
     });
 
     context('new auth header exists', () => {
-        describe('happy cases', () => {
-            beforeEach(async () => {
-                jwt = {
-                    context: {
-                        organisation_id: 'some-user-org-id',
-                        service_user_id: 'some-service-user-id',
-                    },
-                };
+        let ctx: any;
 
-                const authHeader = container.get(FrameworkEnv).AC_AUTH_HEADER_NAME;
-                const headers = {} as any;
-                headers[authHeader] = 'Bearer jwt-token-here';
-                const ctx: any = { req: { headers } };
-                await authService.check(ctx);
-            });
+        beforeEach(() => {
+            const authHeader = container.get(FrameworkEnv).AC_AUTH_HEADER_NAME;
+            const headers = { [authHeader]: 'Bearer jwt-token-here' };
+            ctx = { req: { headers } };
+        });
 
-            it('returns organisationId from acContext', async () => {
-                const organisationId = acContext.getOrganisationId();
-                assert.equal(organisationId, 'some-user-org-id');
-            });
-
-            it('returns serviceAccount from acContext', async () => {
-                const serviceUserId = acContext.getServiceUserAccount();
-                assert.equal(serviceUserId, 'some-service-user-id');
-            });
-
+        describe('jwt payload has organisationId and serviceUserId', () => {
             it('does not send request to s-api', async () => {
+                await authService.check(ctx);
                 assert.equal(requestSent, false);
+            });
+
+            it('sets acContext.authenticated = true', async () => {
+                await authService.check(ctx);
+                assert(acContext.isAuthenticated());
+            });
+
+            context('jwt has organisation_id', () => {
+                it('sets acContext.organisationId', async () => {
+                    jwt = {
+                        context: { organisation_id: 'some-user-org-id' },
+                    };
+                    await authService.check(ctx);
+                    assert.equal(requestSent, false);
+                    const organisationId = acContext.getOrganisationId();
+                    assert.equal(organisationId, 'some-user-org-id');
+                });
+            });
+
+            context('x-ubio-organisation-id presents in header', () => {
+                it('sets acContext.organisationId', async () => {
+                    ctx.req.headers['x-ubio-organisation-id'] = 'org-id-from-header';
+                    await authService.check(ctx);
+                    const organisationId = acContext.getOrganisationId();
+                    assert.equal(organisationId, 'org-id-from-header');
+                });
+            });
+
+            context('jwt has service_user_id', () => {
+                it('returns serviceAccount from acContext', async () => {
+                    jwt = {
+                        context: { service_user_id: 'some-service-user-id' },
+                    };
+                    await authService.check(ctx);
+                    const serviceAccountId = acContext.getServiceAccountId();
+                    assert.equal(serviceAccountId, 'some-service-user-id');
+                });
             });
         });
 

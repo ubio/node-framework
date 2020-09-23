@@ -35,12 +35,12 @@ export class MyRouter extends Router {
     }
 
     @Get({
-        path: '/Hello/serviceAccount',
+        path: '/Hello/serviceAccountId',
         summary: 'I need some other info from decoded jwt',
     })
     async helloServiceAccount() {
         // it throws 403 when serviceAccount info is not found in acContext
-        const serviceAccount = this.acContext.requireServiceAccount();
-        return { message: '👋hello ' + serviceAccount };
+        const serviceAccount = this.acContext.requireServiceAccountId();
+        return { message: '👋hello ' + serviceAccountId };
     }
 ```

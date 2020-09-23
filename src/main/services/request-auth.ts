@@ -1,6 +1,5 @@
 import { injectable, inject } from 'inversify';
 import Koa from 'koa';
-import Ajv from 'ajv';
 import { Request } from '@automationcloud/request';
 import { Exception } from '../exception';
 import { JwtService } from './jwt';
@@ -44,7 +43,8 @@ export class AutomationCloudAuthService extends RequestAuthService {
         const authHeaderName = this.env.AC_AUTH_HEADER_NAME;
         const newAuthHeader = ctx.req.headers[authHeaderName] as string;
         if (newAuthHeader) {
-            await this.handleNewAuth(newAuthHeader);
+            const organisationHeader = ctx.req.headers['x-ubio-organisation-id'] as string;
+            await this.handleNewAuth(newAuthHeader, organisationHeader);
             return;
         }
         // Fallback to legacy header forwarding
@@ -54,7 +54,7 @@ export class AutomationCloudAuthService extends RequestAuthService {
         }
     }
 
-    protected async handleNewAuth(newAuthHeader: string) {
+    protected async handleNewAuth(newAuthHeader: string, organisationHeader: string) {
         const [prefix, token] = newAuthHeader.split(' ');
         if (prefix !== 'Bearer' || !token) {
             throw new Exception({
@@ -67,8 +67,8 @@ export class AutomationCloudAuthService extends RequestAuthService {
             const jwt = await this.jwt.decodeAndVerify(token);
             this.acContext.set({
                 authenticated: true,
-                organisationId: jwt.context?.organisation_id ?? null,
-                serviceUserAccount: jwt.context?.service_user_id ?? null,
+                organisationId: jwt.context?.organisation_id ?? organisationHeader ?? null,
+                serviceAccountId: jwt.context?.service_user_id ?? null,
             });
         } catch (error) {
             throw new Exception({
@@ -105,7 +105,7 @@ export class AutomationCloudAuthService extends RequestAuthService {
         this.acContext.set({
             authenticated: true,
             organisationId: null,
-            serviceUserAccount: null,
+            serviceAccountId: null,
         });
     }
 }

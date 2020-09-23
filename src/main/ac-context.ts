@@ -3,7 +3,7 @@ import { Exception } from './exception';
 export class AutomationCloudContext {
     protected authenticated: boolean = false;
     protected organisationId: string | null = null;
-    protected serviceUserAccount: string | null = null;
+    protected serviceAccountId: string | null = null;
 
     isAuthenticated() {
         return this.authenticated;
@@ -34,25 +34,25 @@ export class AutomationCloudContext {
         return this.organisationId;
     }
 
-    getServiceUserAccount(): string | null {
-        return this.serviceUserAccount;
+    getServiceAccountId(): string | null {
+        return this.serviceAccountId;
     }
 
-    requireServiceUserAccount(): string {
-        if (!this.serviceUserAccount) {
+    requireServiceAccountId(): string {
+        if (!this.serviceAccountId) {
             throw new Exception({
                 status: 403,
                 name: 'Forbidden',
-                message: 'ServiceUserAccount is required',
+                message: 'ServiceAccountId is required',
             });
         }
-        return this.serviceUserAccount;
+        return this.serviceAccountId;
     }
 
     set(details: {
         authenticated: boolean;
         organisationId: string | null;
-        serviceUserAccount: string | null;
+        serviceAccountId: string | null;
     }) {
         Object.assign(this, details);
     }
