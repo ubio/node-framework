@@ -1,28 +1,13 @@
 # Auth service
 
-You can use `AutomationCloudAuthService` to authenticate requests made to automation cloud, It will try to parse the header injected by Gateway, then try to forward the auth header to s-api if the header is not present(for backward compatibility).
-If you were using `ForwardRequestHeaderAuthService`, use `AutomationCloudAuthService` instead (as described here.)
+You can use `AutomationCloudAuthService` to authenticate requests made to automation cloud, It will decode anf verify the auth header injected by Gateway - header name is configured as `process.env.AC_AUTH_HEADER_NAME`) if presented, or it will forward the auth header(`authorization`) to s-api if not presented(for backward compatibility). if none of them is provided, it will not check any auth. for this reason, it is highly recommended for you to add additional `this.acContext.checkAuthenticated()` from your router's middleware.
 
+`AutomationCloudAuthService` is bound to base Application so you won't need to bind it to your application.
 
-## Example
-```ts
-// src/main/routes/my-router.ts
-import {
-    Application,
-    AuthService,
-    AutomationCloudAuthService,
-} from '@ubio/framework';
+> `AuthService` and `ForwardRequestAuthService` are deprecated. You'd want to unbind them to migrate to the new auth service.
 
-export class App extends Application {
+The authentication (`RequestAuthService.check(ctx)`) is checked behind the scene in the middleware defined in [HttpServer](../src/main/http.ts). To confirm and use the state of authentication, you can check the Router property `acContext`. For example, if you want your custom middleware to check the authenticated request only, you can call `await this.acContext.checkAuthenticated()` so that non-authenticated request will be rejected with 401 error. If you'd like your endpoint to accepts a requests contains organisation information, you can call `this.acContext.requireOrganisationId()` this will return organisationId, and throws when organisationId is not parsed from auth payload.
 
-    constructor() {
-        super();
-        this.container.bind(AuthService).to(AutomationCloudAuthService);
-        ...
-    }
-```
-
-It is usually used as a middleware, for example:
 
 ```ts
 // src/main/routes/my-router.ts
@@ -30,15 +15,33 @@ It is usually used as a middleware, for example:
 @injectable()
 export class MyRouter extends Router {
     constructor(
-        @inject(AuthService)
-        protected authService: AuthService
+        @inject(AutomationCloudContext)
+        acContext: AutomationCloudContext
     )
 
     @Middleware()
-    async authorizeUser() {
-        await this.authService.authorize(this.ctx);
-        // to get orgId, use this.authService.getOrganisationId;
+    async authorise() {
+        // throws 401 when not authenticated
+        await this.acContext.checkAuthenticated();
     }
 
+    @Get({
+        path: '/Hello/organisationId',
+        summary: 'I need organisationId from the user',
+    })
+    async helloOrg() {
+        // it throws 403 when organisationId not found from acContext
+        const organisationId = this.acContext.requireOrganisationId();
+        return { message: '👋hello ' + organisationId };
+    }
+
+    @Get({
+        path: '/Hello/serviceAccountId',
+        summary: 'I need some other info from decoded jwt',
+    })
+    async helloServiceAccount() {
+        // it throws 403 when serviceAccount info is not found in acContext
+        const serviceAccountId = this.acContext.requireServiceAccountId();
+        return { message: '👋hello ' + serviceAccountId };
+    }
 ```
-Keep in mind that you need to provide `AC_JWKS_URL`  in your application if you are aiming to use Ubio's AutomationCloud Auth Service (infrastructure).

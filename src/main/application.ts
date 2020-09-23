@@ -6,7 +6,12 @@ import { Router } from './router';
 import { MetricsRegistry } from './metrics';
 import { getGlobalMetrics } from './metrics/global';
 import { FrameworkEnv } from './env';
-import { Jwt, AutomationCloudJwt } from './jwt';
+import {
+    JwtService,
+    AutomationCloudJwtService,
+    AutomationCloudAuthService,
+    RequestAuthService
+} from './services';
 
 /**
  * Application provides an IoC container where all modules should be registered
@@ -34,7 +39,8 @@ export class Application {
         this.container.bind(Router).to(MetricsRouter);
         this.container.bind(MetricsRegistry).toConstantValue(getGlobalMetrics());
         this.container.bind(FrameworkEnv).toSelf().inSingletonScope();
-        this.container.bind(Jwt).to(AutomationCloudJwt).inSingletonScope();
+        this.container.bind(JwtService).to(AutomationCloudJwtService).inSingletonScope();
+        this.container.bind(RequestAuthService).to(AutomationCloudAuthService);
     }
 
     get logger(): Logger {

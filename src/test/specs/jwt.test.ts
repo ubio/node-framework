@@ -3,13 +3,12 @@ import jsonwebtoken from 'jsonwebtoken';
 import crypto from 'crypto';
 import uuid from 'uuid';
 
-import { AutomationCloudJwt } from '../../main/jwt';
 import { FrameworkEnv } from '../../main/env';
-import { ConsoleLogger } from '../../main';
+import { ConsoleLogger, AutomationCloudJwtService } from '../../main';
 
 describe('AutomationCloudJwt', () => {
     describe('decodeAndVerify', () => {
-        let jwtService: AutomationCloudJwt;
+        let jwtService: AutomationCloudJwtService;
         let secretKey: string;
         const payload = {
             context: {
@@ -24,9 +23,9 @@ describe('AutomationCloudJwt', () => {
 
         beforeEach(async () => {
             const env = new FrameworkEnv();
-            jwtService = new AutomationCloudJwt(env, new ConsoleLogger());
+            jwtService = new AutomationCloudJwtService(env, new ConsoleLogger());
             secretKey = getSecretKey();
-            jwtService.jwksClient.getSigningKey = async () => secretKey;
+            (jwtService as any).jwksClient.getSigningKey = async () => secretKey;
         });
 
         it('decodes data with given token', async () => {
@@ -47,8 +46,19 @@ describe('AutomationCloudJwt', () => {
                 assert.equal(err.name, 'JsonWebTokenError');
                 assert.equal(err.message, 'invalid signature');
             }
-
         });
+
+        it('throws when jwt is expired', async () => {
+            const token = jsonwebtoken.sign(payload, secretKey, { algorithm: 'HS256', expiresIn: '-1h' });
+            try {
+                await jwtService.decodeAndVerify(token);
+                assert.ok(true, 'Unexpected success');
+            } catch (err) {
+                assert.equal(err.name, 'TokenExpiredError');
+                assert.equal(err.message, 'jwt expired');
+            }
+        });
+
     });
 });
 
