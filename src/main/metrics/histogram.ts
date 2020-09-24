@@ -1,4 +1,4 @@
-import { MetricLabels, createLabelsKey } from './util';
+import { MetricLabels, createMetricLabelsKey } from './util';
 import { Metric } from './metric';
 
 const DEFAULT_BUCKETS = [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10];
@@ -21,7 +21,7 @@ export class HistogramMetric extends Metric {
     }
 
     add(value: number, labels: MetricLabels = {}, timestamp: number = Date.now()) {
-        const key = createLabelsKey(labels);
+        const key = createMetricLabelsKey(labels);
         const datum = this.data.get(key);
         if (datum) {
             datum.timestamp = timestamp;
