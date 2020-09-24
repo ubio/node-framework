@@ -1,4 +1,4 @@
-import { MetricLabels, MetricDatum, createLabelsKey } from './util';
+import { MetricLabels, MetricDatum, createMetricLabelsKey } from './util';
 import { Metric } from './metric';
 
 export class CounterMetric extends Metric {
@@ -9,11 +9,11 @@ export class CounterMetric extends Metric {
     }
 
     get(labels: MetricLabels = {}) {
-        return this.data.get(createLabelsKey(labels));
+        return this.data.get(createMetricLabelsKey(labels));
     }
 
     incr(value: number = 1, labels: MetricLabels = {}, timestamp?: number) {
-        const key = createLabelsKey(labels);
+        const key = createMetricLabelsKey(labels);
         const datum = this.data.get(key);
         if (datum) {
             datum.value += value;

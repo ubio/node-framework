@@ -8,6 +8,6 @@ export interface MetricDatum {
     value: number;
 }
 
-export function createLabelsKey(labels: MetricLabels) {
+export function createMetricLabelsKey(labels: MetricLabels) {
     return Object.keys(labels).sort().map(k => `${k}="${labels[k]}"`).join(',');
 }

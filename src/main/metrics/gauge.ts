@@ -1,4 +1,4 @@
-import { MetricLabels, MetricDatum, createLabelsKey } from './util';
+import { MetricLabels, MetricDatum, createMetricLabelsKey } from './util';
 import { Metric } from './metric';
 
 export class GaugeMetric extends Metric {
@@ -19,11 +19,11 @@ export class GaugeMetric extends Metric {
     }
 
     get(labels: MetricLabels = {}) {
-        return this.data.get(createLabelsKey(labels));
+        return this.data.get(createMetricLabelsKey(labels));
     }
 
     set(value: number, labels: MetricLabels = {}, timestamp: number = Date.now()) {
-        const key = createLabelsKey(labels);
+        const key = createMetricLabelsKey(labels);
         const datum = this.data.get(key);
         if (datum) {
             datum.value = value;

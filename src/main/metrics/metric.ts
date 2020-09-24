@@ -1,4 +1,4 @@
-import { MetricLabels, createLabelsKey } from './util';
+import { MetricLabels, createMetricLabelsKey } from './util';
 
 export abstract class Metric {
 
@@ -13,7 +13,7 @@ export abstract class Metric {
     protected abstract generateReportLines(): Iterable<string>;
 
     getMetricLineName(labels: MetricLabels, suffix: string = '') {
-        const fields = createLabelsKey(labels);
+        const fields = createMetricLabelsKey(labels);
         return fields ? `${this.name}${suffix}{${fields}}` : this.name;
     }
 
