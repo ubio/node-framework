@@ -1,4 +1,4 @@
 declare module 'theredoc' {
-    function theredoc(str: TemplateStringsArray): string
+    function theredoc(str: TemplateStringsArray, ...args: unknown[]): string;
     export = theredoc;
 }
