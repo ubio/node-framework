@@ -12,6 +12,7 @@ import {
     AutomationCloudAuthService,
     RequestAuthService
 } from './services';
+import { CustomMiddleware, AuthMiddleware } from './custom-middleware';
 
 /**
  * Application provides an IoC container where all modules should be registered
@@ -41,6 +42,7 @@ export class Application {
         this.container.bind(FrameworkEnv).toSelf().inSingletonScope();
         this.container.bind(JwtService).to(AutomationCloudJwtService).inSingletonScope();
         this.container.bind(RequestAuthService).to(AutomationCloudAuthService);
+        this.container.bind(CustomMiddleware).to(AuthMiddleware);
     }
 
     get logger(): Logger {
