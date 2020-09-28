@@ -21,7 +21,7 @@ export class AutomationCloudAuthService extends RequestAuthService {
     clientRequest: Request;
     cacheTtl: number = 60000;
     // legacy forward header auth, deprecated
-    authorizedCache: Map<string, number> = new Map();
+    static authorizedCache: Map<string, { token: string, authorisedAt: number }> = new Map();
 
     constructor(
         @inject(JwtService)
@@ -32,7 +32,7 @@ export class AutomationCloudAuthService extends RequestAuthService {
         protected acContext: AutomationCloudContext,
     ) {
         super();
-        const baseUrl = this.env.API_AUTH_URL; // for forwardRequestHeader
+        const baseUrl = this.env.AC_AUTH_MIDDLEWARE_URL;
         this.clientRequest = new Request({
             baseUrl,
             retryAttempts: 3,
@@ -40,30 +40,37 @@ export class AutomationCloudAuthService extends RequestAuthService {
     }
 
     async check(ctx: Koa.Context) {
-        const authHeaderName = this.env.AC_AUTH_HEADER_NAME;
-        const newAuthHeader = ctx.req.headers[authHeaderName] as string;
-        if (newAuthHeader) {
+        const token = await this.getTokenFromHeader(ctx.req.headers as any);
+        if (token) {
             const organisationHeader = ctx.req.headers['x-ubio-organisation-id'] as string;
-            await this.handleNewAuth(newAuthHeader, organisationHeader);
-            return;
-        }
-        // Fallback to legacy header forwarding
-        const legacyAuthHeader = ctx.req.headers['authorization'];
-        if (legacyAuthHeader) {
-            await this.handleLegacyAuth(legacyAuthHeader);
+            await this.verifyAuth(token, organisationHeader);
         }
     }
 
-    protected async handleNewAuth(newAuthHeader: string, organisationHeader: string) {
-        const [prefix, token] = newAuthHeader.split(' ');
-        if (prefix !== 'Bearer' || !token) {
-            throw new Exception({
-                name: 'AuthenticationError',
-                message: `Incorrect authorization header (prefix=${prefix}, tokenExists=${!!token})`,
-                status: 401
-            });
+    protected async getTokenFromHeader(headers: { [name: string]: string | undefined }) {
+        const authHeaderName = this.env.AC_AUTH_HEADER_NAME;
+        const newAuthHeader = headers[authHeaderName];
+        if (newAuthHeader) {
+            const [prefix, token] = newAuthHeader.split(' ');
+            if (prefix !== 'Bearer' || !token) {
+                throw new Exception({
+                    name: 'AuthenticationError',
+                    message: `Incorrect authorization header (prefix=${prefix}, tokenExists=${!!token})`,
+                    status: 401
+                });
+            }
+            return token;
         }
+
+        const legacyHeader = headers['authorization'];
+        if (legacyHeader) {
+            return this.handleLegacyAuth(legacyHeader);
+        }
+    }
+
+    protected async verifyAuth(token: string, organisationHeader: string) {
         try {
+            // TODO: add cache
             const jwt = await this.jwt.decodeAndVerify(token);
             this.acContext.set({
                 authenticated: true,
@@ -80,18 +87,22 @@ export class AutomationCloudAuthService extends RequestAuthService {
         }
     }
 
-    protected async handleLegacyAuth(legacyAuthHeader: string) {
-        const authorizedAt = this.authorizedCache.get(legacyAuthHeader) || 0;
-        const invalid = authorizedAt + this.cacheTtl < Date.now();
-        if (invalid) {
+    protected async handleLegacyAuth(legacyAuthHeader: string): Promise<string> {
+        const { token: cachedToken, authorisedAt = 0 } = AutomationCloudAuthService.authorizedCache.get(legacyAuthHeader) || {};
+        const invalid = authorisedAt + this.cacheTtl < Date.now();
+        if (invalid || cachedToken == null) {
             const endpoint = this.env.API_AUTH_ENDPOINT;
             try {
-                await this.clientRequest.get(endpoint, {
+                const { token } = await this.clientRequest.get(endpoint, {
                     headers: {
                         authorization: legacyAuthHeader,
                     }
                 });
-                this.authorizedCache.set(legacyAuthHeader, Date.now());
+                AutomationCloudAuthService.authorizedCache.set(legacyAuthHeader, {
+                    token,
+                    authorisedAt: Date.now(),
+                });
+                return token;
             } catch (error) {
                 throw new Exception({
                     name: 'AuthenticationError',
@@ -101,11 +112,7 @@ export class AutomationCloudAuthService extends RequestAuthService {
                 });
             }
         }
-        // Auth successful
-        this.acContext.set({
-            authenticated: true,
-            organisationId: null,
-            serviceAccountId: null,
-        });
+
+        return cachedToken;
     }
 }
