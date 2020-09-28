@@ -32,9 +32,7 @@ export class AutomationCloudAuthService extends RequestAuthService {
         protected acContext: AutomationCloudContext,
     ) {
         super();
-        const baseUrl = this.env.AC_AUTH_VERIFY_URL;
         this.clientRequest = new Request({
-            baseUrl,
             retryAttempts: 3,
         });
     }
@@ -91,7 +89,8 @@ export class AutomationCloudAuthService extends RequestAuthService {
         const invalid = cached.authorisedAt + this.cacheTtl < Date.now();
         if (invalid) {
             try {
-                const { token } = await this.clientRequest.get('', {
+                const url = this.env.AC_AUTH_VERIFY_URL;
+                const { token } = await this.clientRequest.get(url, {
                     headers: {
                         authorization: legacyAuthHeader,
                     }
