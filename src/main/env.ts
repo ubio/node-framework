@@ -49,10 +49,7 @@ export class FrameworkEnv {
     API_JOB_TIMELINE_KEY = readString('API_JOB_TIMELINE_KEY', ''); // to avoid assert error when not used
     // temporary config for new auth compatibility
     AC_AUTH_HEADER_NAME = readString('AC_AUTH_HEADER_NAME', 'x-ubio-auth');
-    AC_AUTH_MIDDLEWARE_URL = readString('AC_AUTH_MIDDLEWARE_URL', 'http://auth-middleware.authz.svc.cluster.local:8080');
+    AC_AUTH_VERIFY_URL = readString('AC_AUTH_MIDDLEWARE_URL', 'http://auth-middleware.authz.svc.cluster.local:8080/verify');
     AC_JWKS_URL = readString('AC_JWKS_URL', 'http://hydra.authz.svc.cluster.local:4445/keys/internal');
     AC_SIGNING_KEY_ALGORITHM = readString('SIGNING_KEY_ALGORITHM', 'HS256');
-    // deprecated, remove after migrating to new auth
-    API_AUTH_URL = readString('API_AUTH_URL', 'http://api-router-internal');
-    API_AUTH_ENDPOINT = readString('API_AUTH_ENDPOINT', '/verify');
 }

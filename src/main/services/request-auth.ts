@@ -32,7 +32,7 @@ export class AutomationCloudAuthService extends RequestAuthService {
         protected acContext: AutomationCloudContext,
     ) {
         super();
-        const baseUrl = this.env.AC_AUTH_MIDDLEWARE_URL;
+        const baseUrl = this.env.AC_AUTH_VERIFY_URL;
         this.clientRequest = new Request({
             baseUrl,
             retryAttempts: 3,
@@ -40,14 +40,14 @@ export class AutomationCloudAuthService extends RequestAuthService {
     }
 
     async check(ctx: Koa.Context) {
-        const token = await this.getTokenFromHeader(ctx.req.headers as any);
+        const token = await this.getToken(ctx.req.headers as any);
         if (token) {
             const organisationHeader = ctx.req.headers['x-ubio-organisation-id'] as string;
-            await this.verifyAuth(token, organisationHeader);
+            await this.verify(token, organisationHeader);
         }
     }
 
-    protected async getTokenFromHeader(headers: { [name: string]: string | undefined }) {
+    protected async getToken(headers: { [name: string]: string | undefined }) {
         const authHeaderName = this.env.AC_AUTH_HEADER_NAME;
         const newAuthHeader = headers[authHeaderName];
         if (newAuthHeader) {
@@ -64,13 +64,12 @@ export class AutomationCloudAuthService extends RequestAuthService {
 
         const legacyHeader = headers['authorization'];
         if (legacyHeader) {
-            return this.handleLegacyAuth(legacyHeader);
+            return this.getTokenFromLegacyAuth(legacyHeader);
         }
     }
 
-    protected async verifyAuth(token: string, organisationHeader: string) {
+    protected async verify(token: string, organisationHeader: string) {
         try {
-            // TODO: add cache
             const jwt = await this.jwt.decodeAndVerify(token);
             this.acContext.set({
                 authenticated: true,
@@ -87,13 +86,12 @@ export class AutomationCloudAuthService extends RequestAuthService {
         }
     }
 
-    protected async handleLegacyAuth(legacyAuthHeader: string): Promise<string> {
-        const { token: cachedToken, authorisedAt = 0 } = AutomationCloudAuthService.authorizedCache.get(legacyAuthHeader) || {};
-        const invalid = authorisedAt + this.cacheTtl < Date.now();
-        if (invalid || cachedToken == null) {
-            const endpoint = this.env.API_AUTH_ENDPOINT;
+    protected async getTokenFromLegacyAuth(legacyAuthHeader: string): Promise<string> {
+        const cached = AutomationCloudAuthService.authorizedCache.get(legacyAuthHeader) || { authorisedAt: 0, token: '' };
+        const invalid = cached.authorisedAt + this.cacheTtl < Date.now();
+        if (invalid) {
             try {
-                const { token } = await this.clientRequest.get(endpoint, {
+                const { token } = await this.clientRequest.get('', {
                     headers: {
                         authorization: legacyAuthHeader,
                     }
@@ -112,7 +110,6 @@ export class AutomationCloudAuthService extends RequestAuthService {
                 });
             }
         }
-
-        return cachedToken;
+        return cached.token;
     }
 }
