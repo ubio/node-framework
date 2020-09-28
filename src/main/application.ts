@@ -9,10 +9,9 @@ import { FrameworkEnv } from './env';
 import {
     JwtService,
     AutomationCloudJwtService,
-    AutomationCloudAuthService,
-    RequestAuthService
+    AuthMiddleware,
 } from './services';
-import { CustomMiddleware, AuthMiddleware } from './custom-middleware';
+import { CustomMiddleware } from './custom-middleware';
 
 /**
  * Application provides an IoC container where all modules should be registered
@@ -41,8 +40,8 @@ export class Application {
         this.container.bind(MetricsRegistry).toConstantValue(getGlobalMetrics());
         this.container.bind(FrameworkEnv).toSelf().inSingletonScope();
         this.container.bind(JwtService).to(AutomationCloudJwtService).inSingletonScope();
-        this.container.bind(RequestAuthService).to(AutomationCloudAuthService);
-        this.container.bind(CustomMiddleware).to(AuthMiddleware);
+        this.container.bind(AuthMiddleware).toSelf();
+        this.container.bind(CustomMiddleware).toService(AuthMiddleware);
     }
 
     get logger(): Logger {

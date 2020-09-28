@@ -5,19 +5,15 @@ import { Exception } from '../exception';
 import { JwtService } from './jwt';
 import { FrameworkEnv } from '../env';
 import { AutomationCloudContext } from '../ac-context';
+import { CustomMiddleware } from '../custom-middleware';
 
 @injectable()
-export abstract class RequestAuthService {
-    abstract async check(ctx: Koa.Context): Promise<void>;
+export abstract class AuthMiddleware extends CustomMiddleware {
+    async abstract apply(ctx: Koa.Context): Promise<void>
 }
 
 @injectable()
-export class RequestAuthServiceMock extends RequestAuthService {
-    async check(_ctx: Koa.Context) {}
-}
-
-@injectable()
-export class AutomationCloudAuthService extends RequestAuthService {
+export class AutomationCloudAuthMiddleware extends CustomMiddleware {
     clientRequest: Request;
     cacheTtl: number = 60000;
     // legacy forward header auth, deprecated
@@ -37,7 +33,7 @@ export class AutomationCloudAuthService extends RequestAuthService {
         });
     }
 
-    async check(ctx: Koa.Context) {
+    async apply(ctx: Koa.Context) {
         const token = await this.getToken(ctx.req.headers as any);
         if (token) {
             const organisationHeader = ctx.req.headers['x-ubio-organisation-id'] as string;
@@ -85,7 +81,7 @@ export class AutomationCloudAuthService extends RequestAuthService {
     }
 
     protected async getTokenFromLegacyAuth(legacyAuthHeader: string): Promise<string> {
-        const cached = AutomationCloudAuthService.authorizedCache.get(legacyAuthHeader) || { authorisedAt: 0, token: '' };
+        const cached = AuthMiddleware.authorizedCache.get(legacyAuthHeader) || { authorisedAt: 0, token: '' };
         const invalid = cached.authorisedAt + this.cacheTtl < Date.now();
         if (invalid) {
             try {
@@ -95,7 +91,7 @@ export class AutomationCloudAuthService extends RequestAuthService {
                         authorization: legacyAuthHeader,
                     }
                 });
-                AutomationCloudAuthService.authorizedCache.set(legacyAuthHeader, {
+                AuthMiddleware.authorizedCache.set(legacyAuthHeader, {
                     token,
                     authorisedAt: Date.now(),
                 });

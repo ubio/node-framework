@@ -4,19 +4,19 @@ import assert from 'assert';
 import {
     Logger,
     ConsoleLogger,
-    AutomationCloudAuthService,
     JwtService,
     Exception,
-    RequestAuthService,
     AutomationCloudContext,
+    AuthMiddleware,
+    CustomMiddleware,
 } from '../../../main';
 import { FrameworkEnv } from '../../../main/env';
 
-describe('RequestAuthService', () => {
+describe('AuthMiddleware', () => {
     let container: Container;
     let fetchMock: request.FetchMock;
     let acContext: AutomationCloudContext;
-    let authService: AutomationCloudAuthService;
+    let authService: AuthMiddleware;
     let jwt: any = {};
 
     beforeEach(() => {
@@ -25,8 +25,8 @@ describe('RequestAuthService', () => {
         container = new Container({ skipBaseClassChecks: true });
         container.bind(AutomationCloudContext).toConstantValue(acContext);
         container.bind(Logger).to(ConsoleLogger);
-        container.bind(AutomationCloudAuthService).toSelf();
-        container.bind(RequestAuthService).toService(AutomationCloudAuthService);
+        container.bind(AuthMiddleware).toSelf();
+        container.bind(CustomMiddleware).toService(AuthMiddleware);
         container.bind(JwtService).toConstantValue({
             async decodeAndVerify(token: string) {
                 if (token !== 'jwt-token-here') {
@@ -40,13 +40,13 @@ describe('RequestAuthService', () => {
         });
 
         container.bind(FrameworkEnv).toSelf().inSingletonScope();
-        authService = container.get(AutomationCloudAuthService);
+        authService = container.get(AuthMiddleware);
         authService.clientRequest.config.fetch = fetchMock;
     });
 
     afterEach(() => {
         jwt = {};
-        AutomationCloudAuthService.authorizedCache = new Map();
+        AuthMiddleware.authorizedCache = new Map();
     });
 
     context('new auth header exists', () => {
@@ -60,12 +60,12 @@ describe('RequestAuthService', () => {
 
         describe('jwt payload has organisationId and serviceUserId', () => {
             it('does not send request to s-api', async () => {
-                await authService.check(ctx);
+                await authService.apply(ctx);
                 assert.equal(fetchMock.spy.called, false);
             });
 
             it('sets acContext.authenticated = true', async () => {
-                await authService.check(ctx);
+                await authService.apply(ctx);
                 assert(acContext.isAuthenticated());
             });
 
@@ -74,7 +74,7 @@ describe('RequestAuthService', () => {
                     jwt = {
                         context: { organisation_id: 'some-user-org-id' },
                     };
-                    await authService.check(ctx);
+                    await authService.apply(ctx);
                     assert.equal(fetchMock.spy.called, false);
                     const organisationId = acContext.getOrganisationId();
                     assert.equal(organisationId, 'some-user-org-id');
@@ -84,7 +84,7 @@ describe('RequestAuthService', () => {
             context('x-ubio-organisation-id presents in header', () => {
                 it('sets acContext.organisationId', async () => {
                     ctx.req.headers['x-ubio-organisation-id'] = 'org-id-from-header';
-                    await authService.check(ctx);
+                    await authService.apply(ctx);
                     const organisationId = acContext.getOrganisationId();
                     assert.equal(organisationId, 'org-id-from-header');
                 });
@@ -95,7 +95,7 @@ describe('RequestAuthService', () => {
                     jwt = {
                         context: { service_user_id: 'some-service-user-id' },
                     };
-                    await authService.check(ctx);
+                    await authService.apply(ctx);
                     const serviceAccountId = acContext.getServiceAccountId();
                     assert.equal(serviceAccountId, 'some-service-user-id');
                 });
@@ -109,7 +109,7 @@ describe('RequestAuthService', () => {
                 const headers = { [authHeader]: 'Bearer unknown-jwt-token' };
                 const ctx: any = { req: { headers } };
                 try {
-                    await authService.check(ctx);
+                    await authService.apply(ctx);
                     assert(false, 'Unexpected success');
                 } catch(err) {
                     assert.equal(acContext.isAuthenticated(), false);
@@ -125,7 +125,7 @@ describe('RequestAuthService', () => {
         it('sends a request with Authorization header', async () => {
             const ctx: any = { req: { headers: { authorization: 'AUTH' } } };
             assert.equal(fetchMock.spy.called, false);
-            await authService.check(ctx);
+            await authService.apply(ctx);
             assert.equal(fetchMock.spy.called, true);
             const requestHeaders = fetchMock.spy.params[0]?.fetchOptions.headers;
             assert.equal(requestHeaders?.authorization, 'AUTH');
@@ -137,10 +137,10 @@ describe('RequestAuthService', () => {
             const margin = 1000;
 
             authService.cacheTtl = ttl;
-            AutomationCloudAuthService.authorizedCache.set('AUTH', { token: 'jwt-token-here', authorisedAt: Date.now() - ttl + margin });
+            AuthMiddleware.authorizedCache.set('AUTH', { token: 'jwt-token-here', authorisedAt: Date.now() - ttl + margin });
             const ctx: any = { req: { headers: { authorization: 'AUTH' } } };
             assert.equal(fetchMock.spy.called, false);
-            await authService.check(ctx);
+            await authService.apply(ctx);
             assert.equal(fetchMock.spy.called, false);
             assert.equal(acContext.isAuthenticated(), true);
         });
@@ -149,10 +149,10 @@ describe('RequestAuthService', () => {
             const ttl = 60000;
             const margin = 1000;
             authService.cacheTtl = ttl;
-            AutomationCloudAuthService.authorizedCache.set('AUTH', { token: 'jwt-token-here', authorisedAt: Date.now() - ttl - margin });
+            AuthMiddleware.authorizedCache.set('AUTH', { token: 'jwt-token-here', authorisedAt: Date.now() - ttl - margin });
             const ctx: any = { req: { headers: { authorization: 'AUTH' } } };
             assert.equal(fetchMock.spy.called, false);
-            await authService.check(ctx);
+            await authService.apply(ctx);
             assert.equal(fetchMock.spy.called, true);
             assert.equal(acContext.isAuthenticated(), true);
         });
@@ -161,7 +161,7 @@ describe('RequestAuthService', () => {
             authService.clientRequest.config.fetch = request.fetchMock({ status: 400 }, {}, new Error('RequestFailed'));
             const ctx: any = { req: { headers: { authorization: 'AUTH' } } };
             try {
-                await authService.check(ctx);
+                await authService.apply(ctx);
                 assert.ok(false, 'unexpected success');
             } catch(err) {
                 assert.equal(err.status, 401);
@@ -175,7 +175,7 @@ describe('RequestAuthService', () => {
                 jwt = {
                     context: { organisation_id: 'some-user-org-id' },
                 };
-                await authService.check(ctx);
+                await authService.apply(ctx);
                 assert.equal(fetchMock.spy.called, true);
                 const organisationId = acContext.getOrganisationId();
                 assert.equal(organisationId, 'some-user-org-id');
@@ -186,7 +186,7 @@ describe('RequestAuthService', () => {
             const ctx: any = { req: { headers: { authorization: 'AUTH' } } };
             it('sets acContext.organisationId', async () => {
                 ctx.req.headers['x-ubio-organisation-id'] = 'org-id-from-header';
-                await authService.check(ctx);
+                await authService.apply(ctx);
                 const organisationId = acContext.getOrganisationId();
                 assert.equal(organisationId, 'org-id-from-header');
             });
@@ -196,7 +196,7 @@ describe('RequestAuthService', () => {
                 jwt = {
                     context: { organisation_id: 'org-id-from-jwt' },
                 };
-                await authService.check(ctx);
+                await authService.apply(ctx);
                 const organisationId = acContext.getOrganisationId();
                 assert.equal(organisationId, 'org-id-from-jwt');
             });
@@ -208,7 +208,7 @@ describe('RequestAuthService', () => {
                 jwt = {
                     context: { service_user_id: 'some-service-user-id' },
                 };
-                await authService.check(ctx);
+                await authService.apply(ctx);
                 const serviceAccountId = acContext.getServiceAccountId();
                 assert.equal(serviceAccountId, 'some-service-user-id');
             });
@@ -219,7 +219,7 @@ describe('RequestAuthService', () => {
 
         it('leaves acContext unauthenticated', async () => {
             const ctx: any = { req: { headers: {} } };
-            await authService.check(ctx);
+            await authService.apply(ctx);
             assert.equal(acContext.isAuthenticated(), false);
         });
 

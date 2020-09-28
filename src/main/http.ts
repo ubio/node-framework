@@ -13,7 +13,6 @@ import cors from '@koa/cors';
 import * as middleware from './middleware';
 import { FrameworkEnv } from './env';
 import { AutomationCloudContext } from './ac-context';
-import { RequestAuthService } from './services/request-auth';
 import { CustomMiddleware } from './custom-middleware';
 
 @injectable()
@@ -62,7 +61,8 @@ export class HttpServer extends Koa {
         this.use(middleware.responseTime);
         this.use(middleware.errorHandler);
         this.use((ctx, next) => {
-            const customMiddleware = this.rootContainer.getAll(CustomMiddleware);
+            const container = ctx.container as Container;
+            const customMiddleware = container.getAll(CustomMiddleware);
             for (const middleware of customMiddleware) {
                 middleware.apply(ctx);
                 return next();
@@ -145,6 +145,5 @@ export class HttpServer extends Koa {
             });
         };
     }
-
 
 }
