@@ -8,12 +8,7 @@ import { AutomationCloudContext } from '../ac-context';
 import { CustomMiddleware } from '../custom-middleware';
 
 @injectable()
-export abstract class AuthMiddleware extends CustomMiddleware {
-    async abstract apply(ctx: Koa.Context): Promise<void>
-}
-
-@injectable()
-export class AutomationCloudAuthMiddleware extends CustomMiddleware {
+export class AuthMiddleware extends CustomMiddleware {
     clientRequest: Request;
     cacheTtl: number = 60000;
     // legacy forward header auth, deprecated
