@@ -15,8 +15,11 @@ import { Logger } from '@ubio/framework';
 
 @injectable()
 export class MyService {
-    @inject(Logger)
-    logger!: Logger;
+
+    constructor(
+        @inject(Logger)
+        protected logger: Logger
+    ) {}
 
     myMethod() {
         this.logger.info('Hello');
@@ -79,47 +82,21 @@ Signletons (for obvious reasons) cannot inject the request scoped modules. As su
 
 > Note: if you desperately need to share state across modules, there's a couple of approaches to consider before trying to "convince" the container to reuse the same instance. Please escalate the issue to team leads, and we will figure out the proper solution together.
 
+## Request Scope
+
+When application is processing HTTP requests, a number of request-scoped components can be bound to Router classes.
+
+Such components include:
+
+- `AcAuth` (Automation Cloud identity and authorisation data)
+- `KoaContext` (bound by string `"KoaContext"` service identifier) — [Koa](https://koajs.org) context object
+- `RequestLogger` (re-bound to `Logger`) which includes request-specific data
+
+Internally request scope is achieved by creating a child container inside Koa middleware and subsequently binding request-only components to it. The request-scoped container is also available in `ctx.container` for further manipulations.
+
+![](scopes.png)
+
 ## FAQ
-
-Q: Should I make every class injectable and inject them instead of passing around as parameters.
-
-A: No. Consider following example, which defines a contract of imaginary request authentication service which is supposed to throw an error if current request does not contain valid authentication data:
-
-```ts
-@injectable()
-export abstract class AuthService {
-    @inject(Logger)
-    logger!: Logger;
-
-    abstract async authenticate(ctx: Context): Promise<void>;
-}
-```
-
-Here `ctx` is already injectable using `'KoaContext'` (string) as part of the framework. So _technically_ it is possible to write it like this:
-
-```ts
-@injectable()
-export abstract class AuthService {
-    @inject(Logger)
-    logger!: Logger;
-    @inject('KoaContext')
-    ctx!: Context;
-
-    abstract async authenticate(): Promise<void>;
-}
-```
-
-Now let's focus only on a single aspect of this module: a contract defined by `authenticate()` method.
-
-```ts
-abstract async authenticate(): Promise<void>;
-```
-
-Does such a contract provide enough data for the potential implementors? What exactly should they authenticate?
-
-Obviously, `ctx` here is _input data_ to the method, as opposed to a _dependency_, and must be included in the contract itself. It is also possible to further refine this contract by changing the signature of `authenticate` method so that it accepts `request: koa.Request` instead of more broad `ctx: koa.Context`.
-
----
 
 Q: How do I make request-bound logger in a singleton (e.g. a database driver)?
 

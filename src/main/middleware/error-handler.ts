@@ -21,9 +21,9 @@ export async function errorHandler(ctx: Context, next: () => Promise<any>) {
         ctx.body = {
             object: 'error',
             name,
-            message: error.message || error.name,
+            message: error.message || '',
             details: error.details,
         };
-        ctx.logger.warn(`Error: ${error.message}`, { error });
+        ctx.logger.warn(`Error: ${error.name} ${error.message}`.trim(), { error });
     }
 }

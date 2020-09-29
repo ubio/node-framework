@@ -1,9 +1,19 @@
 import { Exception } from './exception';
 
-export class AutomationCloudContext {
+export interface AcAuthSpec {
+    authenticated: boolean;
+    organisationId: string | null;
+    serviceAccountId: string | null;
+}
+
+export class AcAuth {
     protected authenticated: boolean = false;
     protected organisationId: string | null = null;
     protected serviceAccountId: string | null = null;
+
+    constructor(spec: Partial<AcAuthSpec> = {}) {
+        Object.assign(this, spec);
+    }
 
     isAuthenticated() {
         return this.authenticated;
@@ -28,7 +38,7 @@ export class AutomationCloudContext {
             throw new Exception({
                 status: 403,
                 name: 'Forbidden',
-                message: 'OrganisationId is required',
+                message: 'organisationId is required',
             });
         }
         return this.organisationId;
@@ -43,18 +53,10 @@ export class AutomationCloudContext {
             throw new Exception({
                 status: 403,
                 name: 'Forbidden',
-                message: 'ServiceAccountId is required',
+                message: 'serviceAccountId is required',
             });
         }
         return this.serviceAccountId;
-    }
-
-    set(details: {
-        authenticated: boolean;
-        organisationId: string | null;
-        serviceAccountId: string | null;
-    }) {
-        Object.assign(this, details);
     }
 
 }

@@ -4,7 +4,7 @@ export * from './router';
 export * from './application';
 export * from './http';
 export * from './services';
-export * from './ac-context';
+export * from './ac-auth';
 export * from './metrics';
 export * from './openapi';
 export * from './doc';
