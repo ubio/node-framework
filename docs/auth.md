@@ -19,7 +19,7 @@ export class MyRouter extends Router {
     @Middleware()
     async authorise() {
         // throws 401 when not authenticated (anonymous)
-        await this.auth.checkAuthenticated();
+        this.auth.checkAuthenticated();
     }
 
     @Get({
