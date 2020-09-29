@@ -12,8 +12,8 @@ import etag from 'koa-etag';
 import cors from '@koa/cors';
 import * as middleware from './middleware';
 import { FrameworkEnv } from './env';
-import { AutomationCloudContext } from './ac-context';
-import { RequestAuthService } from './services/request-auth';
+import { AcAuth } from './ac-auth';
+import { AcAuthProvider } from './services';
 
 @injectable()
 export class HttpServer extends Koa {
@@ -60,7 +60,7 @@ export class HttpServer extends Koa {
         this.use(middleware.requestId);
         this.use(middleware.responseTime);
         this.use(middleware.errorHandler);
-        this.use(this.createAuthMiddleware());
+        this.use(this.createAcAuthMiddleware());
         this.use(this.createRoutingMiddleware());
         return this;
     }
@@ -107,10 +107,8 @@ export class HttpServer extends Koa {
     protected createRequestContainerMiddleware(): Middleware {
         return async (ctx: Koa.Context, next: Koa.Next) => {
             const requestContainer = new Container({ skipBaseClassChecks: true });
-            const acContext = new AutomationCloudContext();
             requestContainer.parent = this.rootContainer;
             requestContainer.bind('KoaContext').toConstantValue(ctx);
-            requestContainer.bind(AutomationCloudContext).toConstantValue(acContext);
             requestContainer.bind(Logger).to(RequestLogger).inSingletonScope();
             ctx.container = requestContainer;
             ctx.logger = requestContainer.get<Logger>(Logger);
@@ -118,10 +116,12 @@ export class HttpServer extends Koa {
         };
     }
 
-    protected createAuthMiddleware(): Middleware {
+    protected createAcAuthMiddleware(): Middleware {
         return async (ctx: Koa.Context, next: Koa.Next) => {
             const container: Container = ctx.container;
-            await container.get(RequestAuthService).check(ctx);
+            const provider = container.get(AcAuthProvider);
+            const acAuth = await provider.provide();
+            container.bind(AcAuth).toConstantValue(acAuth);
             return next();
         };
     }

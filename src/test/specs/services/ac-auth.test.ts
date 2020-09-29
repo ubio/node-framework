@@ -1,0 +1,214 @@
+import { Container } from 'inversify';
+import * as request from '@automationcloud/request';
+import assert from 'assert';
+import {
+    Logger,
+    ConsoleLogger,
+    AcAuthProvider,
+    JwtService,
+    Exception,
+    DefaultAcAuthProvider,
+} from '../../../main';
+import { FrameworkEnv } from '../../../main/env';
+
+describe('RequestAuthService', () => {
+
+    const container = new Container({ skipBaseClassChecks: true });
+    container.bind(Logger).to(ConsoleLogger);
+    container.bind(DefaultAcAuthProvider).toSelf();
+    container.bind(AcAuthProvider).toService(DefaultAcAuthProvider);
+    container.bind('KoaContext').toDynamicValue(() => ({
+        req: { headers }
+    }));
+    container.bind(JwtService).toDynamicValue(() => ({
+        async decodeAndVerify(token: string) {
+            if (token !== 'jwt-token-here') {
+                throw new Exception({
+                    name: 'InvalidJwtToken',
+                    status: 400,
+                });
+            }
+            return jwt;
+        }
+    }));
+    container.bind(FrameworkEnv).toSelf().inSingletonScope();
+
+    let fetchMock: request.FetchMock;
+    let authProvider: DefaultAcAuthProvider;
+    let headers: any = {};
+    let jwt: any = {};
+
+    beforeEach(() => {
+        fetchMock = request.fetchMock({ status: 200 }, { token: 'jwt-token-here' });
+        authProvider = container.get(DefaultAcAuthProvider);
+        authProvider.clientRequest.config.fetch = fetchMock;
+    });
+
+    afterEach(() => {
+        jwt = {};
+        headers = {};
+        DefaultAcAuthProvider.legacyTokensCache = new Map();
+    });
+
+    describe('new auth header exists', () => {
+
+        beforeEach(() => {
+            const authHeader = container.get(FrameworkEnv).AC_AUTH_HEADER_NAME;
+            headers[authHeader] = 'Bearer jwt-token-here';
+        });
+
+        it('does not send request to s-api', async () => {
+            await authProvider.provide();
+            assert.equal(fetchMock.spy.called, false);
+        });
+
+        it('sets authenticated = true', async () => {
+            const auth = await authProvider.provide();
+            assert(auth.isAuthenticated());
+        });
+
+        context('jwt has organisation_id', () => {
+            it('sets auth.organisationId', async () => {
+                jwt.context = { organisation_id: 'some-user-org-id' };
+                const auth = await authProvider.provide();
+                assert.equal(fetchMock.spy.called, false);
+                const organisationId = auth.getOrganisationId();
+                assert.equal(organisationId, 'some-user-org-id');
+            });
+        });
+
+        context('x-ubio-organisation-id presents in header', () => {
+            it('sets auth.organisationId', async () => {
+                headers['x-ubio-organisation-id'] = 'org-id-from-header';
+                const auth = await authProvider.provide();
+                const organisationId = auth.getOrganisationId();
+                assert.equal(organisationId, 'org-id-from-header');
+            });
+        });
+
+        context('jwt has service_user_id', () => {
+            it('returns serviceAccount from auth', async () => {
+                jwt.context = { service_user_id: 'some-service-user-id' };
+                const auth = await authProvider.provide();
+                const serviceAccountId = auth.getServiceAccountId();
+                assert.equal(serviceAccountId, 'some-service-user-id');
+            });
+        });
+
+        it('throws when jwt is not valid', async () => {
+            const authHeader = container.get(FrameworkEnv).AC_AUTH_HEADER_NAME;
+            headers[authHeader] = 'Bearer unknown-jwt-token';
+            try {
+                await authProvider.provide();
+                throw new Error('UnexpectedSuccess');
+            } catch (err) {
+                assert.equal(err.name, 'AuthenticationError');
+            }
+        });
+
+    });
+
+    describe('legacy auth', () => {
+
+        it('sends a request with Authorization header', async () => {
+            headers['authorization'] = 'AUTH';
+            assert.equal(fetchMock.spy.called, false);
+            const auth = await authProvider.provide();
+            assert.equal(fetchMock.spy.called, true);
+            const requestHeaders = fetchMock.spy.params[0]?.fetchOptions.headers;
+            assert.equal(requestHeaders?.authorization, 'AUTH');
+            assert.equal(auth.isAuthenticated(), true);
+        });
+
+        it('does not send request if Authorization is cached', async () => {
+            const ttl = 60000;
+            const margin = 1000;
+            DefaultAcAuthProvider.legacyCacheTtl = ttl;
+            DefaultAcAuthProvider.legacyTokensCache.set('AUTH', {
+                token: 'jwt-token-here',
+                authorisedAt: Date.now() - ttl + margin
+            });
+            headers['authorization'] = 'AUTH';
+            assert.equal(fetchMock.spy.called, false);
+            const auth = await authProvider.provide();
+            assert.equal(fetchMock.spy.called, false);
+            assert.equal(auth.isAuthenticated(), true);
+        });
+
+        it('still sends request if cache expires', async () => {
+            const ttl = 60000;
+            const margin = 1000;
+            DefaultAcAuthProvider.legacyCacheTtl = ttl;
+            DefaultAcAuthProvider.legacyTokensCache.set('AUTH', { token: 'jwt-token-here', authorisedAt: Date.now() - ttl - margin });
+            headers['authorization'] = 'AUTH';
+            assert.equal(fetchMock.spy.called, false);
+            const auth = await authProvider.provide();
+            assert.equal(fetchMock.spy.called, true);
+            assert.equal(auth.isAuthenticated(), true);
+        });
+
+        it('throws 401 if upstream request fails', async () => {
+            authProvider.clientRequest.config.fetch = request.fetchMock({ status: 400 }, {}, new Error('RequestFailed'));
+            headers['authorization'] = 'AUTH';
+            try {
+                await authProvider.provide();
+                throw new Error('UnexpectedSuccess');
+            } catch(err) {
+                assert.equal(err.status, 401);
+            }
+        });
+
+        context('jwt has organisation_id', () => {
+            it('sets auth.organisationId', async () => {
+                headers['authorization'] = 'AUTH';
+                jwt.context = { organisation_id: 'some-user-org-id' };
+                const auth = await authProvider.provide();
+                assert.equal(fetchMock.spy.called, true);
+                const organisationId = auth.getOrganisationId();
+                assert.equal(organisationId, 'some-user-org-id');
+            });
+        });
+
+        context('x-ubio-organisation-id presents in header', () => {
+
+            beforeEach(() => {
+                headers['authorization'] = 'AUTH';
+            });
+
+            it('sets auth.organisationId', async () => {
+                headers['x-ubio-organisation-id'] = 'org-id-from-header';
+                const auth = await authProvider.provide();
+                const organisationId = auth.getOrganisationId();
+                assert.equal(organisationId, 'org-id-from-header');
+            });
+
+            it('sets jwt.context.organisation_id if both present', async () => {
+                headers['x-ubio-organisation-id'] = 'org-id-from-header';
+                jwt.context = { organisation_id: 'org-id-from-jwt' };
+                const auth = await authProvider.provide();
+                const organisationId = auth.getOrganisationId();
+                assert.equal(organisationId, 'org-id-from-jwt');
+            });
+        });
+
+        context('jwt has service_user_id', () => {
+            it('returns serviceAccount from auth', async () => {
+                headers['authorization'] = 'AUTH';
+                jwt.context = { service_user_id: 'some-service-user-id' };
+                const auth = await authProvider.provide();
+                const serviceAccountId = auth.getServiceAccountId();
+                assert.equal(serviceAccountId, 'some-service-user-id');
+            });
+        });
+    });
+
+    context('authorization header does not exist', () => {
+
+        it('leaves auth unauthenticated', async () => {
+            const auth = await authProvider.provide();
+            assert.equal(auth.isAuthenticated(), false);
+        });
+
+    });
+
+});

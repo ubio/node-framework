@@ -9,8 +9,8 @@ import { FrameworkEnv } from './env';
 import {
     JwtService,
     AutomationCloudJwtService,
-    AutomationCloudAuthService,
-    RequestAuthService
+    AcAuthProvider,
+    DefaultAcAuthProvider,
 } from './services';
 
 /**
@@ -40,7 +40,7 @@ export class Application {
         this.container.bind(MetricsRegistry).toConstantValue(getGlobalMetrics());
         this.container.bind(FrameworkEnv).toSelf().inSingletonScope();
         this.container.bind(JwtService).to(AutomationCloudJwtService).inSingletonScope();
-        this.container.bind(RequestAuthService).to(AutomationCloudAuthService);
+        this.container.bind(AcAuthProvider).to(DefaultAcAuthProvider);
     }
 
     get logger(): Logger {
