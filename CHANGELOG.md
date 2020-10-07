@@ -1,3 +1,7 @@
+- feat: multipart requests supported
+- BREAKING CHANGE: new platform-wide auth conventions, and some more sneaked in
+- BREAKING CHANGE: `@automationcloud/request` replaced `RequestFactory`
+
 ## 5.0.0
 
 - BREAKING CHANGE: drop `RequestFactory`, `Request`, use @automationcloud/request instead
