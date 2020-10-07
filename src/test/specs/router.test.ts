@@ -3,6 +3,7 @@ import { tokenizePath, matchPath, Application, Router } from '../../main';
 import { FooRouter } from '../routes/foo';
 import { BarRouter } from '../routes/bar';
 import supertest from 'supertest';
+import { MultipartRouter } from '../routes/multipart';
 
 describe('Router', () => {
 
@@ -119,6 +120,7 @@ describe('Router', () => {
                 super();
                 this.container.bind(Router).to(FooRouter);
                 this.container.bind(Router).to(BarRouter);
+                this.container.bind(Router).to(MultipartRouter);
             }
             async beforeStart() {
                 await this.httpServer.startServer();
@@ -252,6 +254,22 @@ describe('Router', () => {
                 .send({ invalid: true });
             assert.equal(res.status, 400);
             assert.equal(res.body.name, 'RequestBodyValidationError');
+        });
+
+        describe('multipart body', () => {
+
+            it('POST /upload works with multipart requests', async () => {
+                const request = supertest(app.httpServer.callback());
+                const res = await request.post('/upload')
+                    .field('foo', 'hello')
+                    .attach('myFile', Buffer.from('some file content', 'utf-8'), {
+                        filename: 'file.txt'
+                    });
+                assert.equal(res.status, 200);
+                assert.equal(res.body.foo, 'hello');
+                assert.equal(res.body.fileSize, 17);
+            });
+
         });
 
     });

@@ -6,7 +6,7 @@ import { Router } from './router';
 import http from 'http';
 import https from 'https';
 import stoppable, { StoppableServer } from 'stoppable';
-import bodyParser from 'koa-bodyparser';
+import bodyParser from 'koa-body';
 import conditional from 'koa-conditional-get';
 import etag from 'koa-etag';
 import cors from '@koa/cors';
@@ -47,8 +47,14 @@ export class HttpServer extends Koa {
     addStandardMiddleware(): this {
         this.use(this.createRequestContainerMiddleware());
         this.use(bodyParser({
-            enableTypes: ['json'],
-            jsonLimit: this.frameworkEnv.HTTP_JSON_LIMIT
+            json: true,
+            urlencoded: true,
+            multipart: true,
+            jsonLimit: this.frameworkEnv.HTTP_JSON_LIMIT,
+            formLimit: this.frameworkEnv.HTTP_FORM_LIMIT,
+            formidable: {
+                maxFileSize: this.frameworkEnv.HTTP_MAX_FILE_SIZE_BYTES,
+            }
         }));
         this.use(conditional());
         this.use(etag());
