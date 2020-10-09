@@ -66,10 +66,7 @@ export class ApiJobTimelineService extends JobTimelineService {
         const baseUrl = this.env.API_JOB_TIMELINE_URL;
         const authKey = this.env.API_JOB_TIMELINE_KEY;
         if (!baseUrl || !authKey) {
-            throw new Exception({
-                name: 'ConfigurationError',
-                message: 'Check Environment: API_JOB_TIMELINE_URL, API_JOB_TIMELINE_KEY',
-            });
+            throw new Exception('Check Environment: API_JOB_TIMELINE_URL, API_JOB_TIMELINE_KEY');
         }
 
         // subject to change the auth afterwards?

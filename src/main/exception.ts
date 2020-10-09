@@ -1,30 +1,13 @@
-export interface ExceptionSpec {
-    name: string;
-    code?: string;
-    message?: string;
-    status?: number;
-    retry?: boolean;
-    details?: object;
-}
-
+/**
+ * Standard error middleware presents instances of Exception class
+ * as { object: 'error', name, message, details }.
+ * All other errors are presented as a generic 'ServerError'.
+ *
+ * Use this class to create more specific error classes.
+ * Class name should be interpreted as error code.
+ */
 export class Exception extends Error {
-    code: string;
-    status?: number;
-    retry?: boolean;
-    details?: any;
-
-    constructor(spec: ExceptionSpec) {
-        super(spec.message);
-        this.name = spec.name;
-        this.code = spec.code || spec.name;
-        this.message = spec.message || spec.name;
-        if (spec.status != null) {
-            this.status = spec.status;
-        }
-        if (spec.retry != null) {
-            this.retry = spec.retry;
-        }
-        this.details = spec.details;
-    }
-
+    name = this.constructor.name;
+    status: number = 500;
+    details: any = {};
 }

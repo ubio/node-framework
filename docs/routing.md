@@ -67,7 +67,7 @@ Routers support two kinds of methods:
 Application dispatches each request as follows:
 
 - first, it looks through all the endpoints and picks the first one that matches request method and `path`
-    - if no such endpoint is found, application finishes the request processing, throwing `RouteNotFound` error with 404 status (which is subsequently processed by error handling middleware)
+    - if no such endpoint is found, application finishes the request processing, throwing `RouteNotFoundError` error with 404 status (which is subsequently processed by error handling middleware)
 - next, application will try to match and execute all middleware **in the same router as the endpoint**, in the order the methods are defined in the class
     - if middleware specifies `path`, then only the middleware which match the said path pattern are executed
     - middleware specified in other routers are not executed, even if they match the request

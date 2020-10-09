@@ -31,10 +31,7 @@ export class MetricsRegistry {
         // It is prohibited to register a metric with same name twice
         const existing = this.registry.get(metric.name);
         if (existing) {
-            throw new Exception({
-                name: 'MetricAlreadyDefined',
-                message: `Metric ${metric.name} is already defined; please store a reference to a metric instance`
-            });
+            throw new MetricAlreadyDefined(metric.name);
         }
         this.registry.set(metric.name, metric);
     }
@@ -43,4 +40,10 @@ export class MetricsRegistry {
         return [...this.registry.values()].map(_ => _.report()).join('\n\n');
     }
 
+}
+
+export class MetricAlreadyDefined extends Exception {
+    constructor(metricName: string) {
+        super(`Metric ${metricName} is already defined; please store a reference to a metric instance`);
+    }
 }

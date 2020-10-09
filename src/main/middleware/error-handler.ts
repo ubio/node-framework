@@ -1,4 +1,5 @@
 import { Context } from 'koa';
+import { Exception } from '../exception';
 
 /**
  * Handles error thrown during request processing.
@@ -16,14 +17,27 @@ export async function errorHandler(ctx: Context, next: () => Promise<any>) {
     try {
         await next();
     } catch (error) {
-        const name = error.name === 'Error' ? error.constructor.name : error.name;
-        ctx.status = typeof error.status === 'number' ? error.status : 500;
-        ctx.body = {
-            object: 'error',
-            name,
-            message: error.message || '',
-            details: error.details,
-        };
-        ctx.logger.warn(`Error: ${error.name} ${error.message}`.trim(), { error });
+        ctx.logger.warn(`Error: ${error.name} ${error.message}`.trim(), {
+            method: ctx.method,
+            url: ctx.url,
+            requestId: ctx.header['x-request-id'],
+            ...error,
+        });
+        if (error instanceof Exception) {
+            ctx.status = typeof error.status === 'number' ? error.status : 500;
+            ctx.body = {
+                object: 'error',
+                name: error.name,
+                message: error.message || '',
+                details: error.details,
+            };
+        } else {
+            ctx.status = 500;
+            ctx.body = {
+                object: 'error',
+                name: 'ServerError',
+                message: 'The request cannot be processed.',
+            };
+        }
     }
 }
