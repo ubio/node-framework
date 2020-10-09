@@ -6,8 +6,8 @@ import {
     ConsoleLogger,
     AcAuthProvider,
     JwtService,
-    Exception,
     DefaultAcAuthProvider,
+    AuthenticationError,
 } from '../../../main';
 import { FrameworkEnv } from '../../../main/env';
 
@@ -23,10 +23,7 @@ describe('RequestAuthService', () => {
     container.bind(JwtService).toDynamicValue(() => ({
         async decodeAndVerify(token: string) {
             if (token !== 'jwt-token-here') {
-                throw new Exception({
-                    name: 'InvalidJwtToken',
-                    status: 400,
-                });
+                throw new AuthenticationError();
             }
             return jwt;
         }

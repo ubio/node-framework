@@ -30,12 +30,8 @@ export class JwksClient {
         const alg = this.options.algorithm;
         const matchingKey = keys.find(k => k.alg === alg && k.kid === 'services');
         if (!matchingKey) {
-            throw new Exception({
-                name: 'SigningKeyNotFoundError',
-                message: 'Expected signing key not found from response',
-            });
+            throw new SigningKeyNotFoundError();
         }
-
         return matchingKey.k;
     }
 
@@ -73,17 +69,9 @@ export class JwksClient {
         if (validateFunction(res) === true) {
             return res as SigningKeySets;
         }
-
         const errors = validateFunction.errors || [];
         const messages = errors.map(e => ajvErrorToMessage(e));
-
-        throw new Exception({
-            name: 'JwksValidationError',
-            message: 'Automation cloud jwks response validation failed',
-            details: {
-                messages,
-            }
-        });
+        throw new JwksValidationError(messages);
     }
 }
 
@@ -108,4 +96,18 @@ export interface SigningKey {
     kid: string;
     alg: string;
     k: string;
+}
+
+export class SigningKeyNotFoundError extends Exception {
+    message = 'Expected signing key not found from response';
+}
+
+export class JwksValidationError extends Exception {
+    message = 'JWKS validation failed';
+    constructor(messages: string[]) {
+        super();
+        this.details = {
+            messages
+        };
+    }
 }

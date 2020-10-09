@@ -4,7 +4,8 @@ import { Request } from '@automationcloud/request';
 import { Exception } from '../exception';
 import { JwtService } from './jwt';
 import { FrameworkEnv } from '../env';
-import { AcAuth } from '../ac-auth';
+import { AcAuth, AuthenticationError } from '../ac-auth';
+import { Logger } from '../logger';
 
 @injectable()
 export abstract class AcAuthProvider {
@@ -19,6 +20,8 @@ export class DefaultAcAuthProvider {
     static legacyTokensCache: Map<string, { token: string, authorisedAt: number }> = new Map();
 
     constructor(
+        @inject(Logger)
+        protected logger: Logger,
         @inject(JwtService)
         protected jwt: JwtService,
         @inject(FrameworkEnv)
@@ -48,13 +51,9 @@ export class DefaultAcAuthProvider {
                 organisationId: jwt.context?.organisation_id ?? organisationIdHeader ?? null,
                 serviceAccountId: jwt.context?.service_user_id ?? null,
             });
-        } catch (error) {
-            throw new Exception({
-                name: 'AuthenticationError',
-                status: 401,
-                message: error.message,
-                details: error
-            });
+        } catch (err) {
+            this.logger.warn(`Authentication from token failed`, { ...err });
+            throw new AuthenticationError();
         }
     }
 
@@ -64,11 +63,10 @@ export class DefaultAcAuthProvider {
         if (newAuthHeader) {
             const [prefix, token] = newAuthHeader.split(' ');
             if (prefix !== 'Bearer' || !token) {
-                throw new Exception({
-                    name: 'AuthenticationError',
-                    message: `Incorrect authorization header (prefix=${prefix}, tokenExists=${!!token})`,
-                    status: 401
+                this.logger.warn(`Incorrect authorization header`, {
+                    details: { prefix, token }
                 });
+                throw new AuthenticationError('Incorrect authorization header');
             }
             return token;
         }
@@ -95,12 +93,8 @@ export class DefaultAcAuthProvider {
                 });
                 return token;
             } catch (error) {
-                throw new Exception({
-                    name: 'AuthenticationError',
-                    status: 401,
-                    message: error.message,
-                    details: error
-                });
+                this.logger.warn('Legacy authentication failed', { ...error });
+                throw new AuthenticationError();
             }
         }
         return cached.token;

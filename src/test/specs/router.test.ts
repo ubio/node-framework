@@ -163,7 +163,7 @@ describe('Router', () => {
             assert.equal(res.header['foo-before-all'], 'true');
             assert(res.header['bar-before-all'] == null);
             assert(res.header['foo-before-get-one'] == null);
-            assert.deepEqual(res.body.name, 'RequestBodyValidationError');
+            assert.deepEqual(res.body.name, 'RequestParametersValidationError');
         });
 
         it('POST /foo with incorrect params', async () => {
@@ -174,7 +174,7 @@ describe('Router', () => {
             assert.equal(res.header['foo-before-all'], 'true');
             assert(res.header['bar-before-all'] == null);
             assert(res.header['foo-before-get-one'] == null);
-            assert.deepEqual(res.body.name, 'RequestBodyValidationError');
+            assert.deepEqual(res.body.name, 'RequestParametersValidationError');
         });
 
         it('GET /foo/{fooId}', async () => {
@@ -253,7 +253,7 @@ describe('Router', () => {
             const res = await request.post('/bar')
                 .send({ invalid: true });
             assert.equal(res.status, 400);
-            assert.equal(res.body.name, 'RequestBodyValidationError');
+            assert.equal(res.body.name, 'RequestParametersValidationError');
         });
 
         describe('multipart body', () => {

@@ -64,10 +64,8 @@ function routeDecorator(method: string, spec: RouteSpec, isMiddleware: boolean =
         const bodyParams = params.filter(_ => _.source === 'body');
         if (spec.requestBodySchema) {
             if (bodyParams.length > 0) {
-                throw new Exception({
-                    name: 'InvalidRouteDefinition',
-                    message: `${method} ${path}: BodyParams are only supported if requestBodySchema is not specified`
-                });
+                throw new Exception(
+                    `${method} ${path}: BodyParams are only supported if requestBodySchema is not specified`);
             }
         }
         const requestBodySchema = spec.requestBodySchema ? ajv.compile(spec.requestBodySchema) :
@@ -172,13 +170,7 @@ export class Router {
         const valid = ep.paramsSchema(paramsObject);
         if (!valid) {
             const messages = ep.paramsSchema.errors!.map(e => ajvErrorToMessage(e));
-            throw new Exception({
-                name: 'RequestParametersValidationError',
-                status: 400,
-                details: {
-                    messages
-                }
-            });
+            throw new RequestParametersValidationError(messages);
         }
     }
 
@@ -189,13 +181,7 @@ export class Router {
         const valid = ep.requestBodySchema(body);
         if (!valid) {
             const messages = ep.requestBodySchema.errors!.map(e => ajvErrorToMessage(e));
-            throw new Exception({
-                name: 'RequestBodyValidationError',
-                status: 400,
-                details: {
-                    messages
-                }
-            });
+            throw new RequestParametersValidationError(messages);
         }
     }
 
@@ -227,10 +213,9 @@ function validateRouteDefinition(ep: RouteDefinition) {
     const paramNamesSet: Set<string> = new Set();
     for (const param of ep.params) {
         if (paramNamesSet.has(param.name)) {
-            throw new Exception({
-                name: 'InvalidRouteDefinition',
-                message: `${ep.method} ${ep.path}: Parameter ${param.name} is declared more than once`
-            });
+            throw new Exception(
+                `${ep.method} ${ep.path}: Parameter ${param.name} is declared more than once`
+            );
         }
         paramNamesSet.add(param.name);
     }
@@ -398,4 +383,13 @@ export interface ResponseSpec {
     description?: string;
     schema?: object;
     contentType?: string | string[];
+}
+
+export class RequestParametersValidationError extends Exception {
+    status = 400;
+
+    constructor(messages: string[]) {
+        super('Invalid request parameters; check details for additional information');
+        this.details = { messages };
+    }
 }

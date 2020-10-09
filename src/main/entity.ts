@@ -104,13 +104,7 @@ export class Entity {
             return;
         }
         const messages = errors.map(e => ajvErrorToMessage(e));
-        throw new Exception({
-            name: 'EntityValidationError',
-            message: `${this.constructor.name} validation failed`,
-            details: {
-                messages,
-            }
-        });
+        throw new EntityValidationError(this.constructor.name, messages);
     }
 
     present(presenter: string = ''): object {
@@ -325,10 +319,7 @@ function presentFieldValue(
                     return value.map(v => presentFieldValue(presenter, key, v, items.type));
                 }
             }
-            throw new Exception({
-                name: 'SerializationError',
-                message: `Cannot serialize array ${key}`,
-            });
+            throw new EntitySerializationError(`Cannot serialize array ${key}`);
         }
         case 'object': {
             if (value && entityClass) {
@@ -360,10 +351,7 @@ function deserializeFieldValue(
             if (items) {
                 return array.map(v => deserializeFieldValue(key, v, items.type));
             }
-            throw new Exception({
-                name: 'DeserializationError',
-                message: `Cannot deserialize array ${key}`,
-            });
+            throw new EntityDeserializationError(`Cannot deserialize array ${key}`);
         }
         case 'object': {
             if (entityClass) {
@@ -393,3 +381,16 @@ function deserializeSubEntity(constructor: AnyConstructor, value: any) {
     const subEntity = (new constructor()) as Entity;
     return subEntity.assign(value);
 }
+
+export class EntityValidationError extends Exception {
+    constructor(className: string, messages: string[]) {
+        super();
+        this.message = `${className} validation failed`;
+        this.details = {
+            messages
+        };
+    }
+}
+
+export class EntitySerializationError extends Exception {}
+export class EntityDeserializationError extends Exception {}

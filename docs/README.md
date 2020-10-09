@@ -7,3 +7,4 @@
 - [Entities](entities.md)
 - [Routing Requests](routing.md)
 - [Metrics](metrics.md)
+- [Error Handling](error-handling.md)

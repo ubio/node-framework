@@ -21,11 +21,7 @@ export class AcAuth {
 
     checkAuthenticated(): void {
         if (!this.authenticated) {
-            throw new Exception({
-                status: 401,
-                name: 'AuthenticationError',
-                message: 'Authentication is required',
-            });
+            throw new AuthenticationError();
         }
     }
 
@@ -35,11 +31,7 @@ export class AcAuth {
 
     requireOrganisationId(): string {
         if (!this.organisationId) {
-            throw new Exception({
-                status: 403,
-                name: 'Forbidden',
-                message: 'organisationId is required',
-            });
+            throw new AccessForbidden('organisationId is required');
         }
         return this.organisationId;
     }
@@ -50,13 +42,18 @@ export class AcAuth {
 
     requireServiceAccountId(): string {
         if (!this.serviceAccountId) {
-            throw new Exception({
-                status: 403,
-                name: 'Forbidden',
-                message: 'serviceAccountId is required',
-            });
+            throw new AccessForbidden('serviceAccountId is required');
         }
         return this.serviceAccountId;
     }
 
+}
+
+export class AuthenticationError extends Exception {
+    status = 401;
+    message = 'Authentication is required';
+}
+
+export class AccessForbidden extends Exception {
+    status = 403;
 }
