@@ -1,5 +1,5 @@
 import { Context } from 'koa';
-import { Exception } from '../exception';
+import { ClientError } from '../exception';
 
 /**
  * Handles error thrown during request processing.
@@ -23,8 +23,8 @@ export async function errorHandler(ctx: Context, next: () => Promise<any>) {
             requestId: ctx.header['x-request-id'],
             ...error,
         });
-        if (error instanceof Exception) {
-            ctx.status = typeof error.status === 'number' ? error.status : 500;
+        if (error instanceof ClientError) {
+            ctx.status = error.status;
             ctx.body = {
                 object: 'error',
                 name: error.name,

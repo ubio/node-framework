@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import Ajv from 'ajv';
 import { ajvErrorToMessage, AnyConstructor, Constructor } from './util';
 import uuid from 'uuid';
-import { Exception } from './exception';
+import { ClientError, Exception } from './exception';
 
 const FIELDS_KEY = Symbol('Entity:fields');
 const SCHEMA_KEY = Symbol('Entity:schema');
@@ -382,7 +382,8 @@ function deserializeSubEntity(constructor: AnyConstructor, value: any) {
     return subEntity.assign(value);
 }
 
-export class EntityValidationError extends Exception {
+export class EntityValidationError extends ClientError {
+    status = 400;
     constructor(className: string, messages: string[]) {
         super();
         this.message = `${className} validation failed`;
