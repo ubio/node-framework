@@ -1,4 +1,4 @@
-import { Exception } from './exception';
+import { ClientError } from './exception';
 
 export interface AcAuthSpec {
     authenticated: boolean;
@@ -49,11 +49,11 @@ export class AcAuth {
 
 }
 
-export class AuthenticationError extends Exception {
+export class AuthenticationError extends ClientError {
     status = 401;
     message = 'Authentication is required';
 }
 
-export class AccessForbidden extends Exception {
+export class AccessForbidden extends ClientError {
     status = 403;
 }

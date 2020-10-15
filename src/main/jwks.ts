@@ -1,6 +1,6 @@
 import Ajv from 'ajv';
 import { Request, Fetch } from '@automationcloud/request';
-import { Exception } from './exception';
+import { ClientError, Exception } from './exception';
 import { ajvErrorToMessage } from './util';
 
 const ajv = new Ajv({
@@ -99,10 +99,10 @@ export interface SigningKey {
 }
 
 export class SigningKeyNotFoundError extends Exception {
-    message = 'Expected signing key not found from response';
+    message = 'Expected signing key not found in JWKS response';
 }
 
-export class JwksValidationError extends Exception {
+export class JwksValidationError extends ClientError {
     message = 'JWKS validation failed';
     constructor(messages: string[]) {
         super();

@@ -1,7 +1,6 @@
 import { injectable, inject } from 'inversify';
 import Koa from 'koa';
 import { Request } from '@automationcloud/request';
-import { Exception } from '../exception';
 import { JwtService } from './jwt';
 import { FrameworkEnv } from '../env';
 import { AcAuth, AuthenticationError } from '../ac-auth';

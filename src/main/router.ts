@@ -3,7 +3,7 @@ import * as koa from 'koa';
 import escapeRegexp from 'escape-string-regexp';
 import Ajv from 'ajv';
 import { Logger } from './logger';
-import { Exception } from './exception';
+import { ClientError, Exception } from './exception';
 import { Constructor, ajvErrorToMessage, AnyConstructor, deepClone } from './util';
 
 const ROUTES_KEY = Symbol('Route');
@@ -385,7 +385,7 @@ export interface ResponseSpec {
     contentType?: string | string[];
 }
 
-export class RequestParametersValidationError extends Exception {
+export class RequestParametersValidationError extends ClientError {
     status = 400;
 
     constructor(messages: string[]) {

@@ -1,7 +1,7 @@
 import Koa, { Middleware } from 'koa';
 import { Container, injectable, inject } from 'inversify';
 import { Logger, RequestLogger } from './logger';
-import { Exception } from './exception';
+import { ClientError } from './exception';
 import { Router } from './router';
 import http from 'http';
 import https from 'https';
@@ -148,7 +148,7 @@ export class HttpServer extends Koa {
 
 }
 
-export class RouteNotFoundError extends Exception {
+export class RouteNotFoundError extends ClientError {
     status = 404;
     message = 'Route not found';
 }

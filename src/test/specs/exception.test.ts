@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { Exception } from '../../main';
+import { ClientError, Exception } from '../../main';
 
 describe('Exception', () => {
 
@@ -30,18 +30,22 @@ describe('Exception', () => {
         assert.deepStrictEqual(err.details, { foo: 'blah' });
     });
 
+});
+
+describe('ClientError', () => {
+
     it('supports custom status code', () => {
-        class MyCustomError extends Exception {
+        class MyCustomError extends ClientError {
             status = 400;
         }
         const err = new MyCustomError();
         assert.strictEqual(err.status, 400);
     });
 
-    it('default status is 500', () => {
-        class MyCustomError extends Exception {}
+    it('default status is 400', () => {
+        class MyCustomError extends ClientError {}
         const err = new MyCustomError();
-        assert.strictEqual(err.status, 500);
+        assert.strictEqual(err.status, 400);
     });
 
 });
