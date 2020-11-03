@@ -31,7 +31,7 @@ const Book = new Schema<Book>({
     },
 });
 
-describe.only('Schema', () => {
+describe('Schema', () => {
 
     describe('schema', () => {
 
