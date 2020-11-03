@@ -23,6 +23,7 @@ export class Schema<T> {
             allErrors: true,
             messages: true,
             useDefaults: true,
+            removeAdditional: true,
         });
         this.schema = schema;
         this.defaults = defaults;

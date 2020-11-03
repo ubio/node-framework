@@ -22,6 +22,7 @@ const Book = new Schema<Book>({
                 items: { type: 'string', minLength: 1 },
             },
         },
+        additionalProperties: false,
     },
     defaults: () => {
         return {
@@ -47,7 +48,8 @@ describe('Schema', () => {
                         type: 'array',
                         items: { type: 'string', minLength: 1 },
                     },
-                }
+                },
+                additionalProperties: false,
             });
         });
     });
@@ -74,6 +76,15 @@ describe('Schema', () => {
             });
             assert(book.id.length > 0);
             assert.deepStrictEqual(book.tags, ['foo', 'bar', 'baz']);
+        });
+
+        it('removes additional properties', () => {
+            const book = Book.decode({
+                title: 'The Adventures of Foo',
+                year: 2020,
+                something: 'boo',
+            }) as any;
+            assert(typeof book.something === 'undefined');
         });
 
         it('throws ValidationError if not valid', () => {

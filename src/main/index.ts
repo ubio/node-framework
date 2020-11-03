@@ -5,7 +5,6 @@ export * from './entity';
 export * from './exception';
 export * from './http';
 export * from './logger';
-export * from './logger';
 export * from './metrics';
 export * from './openapi';
 export * from './router';
