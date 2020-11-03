@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import path from 'path';
+import 'reflect-metadata';
 import { generateEndpointDocSpec } from '../main';
 
 const packageJsonPath = path.join(process.cwd(), 'package.json');
