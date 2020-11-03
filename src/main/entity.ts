@@ -72,6 +72,8 @@ export function Field(spec: FieldSpec) {
  * - define per-field schema
  * - automate presenting entities into different data formats
  * - automate entity validation
+ *
+ * @deprecated we're phasing out the Entity support due to its complexity, use {@link Schema} instead
  */
 export class Entity {
 

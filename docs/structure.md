@@ -7,9 +7,10 @@ src/                               // TypeScript sources
     bin/                           // Runnable entrypoints
         serve.ts                   // Start application HTTP server
     main/
-        entities/
+        entities/                  // Deprecated
         routes/
         repositories/
+        schema/                    // Describes domain model data structures
         services/
         util/                      // Helpers and utilities
         app.ts                     // Application class (IoC composition root)
