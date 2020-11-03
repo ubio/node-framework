@@ -21,7 +21,7 @@
         "changelog": "node ./changelog",
         "preversion": "npm run compile && npm run lint && npm run test",
         "version": "npm run changelog && git add CHANGELOG.md",
-        "postversion": "npm publish --access public && git push origin master --tags"
+        "postversion": "npm publish --access public && git push origin main --tags"
     },
     "pre-commmit": [
         "lint"
