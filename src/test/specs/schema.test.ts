@@ -54,6 +54,36 @@ describe('Schema', () => {
         });
     });
 
+    describe('listSchema', () => {
+        it('returns JSON Schema object', () => {
+            assert.deepStrictEqual(Book.listSchema, {
+                type: 'object',
+                required: ['type', 'count', 'data'],
+                properties: {
+                    type: { type: 'string',  const: 'list' },
+                    count: { type: 'number' },
+                    data: {
+                        type: 'array',
+                        items: {
+                            type: 'object',
+                            required: ['id', 'title', 'year', 'tags'],
+                            properties: {
+                                id: { type: 'string', minLength: 1 },
+                                title: { type: 'string', minLength: 1 },
+                                year: { type: 'integer', min: 0, max: 3000 },
+                                tags: {
+                                    type: 'array',
+                                    items: { type: 'string', minLength: 1 },
+                                },
+                            },
+                            additionalProperties: false,
+                        }
+                    },
+                }
+            });
+        });
+    });
+
     describe('decode', () => {
 
         it('applies defaults', () => {

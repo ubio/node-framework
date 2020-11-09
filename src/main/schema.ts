@@ -30,6 +30,21 @@ export class Schema<T> {
         this.validateFn = this.ajv.compile(schema);
     }
 
+    get listSchema() {
+        return {
+            type: 'object',
+            required: ['type', 'count', 'data'],
+            properties: {
+                type: { type: 'string', const: 'list' },
+                count: { type: 'number' },
+                data: {
+                    type: 'array',
+                    items: this.schema,
+                }
+            }
+        };
+    }
+
     validate(obj: any): Ajv.ErrorObject[] {
         const valid = this.validateFn(obj);
         return valid ? [] : this.validateFn.errors!;
