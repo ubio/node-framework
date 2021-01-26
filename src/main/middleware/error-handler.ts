@@ -23,6 +23,7 @@ export async function errorHandler(ctx: Context, next: () => Promise<any>) {
             requestId: ctx.header['x-request-id'],
             ...error,
         });
+        ctx.logger.debug(error.stack);
         if (error instanceof ClientError) {
             ctx.status = error.status;
             ctx.body = {
