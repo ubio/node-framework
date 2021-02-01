@@ -6,7 +6,7 @@ import { Logger } from '../logger';
 
 @injectable()
 export abstract class JwtService {
-    abstract async decodeAndVerify(token: string): Promise<DecodedJwt>;
+    abstract decodeAndVerify(token: string): Promise<DecodedJwt>;
 }
 
 @injectable()

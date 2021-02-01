@@ -8,7 +8,7 @@ import { Logger } from '../logger';
 
 @injectable()
 export abstract class AcAuthProvider {
-    abstract async provide(): Promise<AcAuth>;
+    abstract provide(): Promise<AcAuth>;
 }
 
 @injectable()

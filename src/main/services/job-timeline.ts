@@ -22,8 +22,8 @@ export interface JobTimelineEvent {
 
 export abstract class JobTimelineService {
     abstract add(timelineEvent: JobTimelineEvent): void;
-    abstract async start(): Promise<void>;
-    abstract async stop(): Promise<void>;
+    abstract start(): Promise<void>;
+    abstract stop(): Promise<void>;
 }
 
 @injectable()
