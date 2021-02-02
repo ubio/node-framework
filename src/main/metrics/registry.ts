@@ -39,7 +39,6 @@ export class MetricsRegistry {
     report() {
         return [...this.registry.values()].map(_ => _.report()).join('\n\n');
     }
-
 }
 
 export class MetricAlreadyDefined extends Exception {
