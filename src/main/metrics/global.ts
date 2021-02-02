@@ -7,6 +7,9 @@ export class GlobalMetricsRegistry extends MetricsRegistry {
         'Performance measurements taken for a particular class method');
     handlerDuration = this.histogram('app_handler_duration_seconds',
         'Application performance measurements');
+
+    mongoDocumentsTotal = this.gauge('mongo_documents_total',
+        'Estimated count of MongoDB documents, per collection');
 }
 
 export function getGlobalMetrics(): GlobalMetricsRegistry {

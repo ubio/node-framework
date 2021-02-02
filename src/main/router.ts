@@ -5,7 +5,7 @@ import Ajv from 'ajv';
 import { Logger } from './logger';
 import { ClientError, Exception } from './exception';
 import { Constructor, ajvErrorToMessage, AnyConstructor, deepClone } from './util';
-import { getGlobalMetrics } from './metrics';
+import { getGlobalMetrics } from './metrics/global';
 
 const ROUTES_KEY = Symbol('Route');
 const PARAMS_KEY = Symbol('Param');
