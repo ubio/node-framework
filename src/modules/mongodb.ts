@@ -33,7 +33,9 @@ export class MongoDb {
 
     async start() {
         await this.client.connect();
-        this.startRefresh();
+        if (this.env.MONGO_METRICS_ENABLED) {
+            this.startRefresh();
+        }
     }
 
     async stop() {

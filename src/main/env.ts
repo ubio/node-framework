@@ -31,6 +31,18 @@ export function readNumber(key: string, defaultValue?: number): number {
     return num;
 }
 
+export function readBoolean(key: string, defaultValue?: boolean): boolean {
+    const value = process.env[key] || '';
+    if (['true', 'false'].includes(value)) {
+        return value === 'true';
+    }
+    if (defaultValue != null) {
+        return defaultValue;
+    }
+    missingKeys.push(key);
+    return false;
+}
+
 export function assertEnv() {
     assert(!missingKeys.length, `Missing environment: ${missingKeys.join(', ')}`);
 }
@@ -57,4 +69,5 @@ export class FrameworkEnv {
     AC_SIGNING_KEY_ALGORITHM = readString('SIGNING_KEY_ALGORITHM', 'HS256');
 
     MONGO_URL = readString('MONGO_URL', '');
+    MONGO_METRICS_ENABLED = readBoolean('MONGO_METRICS_ENABLED', process.env.NODE_ENV !== 'test');
 }
