@@ -5,6 +5,7 @@ import Ajv from 'ajv';
 import { Logger } from './logger';
 import { ClientError, Exception } from './exception';
 import { Constructor, ajvErrorToMessage, AnyConstructor, deepClone } from './util';
+import { getGlobalMetrics } from './metrics';
 
 const ROUTES_KEY = Symbol('Route');
 const PARAMS_KEY = Symbol('Param');
@@ -127,29 +128,31 @@ export class Router {
 
     params: Params = {};
 
-    async handle(): Promise<boolean> {
-        // Route matched; now validate parameters
-        for (const route of getEndpointRoutes(this.constructor as Constructor<Router>)) {
-            const pathParams = matchRoute(route, this.ctx.method, this.ctx.path);
-            if (pathParams == null) {
-                continue;
-            }
-            // Route matched, now execute all middleware first, then execute the route itself
-            for (const middleware of getMiddlewareRoutes(this.constructor as Constructor<Router>)) {
-                const pathParams = matchRoute(middleware, this.ctx.method, this.ctx.path);
+    handle(): Promise<boolean> {
+        return getGlobalMetrics().handlerDuration.measure(async () => {
+            // Route matched; now validate parameters
+            for (const route of getEndpointRoutes(this.constructor as Constructor<Router>)) {
+                const pathParams = matchRoute(route, this.ctx.method, this.ctx.path);
                 if (pathParams == null) {
                     continue;
                 }
-                await this.executeRoute(middleware, pathParams);
+                // Route matched, now execute all middleware first, then execute the route itself
+                for (const middleware of getMiddlewareRoutes(this.constructor as Constructor<Router>)) {
+                    const pathParams = matchRoute(middleware, this.ctx.method, this.ctx.path);
+                    if (pathParams == null) {
+                        continue;
+                    }
+                    await this.executeRoute(middleware, pathParams);
+                }
+                const response = await this.executeRoute(route, pathParams);
+                if (response != null) {
+                    this.ctx.body = response;
+                }
+                return true;
             }
-            const response = await this.executeRoute(route, pathParams);
-            if (response != null) {
-                this.ctx.body = response;
-            }
-            return true;
-        }
-        // No routes match
-        return false;
+            // No routes match
+            return false;
+        }, { method: this.ctx.method, path: this.ctx.path, protocol: this.ctx.protocol });
     }
 
     async executeRoute(ep: RouteDefinition, pathParams: Params): Promise<any> {
