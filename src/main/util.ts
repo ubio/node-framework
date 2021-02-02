@@ -40,3 +40,8 @@ export function ajvErrorToMessage(e: Ajv.ErrorObject): string {
 export function fakeUuid(char: string): string {
     return uuid.v4().replace(/[0-9a-f]/g, char);
 }
+
+export interface EntityList<T> {
+    entities: T[];
+    totalCount: number;
+}
