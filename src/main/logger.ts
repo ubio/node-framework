@@ -112,7 +112,7 @@ export class StandardLogger extends Logger {
             ...this.contextData,
             ...details
         };
-        process.stdout.write(safeStringify(payload));
+        process.stdout.write(safeStringify(payload) + '\n');
     }
 
     protected logPretty(level: LogLevel, message: string, details: object) {
