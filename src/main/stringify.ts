@@ -10,7 +10,7 @@ export const DEFAULT_STRINGIFY_OPTS: StringifyConfig = {
     indent: 0,
     omitKeyPattern: /^_|^\$/,
     maskKeyPattern: /password|secret/i,
-    maxStringLength: 400,
+    maxStringLength: 1000,
     replacer: errorReplacer,
 };
 
@@ -51,9 +51,8 @@ export function safeStringify(obj: any, options: Partial<StringifyConfig> = {}) 
             }
             // Trim excess strings
             if (typeof v === 'string') {
-                const l = Math.floor(config.maxStringLength / 2);
                 if (v.length > config.maxStringLength) {
-                    v = v.substring(0, l) + '...' + v.substring(v.length - l);
+                    v = v.substring(0, config.maxStringLength) + '...';
                 }
             }
             return config.replacer(k, v);
