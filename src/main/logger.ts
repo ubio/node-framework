@@ -1,6 +1,7 @@
 import { injectable, inject } from 'inversify';
 import chalk, { Chalk} from 'chalk';
 import * as koa from 'koa';
+import { safeStringify } from './stringify';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'mute';
 
@@ -26,34 +27,30 @@ export abstract class Logger implements ILogger {
     contextData: object = {};
     level: LogLevel = 'info';
 
-    protected abstract write(level: LogLevel, message: string, details: object): void;
+    protected abstract write(level: LogLevel, message: string, data: object): void;
     abstract child(data: object): Logger;
 
-    log(level: LogLevel, message: string, details: object) {
+    log(level: LogLevel, message: string, data: object) {
         if (level === 'mute' || LOG_LEVELS.indexOf(level) < LOG_LEVELS.indexOf(this.level)) {
             return;
         }
-        return this.write(level, message, details);
+        return this.write(level, message, data);
     }
 
-    info(message: string, details: object = {}) {
-        this.log('info', message, details);
+    info(message: string, data: object = {}) {
+        this.log('info', message, data);
     }
 
-    warn(message: string, details: object = {}) {
-        this.log('warn', message, details);
+    warn(message: string, data: object = {}) {
+        this.log('warn', message, data);
     }
 
-    error(message: string, details: object = {}) {
-        this.log('error', message, details);
+    error(message: string, data: object = {}) {
+        this.log('error', message, data);
     }
 
-    debug(message: string, details: object = {}) {
-        this.log('debug', message, details);
-    }
-
-    metric(message: string, details: any = {}): void {
-        this.log('info', message, { isMetric: true, ...details });
+    debug(message: string, data: object = {}) {
+        this.log('debug', message, data);
     }
 
     addContextData(data: object): this {
@@ -66,10 +63,10 @@ export abstract class Logger implements ILogger {
 @injectable()
 export class ConsoleLogger extends Logger {
 
-    protected write(level: LogLevel, message: string, details: object): void {
+    protected write(level: LogLevel, message: string, data: object): void {
         if (level === 'info' || level === 'debug' || level === 'warn' || level === 'error') {
             // eslint-disable-next-line no-console
-            console[level](message, { ...this.contextData, ...details });
+            console[level](message, { ...this.contextData, ...data });
         }
     }
 
@@ -95,11 +92,11 @@ export class StandardLogger extends Logger {
         }
     }
 
-    protected write(level: LogLevel, message: string, details: object) {
+    protected write(level: LogLevel, message: string, data: object) {
         if (this.pretty) {
-            this.logPretty(level, message, details);
+            this.logPretty(level, message, data);
         } else {
-            this.logStructured(level, message, details);
+            this.logStructured(level, message, data);
         }
     }
 
@@ -115,7 +112,7 @@ export class StandardLogger extends Logger {
             ...this.contextData,
             ...details
         };
-        process.stdout.write(JSON.stringify(payload, jsonReplacer) + '\n');
+        process.stdout.write(safeStringify(payload));
     }
 
     protected logPretty(level: LogLevel, message: string, details: object) {
@@ -124,7 +121,7 @@ export class StandardLogger extends Logger {
         if (level === 'debug') {
             ts = chalk.gray(ts);
         }
-        const detailsStr = chalk.gray(JSON.stringify(details, jsonReplacer, 2));
+        const detailsStr = chalk.gray(safeStringify(details, { indent: 2 }));
         process.stdout.write(`${ts} ${color(message)} ${detailsStr}\n`);
     }
 
@@ -148,19 +145,4 @@ export class RequestLogger extends StandardLogger {
             requestId,
         });
     }
-
-}
-
-// Helper to deserialize error fields to JSON
-function jsonReplacer(k: string, v: any) {
-    if (v instanceof Error) {
-        return {
-            name: v.name,
-            message: v.message,
-            code: (v as any).code,
-            details: (v as any).details,
-            status: (v as any).status,
-        };
-    }
-    return v;
 }
