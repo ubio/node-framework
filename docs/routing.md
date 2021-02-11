@@ -82,7 +82,7 @@ Application dispatches each request as follows:
     - it is possible for the endpoint to specify the response status using `this.ctx.status =`
     - for non-JSON responses endpoint should set `this.ctx.body` property as per [Koa docs](https://github.com/koajs/koa/blob/master/docs/api/response.md#responsebody) and should **not** return any value
 
-## Parameters
+## Request Parameters
 
 Request parameters are extracted and validated using `@PathParam`, `@QueryParam` and `@BodyParam` decorators, applied to request methods (the order of parameters is not important).
 
@@ -125,3 +125,11 @@ async list(
     };
 }
 ```
+
+### Runtime vs. Compile Time Validation
+
+Framework uses [JSON schema](https://json-schema.org/) to perform **runtime** validation of request parameters.
+
+It is developer's responsibility to make sure that **compile time** type correctly corresponds to JSON Schema. There is currently no automatic way of checking this at compile time, without sacrificing the JSON flexibility and ability to generate route metadata.
+
+For this reason is highly advisable to stick with primitive types (i.e. multiple arguments each annotated with simple schema vs. a single object with a complex schema). Another advantage of this approach is that it allows generating Open API documentation for each individual field.
