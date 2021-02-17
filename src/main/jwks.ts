@@ -6,8 +6,7 @@ import { ajvErrorToMessage } from './util';
 const ajv = new Ajv({
     allErrors: true,
     useDefaults: true,
-    jsonPointers: true,
-    format: 'full',
+    validateFormats: false,
 });
 
 // eslint-disable-next-line import/no-commonjs

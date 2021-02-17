@@ -16,7 +16,7 @@ const Book = new Schema<Book>({
         properties: {
             id: { type: 'string', minLength: 1 },
             title: { type: 'string', minLength: 1 },
-            year: { type: 'integer', min: 0, max: 3000 },
+            year: { type: 'integer', minimum: 0, maximum: 3000 },
             tags: {
                 type: 'array',
                 items: { type: 'string', minLength: 1 },
@@ -43,7 +43,7 @@ describe('Schema', () => {
                 properties: {
                     id: { type: 'string', minLength: 1 },
                     title: { type: 'string', minLength: 1 },
-                    year: { type: 'integer', min: 0, max: 3000 },
+                    year: { type: 'integer', minimum: 0, maximum: 3000 },
                     tags: {
                         type: 'array',
                         items: { type: 'string', minLength: 1 },

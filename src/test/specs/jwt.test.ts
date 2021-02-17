@@ -1,7 +1,7 @@
 import assert from 'assert';
 import jsonwebtoken from 'jsonwebtoken';
 import crypto from 'crypto';
-import uuid from 'uuid';
+import { v4 as uuid } from 'uuid';
 
 import { FrameworkEnv } from '../../main/env';
 import { ConsoleLogger, AutomationCloudJwtService } from '../../main';
@@ -63,7 +63,7 @@ describe('AutomationCloudJwt', () => {
 });
 
 function getSecretKey() {
-    const hmac = crypto.createHmac('sha256', uuid.v4());
+    const hmac = crypto.createHmac('sha256', uuid());
     hmac.update('some-encrypted-data');
     return hmac.digest('hex');
 }
