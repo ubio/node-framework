@@ -1,5 +1,5 @@
-import Ajv from 'ajv';
-import uuid from 'uuid';
+import Ajv, { ErrorObject as AjvErrorObject } from 'ajv';
+import { v4 as uuid } from 'uuid';
 
 export type Constructor<T> = new (...args: any[]) => T;
 export type AnyConstructor = new (...args: any[]) => {};
@@ -26,7 +26,7 @@ export function sortBy<T, K>(items: T[], fn: (item: T) => K): T[] {
     return items.slice().sort((a, b) => fn(a) > fn(b) ? 1 : -1);
 }
 
-export function ajvErrorToMessage(e: Ajv.ErrorObject): string {
+export function ajvErrorToMessage(e: AjvErrorObject): string {
     const msgs = [];
     if (e.keyword === 'additionalProperties') {
         const prop = e.params && (e.params as any).additionalProperty;
@@ -38,7 +38,7 @@ export function ajvErrorToMessage(e: Ajv.ErrorObject): string {
 }
 
 export function fakeUuid(char: string): string {
-    return uuid.v4().replace(/[0-9a-f]/g, char);
+    return uuid().replace(/[0-9a-f]/g, char);
 }
 
 export interface EntityList<T> {

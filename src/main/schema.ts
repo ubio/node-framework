@@ -1,4 +1,4 @@
-import Ajv from 'ajv';
+import Ajv, { ErrorObject, ValidateFunction } from 'ajv';
 import { ClientError } from './exception';
 import { ajvErrorToMessage } from './util';
 
@@ -10,8 +10,8 @@ import { ajvErrorToMessage } from './util';
 export class Schema<T> {
     schema: object;
 
-    protected ajv: Ajv.Ajv;
-    protected validateFn: Ajv.ValidateFunction;
+    protected ajv: Ajv;
+    protected validateFn: ValidateFunction;
     protected defaults: SchemaDefaults<T>;
 
     constructor(options: SchemaInit<T>) {
@@ -30,7 +30,7 @@ export class Schema<T> {
         this.validateFn = this.ajv.compile(schema);
     }
 
-    validate(obj: any): Ajv.ErrorObject[] {
+    validate(obj: any): ErrorObject[] {
         const valid = this.validateFn(obj);
         return valid ? [] : this.validateFn.errors!;
     }

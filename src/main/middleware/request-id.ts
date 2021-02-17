@@ -1,4 +1,4 @@
-import uuid from 'uuid';
+import { v4 as uuid } from 'uuid';
 import { Context } from 'koa';
 
 /**
@@ -6,7 +6,7 @@ import { Context } from 'koa';
  * or generates a new one (uuid) if no such header present in request.
  */
 export async function requestId(ctx: Context, next: () => Promise<any>) {
-    const requestId = ctx.headers['x-request-id'] || uuid.v4();
+    const requestId = ctx.headers['x-request-id'] || uuid();
     ctx.state.requestId = requestId;
     try {
         await next();

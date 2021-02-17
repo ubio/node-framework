@@ -1,7 +1,7 @@
 import { injectable, inject } from 'inversify';
 import * as koa from 'koa';
 import escapeRegexp from 'escape-string-regexp';
-import Ajv from 'ajv';
+import Ajv, { ValidateFunction as AjvValidateFunction } from 'ajv';
 import { Logger } from './logger';
 import { ClientError, Exception } from './exception';
 import { Constructor, ajvErrorToMessage, AnyConstructor, deepClone } from './util';
@@ -16,7 +16,6 @@ const ajv = new Ajv({
     allErrors: true,
     coerceTypes: 'array',
     useDefaults: true,
-    jsonPointers: true,
     removeAdditional: true,
 });
 
@@ -235,7 +234,7 @@ export function matchRoute(
     return matchPath(path, ep.pathTokens, ep.isMiddleware);
 }
 
-function compileParamsSchema(params: ParamDefinition[] = []): Ajv.ValidateFunction {
+function compileParamsSchema(params: ParamDefinition[] = []): AjvValidateFunction {
     const properties: any = {};
     const required: string[] = [];
     for (const p of params) {
@@ -348,8 +347,8 @@ export interface RouteDefinition {
     path: string;
     pathTokens: PathToken[];
     params: ParamDefinition[];
-    paramsSchema: Ajv.ValidateFunction;
-    requestBodySchema?: Ajv.ValidateFunction;
+    paramsSchema: AjvValidateFunction;
+    requestBodySchema?: AjvValidateFunction;
     responses: ResponsesSpec;
 }
 
