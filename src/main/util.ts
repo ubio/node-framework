@@ -1,4 +1,4 @@
-import Ajv, { ErrorObject as AjvErrorObject } from 'ajv';
+import { ErrorObject as AjvErrorObject } from 'ajv';
 import { v4 as uuid } from 'uuid';
 
 export type Constructor<T> = new (...args: any[]) => T;
