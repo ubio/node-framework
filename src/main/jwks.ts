@@ -1,5 +1,5 @@
 import Ajv from 'ajv';
-import { Request, Fetch } from '@automationcloud/request';
+import { Request } from '@automationcloud/request';
 import { ClientError, Exception } from './exception';
 import { ajvErrorToMessage } from './util';
 
@@ -20,7 +20,6 @@ export class JwksClient {
         this.options = options;
         this.request = new Request({
             retryAttempts: this.options.retryAttempts ?? 3,
-            fetch: this.options.fetch,
         });
     }
 
@@ -78,9 +77,7 @@ export interface JwksOptions {
     url: string;
     algorithm: string;
     cacheMaxAge?: number;
-
     retryAttempts?: number;
-    fetch?: Fetch;
 }
 
 export type JwksCache = SigningKeySets & { validUntil: number }

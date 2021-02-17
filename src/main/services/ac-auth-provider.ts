@@ -51,7 +51,7 @@ export class DefaultAcAuthProvider {
                 serviceAccountId: jwt.context?.service_user_id ?? null,
             });
         } catch (err) {
-            this.logger.warn(`Authentication from token failed`, { ...err });
+            this.logger.warn(`Authentication from token failed`, { details: err });
             throw new AuthenticationError();
         }
     }

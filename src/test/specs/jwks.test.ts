@@ -22,9 +22,8 @@ describe('JwksClient', () => {
                 url: mockUrl,
                 retryAttempts: 1,
                 algorithm,
-                fetch,
             });
-
+            jwksClient.request.config.fetch = fetch;
             jwksClient.clearCache();
 
         });
