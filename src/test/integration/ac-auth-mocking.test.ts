@@ -1,6 +1,7 @@
+import assert from 'assert';
 import { inject } from 'inversify';
 import supertest from 'supertest';
-import assert from 'assert';
+
 import { AcAuth, AcAuthProvider, Application, Get, Router } from '../../main';
 
 describe('Mocking AcAuth', () => {

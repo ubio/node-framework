@@ -1,10 +1,10 @@
 import assert from 'assert';
-import jsonwebtoken from 'jsonwebtoken';
 import crypto from 'crypto';
+import jsonwebtoken from 'jsonwebtoken';
 import { v4 as uuid } from 'uuid';
 
+import { AutomationCloudJwtService, ConsoleLogger } from '../../main';
 import { FrameworkEnv } from '../../main/env';
-import { ConsoleLogger, AutomationCloudJwtService } from '../../main';
 
 describe('AutomationCloudJwt', () => {
     describe('decodeAndVerify', () => {

@@ -1,4 +1,4 @@
-import { Router, Get, PathParam, Middleware, Post, BodyParam, Put } from '../../main';
+import { BodyParam, Get, Middleware, PathParam, Post, Put, Router } from '../../main';
 
 export class FooRouter extends Router {
 

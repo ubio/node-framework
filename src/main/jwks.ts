@@ -1,5 +1,6 @@
-import Ajv from 'ajv';
 import { Request } from '@automationcloud/request';
+import Ajv from 'ajv';
+
 import { ClientError, Exception } from './exception';
 import { ajvErrorToMessage } from './util';
 

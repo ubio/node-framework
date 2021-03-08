@@ -1,13 +1,14 @@
-import { Container } from 'inversify';
 import * as request from '@automationcloud/request';
 import assert from 'assert';
+import { Container } from 'inversify';
+
 import {
-    Logger,
-    ConsoleLogger,
     AcAuthProvider,
-    JwtService,
-    DefaultAcAuthProvider,
     AuthenticationError,
+    ConsoleLogger,
+    DefaultAcAuthProvider,
+    JwtService,
+    Logger,
 } from '../../../main';
 import { FrameworkEnv } from '../../../main/env';
 

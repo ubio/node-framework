@@ -1,10 +1,11 @@
-import { injectable, inject } from 'inversify';
-import Koa from 'koa';
 import { Request } from '@automationcloud/request';
-import { JwtService } from './jwt';
-import { FrameworkEnv } from '../env';
+import { inject, injectable } from 'inversify';
+import Koa from 'koa';
+
 import { AcAuth, AuthenticationError } from '../ac-auth';
+import { FrameworkEnv } from '../env';
 import { Logger } from '../logger';
+import { JwtService } from './jwt';
 
 @injectable()
 export abstract class AcAuthProvider {

@@ -1,11 +1,12 @@
-import { injectable, inject } from 'inversify';
-import * as koa from 'koa';
-import escapeRegexp from 'escape-string-regexp';
 import Ajv, { ValidateFunction as AjvValidateFunction } from 'ajv';
-import { Logger } from './logger';
+import escapeRegexp from 'escape-string-regexp';
+import { inject, injectable } from 'inversify';
+import * as koa from 'koa';
+
 import { ClientError, Exception } from './exception';
-import { Constructor, ajvErrorToMessage, AnyConstructor, deepClone } from './util';
+import { Logger } from './logger';
 import { getGlobalMetrics } from './metrics/global';
+import { ajvErrorToMessage, AnyConstructor, Constructor, deepClone } from './util';
 
 const ROUTES_KEY = Symbol('Route');
 const PARAMS_KEY = Symbol('Param');

@@ -1,7 +1,8 @@
-import { MongoClient, Db, MongoClientOptions } from 'mongodb';
-import { injectable, inject } from 'inversify';
-import { FrameworkEnv } from '../main/env';
+import { inject, injectable } from 'inversify';
+import { Db, MongoClient, MongoClientOptions } from 'mongodb';
+
 import { getGlobalMetrics, Logger } from '../main';
+import { FrameworkEnv } from '../main/env';
 
 interface MongoClientOptionsExtended extends MongoClientOptions {
     useUnifiedTopology: boolean;

@@ -1,9 +1,10 @@
 import { injectable } from 'inversify';
-import { Metric } from './metric';
+
+import { Exception } from '../exception';
 import { CounterMetric } from './counter';
 import { GaugeMetric } from './gauge';
 import { HistogramMetric } from './histogram';
-import { Exception } from '../exception';
+import { Metric } from './metric';
 
 @injectable()
 export class MetricsRegistry {

@@ -1,6 +1,7 @@
-import { injectable, inject } from 'inversify';
 import chalk, { Chalk } from 'chalk';
+import { inject, injectable } from 'inversify';
 import * as koa from 'koa';
+
 import { safeStringify } from './stringify';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'mute';

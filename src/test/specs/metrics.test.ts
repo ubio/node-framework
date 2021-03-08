@@ -1,6 +1,7 @@
-import { CounterMetric, GaugeMetric, HistogramMetric } from '../../main';
 import assert from 'assert';
 import theredoc from 'theredoc';
+
+import { CounterMetric, GaugeMetric, HistogramMetric } from '../../main';
 
 describe('CounterMetric', () => {
 

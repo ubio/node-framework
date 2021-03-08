@@ -1,7 +1,8 @@
-import { injectable, inject } from 'inversify';
+import { inject, injectable } from 'inversify';
 import jsonwebtoken from 'jsonwebtoken';
-import { JwksClient } from '../jwks';
+
 import { FrameworkEnv } from '../env';
+import { JwksClient } from '../jwks';
 import { Logger } from '../logger';
 
 @injectable()

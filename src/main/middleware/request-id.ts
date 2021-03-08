@@ -1,5 +1,5 @@
-import { v4 as uuid } from 'uuid';
 import { Context } from 'koa';
+import { v4 as uuid } from 'uuid';
 
 /**
  * Forwards x-request-id header from request to response,

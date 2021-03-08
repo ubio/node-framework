@@ -1,5 +1,6 @@
-import { fetchMock, FetchMock } from '@automationcloud/request';
+import { FetchMock, fetchMock } from '@automationcloud/request';
 import assert from 'assert';
+
 import { JwksClient } from '../../main/jwks';
 
 describe('JwksClient', () => {

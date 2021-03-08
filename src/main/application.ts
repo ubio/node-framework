@@ -1,16 +1,17 @@
 import { Container } from 'inversify';
-import { Logger, StandardLogger } from './logger';
+
+import { FrameworkEnv } from './env';
 import { HttpServer } from './http';
-import { MetricsRouter } from './metrics/route';
-import { Router } from './router';
+import { Logger, StandardLogger } from './logger';
 import { MetricsRegistry } from './metrics';
 import { getGlobalMetrics } from './metrics/global';
-import { FrameworkEnv } from './env';
+import { MetricsRouter } from './metrics/route';
+import { Router } from './router';
 import {
-    JwtService,
-    AutomationCloudJwtService,
     AcAuthProvider,
+    AutomationCloudJwtService,
     DefaultAcAuthProvider,
+    JwtService,
 } from './services';
 
 /**

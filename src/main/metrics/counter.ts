@@ -1,5 +1,5 @@
-import { MetricLabels, MetricDatum, createMetricLabelsKey } from './util';
 import { Metric } from './metric';
+import { createMetricLabelsKey, MetricDatum, MetricLabels } from './util';
 
 export class CounterMetric extends Metric {
     protected data: Map<string, MetricDatum> = new Map();

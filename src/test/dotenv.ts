@@ -1,5 +1,5 @@
-import path from 'path';
 import dotenv from 'dotenv';
+import path from 'path';
 
 dotenv.config({
     path: path.resolve(process.cwd(), '.env.test')

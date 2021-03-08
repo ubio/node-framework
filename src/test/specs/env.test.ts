@@ -1,4 +1,5 @@
 import assert from 'assert';
+
 import { env } from '../../main';
 
 describe('env', () => {

@@ -1,4 +1,5 @@
 import assert from 'assert';
+
 import { ClientError, Exception } from '../../main';
 
 describe('Exception', () => {

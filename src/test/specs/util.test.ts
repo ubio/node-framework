@@ -1,4 +1,5 @@
 import assert from 'assert';
+
 import { groupBy, sortBy } from '../../main';
 
 describe('util', () => {

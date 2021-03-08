@@ -1,6 +1,7 @@
-import { v4 as uuid } from 'uuid';
-import { Schema } from '../../main';
 import assert from 'assert';
+import { v4 as uuid } from 'uuid';
+
+import { Schema } from '../../main';
 
 interface Book {
     id: string;

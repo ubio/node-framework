@@ -1,5 +1,6 @@
-import { Get, Router } from '../router';
 import { injectable, multiInject } from 'inversify';
+
+import { Get, Router } from '../router';
 import { MetricsRegistry } from './registry';
 
 @injectable()

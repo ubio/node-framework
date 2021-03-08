@@ -1,8 +1,9 @@
 import assert from 'assert';
-import { tokenizePath, matchPath, Application, Router } from '../../main';
-import { FooRouter } from '../routes/foo';
-import { BarRouter } from '../routes/bar';
 import supertest from 'supertest';
+
+import { Application, matchPath, Router, tokenizePath } from '../../main';
+import { BarRouter } from '../routes/bar';
+import { FooRouter } from '../routes/foo';
 import { MultipartRouter } from '../routes/multipart';
 
 describe('Router', () => {

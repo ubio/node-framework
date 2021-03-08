@@ -1,4 +1,4 @@
-import { Router, Post, BodyParam } from '../../main';
+import { BodyParam, Post, Router } from '../../main';
 
 export class MultipartRouter extends Router {
 

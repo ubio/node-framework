@@ -1,8 +1,9 @@
-import { injectable, inject } from 'inversify';
-import { Logger } from '../logger';
-import { Request, BasicAuthAgent } from '@automationcloud/request';
+import { BasicAuthAgent, Request } from '@automationcloud/request';
+import { inject, injectable } from 'inversify';
+
 import { FrameworkEnv } from '../env';
 import { Exception } from '../exception';
+import { Logger } from '../logger';
 
 export interface JobTimelineEvent {
     namespace: string;

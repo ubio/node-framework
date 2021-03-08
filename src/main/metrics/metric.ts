@@ -1,4 +1,4 @@
-import { MetricLabels, createMetricLabelsKey } from './util';
+import { createMetricLabelsKey, MetricLabels } from './util';
 
 export abstract class Metric {
 

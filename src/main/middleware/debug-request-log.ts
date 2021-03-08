@@ -1,4 +1,5 @@
 import { Context } from 'koa';
+
 import { Logger } from '../logger';
 
 export async function debugRequestLog(ctx: Context, next: () => Promise<any>) {
