@@ -9,7 +9,7 @@ export class MultipartRouter extends Router {
         }
     })
     async update(
-        @BodyParam('foo', { schema: { type: 'string' }})
+        @BodyParam('foo', { schema: { type: 'string' } })
         foo: string
     ) {
         const { myFile } = this.ctx.request.files!;

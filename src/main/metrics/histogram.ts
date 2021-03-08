@@ -92,7 +92,7 @@ export class HistogramMetric extends Metric {
 export interface HistogramDatum {
     labels: MetricLabels;
     timestamp: number;
-    buckets: number[];   // correspond to configured buckets, w/o +Inf
+    buckets: number[]; // correspond to configured buckets, w/o +Inf
     count: number;
     sum: number;
 }

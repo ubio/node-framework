@@ -1,5 +1,5 @@
 import { injectable, inject } from 'inversify';
-import chalk, { Chalk} from 'chalk';
+import chalk, { Chalk } from 'chalk';
 import * as koa from 'koa';
 import { safeStringify } from './stringify';
 

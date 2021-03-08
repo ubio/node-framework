@@ -150,7 +150,7 @@ describe('RequestAuthService', () => {
             try {
                 await authProvider.provide();
                 throw new Error('UnexpectedSuccess');
-            } catch(err) {
+            } catch (err) {
                 assert.equal(err.status, 401);
             }
         });

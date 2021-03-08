@@ -25,7 +25,7 @@ export class DefaultAcAuthProvider {
         protected jwt: JwtService,
         @inject(FrameworkEnv)
         protected env: FrameworkEnv,
-        @inject("KoaContext")
+        @inject('KoaContext')
         protected ctx: Koa.Context,
     ) {
         this.clientRequest = new Request({

@@ -17,7 +17,7 @@ describe('Mocking AcAuth', () => {
             path: '/foo'
         })
         foo() {
-            return { ... this.auth };
+            return { ...this.auth };
         }
 
     }

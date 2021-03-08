@@ -22,7 +22,7 @@ export class FooRouter extends Router {
         }
     })
     async list() {
-        return [ 'foo1', 'foo2', 'foo3' ];
+        return ['foo1', 'foo2', 'foo3'];
     }
 
     @Post({
@@ -61,7 +61,7 @@ export class FooRouter extends Router {
     async update(
         @PathParam('fooId', { schema: { type: 'string' } })
         fooId: string,
-        @BodyParam('bar', { schema: { type: 'string' }})
+        @BodyParam('bar', { schema: { type: 'string' } })
         bar: string
     ) {
         return { fooId, bar };

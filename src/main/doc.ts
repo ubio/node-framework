@@ -106,7 +106,7 @@ function schemaToSpec(schema: { [key: string]: any }, paddingNum = 0, requiredAr
         // if v has "type" and type is object
         // extract type required additionalProperties, and run schemaToSpec using properties
         const { required, properties = {} } = schema;
-        const result = schemaToSpec(properties,  paddingNum, required);
+        const result = schemaToSpec(properties, paddingNum, required);
         spec.push(...result);
     } else {
         for (const [k, v = null] of Object.entries(schema)) {
@@ -121,7 +121,7 @@ function schemaToSpec(schema: { [key: string]: any }, paddingNum = 0, requiredAr
                 spec.push(padding + `- ${k}: ${v.toString() || '[]'}` + optional);
             } else {
                 const { type, required } = v;
-                const result = schemaToSpec(v,  paddingNum + 2, required);
+                const result = schemaToSpec(v, paddingNum + 2, required);
                 spec.push(padding + `- ${k}: ${type || '{}'}` + optional); // duck tape for schema doesn't contain type
                 spec.push(...result);
             }

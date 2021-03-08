@@ -70,7 +70,7 @@ describe('JwksClient', () => {
                 const wrongAlg = { ...happyKey, alg: 'ES256' };
                 jwksClient.request.config.fetch = fetchMock({ status: 200 }, { keys: [wrongAlg] });
 
-               try {
+                try {
                     await jwksClient.getSigningKey();
                     assert(true, 'unexpected success');
                 } catch (error) {
@@ -83,7 +83,7 @@ describe('JwksClient', () => {
                 const fetch = fetchMock({ status: 200 }, { keys: [wrongKid] });
                 jwksClient.request.config.fetch = fetch;
 
-               try {
+                try {
                     await jwksClient.getSigningKey();
                     assert(true, 'unexpected success');
                 } catch (error) {
@@ -95,7 +95,7 @@ describe('JwksClient', () => {
                 const noAlg = { ...happyKey, alg: undefined };
                 jwksClient.request.config.fetch = fetchMock({ status: 200 }, { keys: [noAlg] });
 
-               try {
+                try {
                     await jwksClient.getSigningKey();
                     assert(true, 'unexpected success');
                 } catch (error) {
@@ -109,7 +109,7 @@ describe('JwksClient', () => {
                 const fetch = fetchMock({ status: 200 }, { keys: [noK] });
                 jwksClient.request.config.fetch = fetch;
 
-               try {
+                try {
                     await jwksClient.getSigningKey();
                     assert(true, 'unexpected success');
                 } catch (error) {
@@ -123,7 +123,7 @@ describe('JwksClient', () => {
                 const fetch = fetchMock({ status: 200 }, { keys: [noKid] });
                 jwksClient.request.config.fetch = fetch;
 
-               try {
+                try {
                     await jwksClient.getSigningKey();
                     assert(true, 'unexpected success');
                 } catch (error) {
@@ -141,7 +141,7 @@ describe('JwksClient', () => {
 
                 jwksClient.request.config.fetch = fetchMock({ status: 200 }, { keys: [noOptional] });
 
-               try {
+                try {
                     await jwksClient.getSigningKey();
                     assert(true, 'unexpected success');
                 } catch (error) {
