@@ -19,12 +19,13 @@ export class Schema<T> {
         const {
             schema,
             defaults = {},
+            removeAdditional = 'all',
         } = options;
         this.ajv = new Ajv({
             allErrors: true,
             messages: true,
             useDefaults: true,
-            removeAdditional: true,
+            removeAdditional,
         });
         this.schema = schema;
         this.defaults = defaults;
@@ -65,6 +66,7 @@ export class ValidationError extends ClientError {
 export interface SchemaInit<T> {
     schema: JsonSchema;
     defaults?: SchemaDefaults<T>;
+    removeAdditional?: boolean | 'all' | 'failing';
 }
 
 export type SchemaDefaults<T> = (() => Partial<T>) | Partial<T>;
