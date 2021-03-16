@@ -59,6 +59,7 @@ export class FrameworkEnv {
     HTTP_FORM_LIMIT = readString('HTTP_FORM_LIMIT', '1mb');
     HTTP_MAX_FILE_SIZE_BYTES = readNumber('HTTP_MAX_FILE_SIZE_BYTES', 50 * 1024 * 1024);
     HTTP_SHUTDOWN_DELAY = readNumber('HTTP_SHUTDOWN_DELAY', 10000);
+    HTTP_VALIDATE_RESPONSES = readBoolean('HTTP_VALIDATE_RESPONSES', false);
     METRICS_REFRESH_INTERVAL = readNumber('METRICS_REFRESH_INTERVAL', 30000);
     API_JOB_TIMELINE_URL = readString('API_JOB_TIMELINE_URL', 'http://api-job-timeline');
     API_JOB_TIMELINE_KEY = readString('API_JOB_TIMELINE_KEY', ''); // to avoid assert error when not used

@@ -3,6 +3,7 @@ import escapeRegexp from 'escape-string-regexp';
 import { inject, injectable } from 'inversify';
 import * as koa from 'koa';
 
+import { FrameworkEnv } from './env';
 import { ClientError, Exception } from './exception';
 import { Logger } from './logger';
 import { getGlobalMetrics } from './metrics/global';
@@ -125,6 +126,8 @@ export class Router {
     logger!: Logger;
     @inject('KoaContext')
     ctx!: koa.Context;
+    @inject(FrameworkEnv)
+    frameworkEnv!: FrameworkEnv;
 
     params: Params = {};
 
@@ -148,6 +151,9 @@ export class Router {
                 if (response != null) {
                     this.ctx.body = response;
                 }
+                if (this.isResponseValidationEnabled()) {
+                    this.validateResponseBody(route, this.ctx.status, this.ctx.body);
+                }
                 return true;
             }
             // No routes match
@@ -155,7 +161,7 @@ export class Router {
         }, { method: this.ctx.method, path: this.ctx.path, protocol: this.ctx.protocol });
     }
 
-    async executeRoute(ep: RouteDefinition, pathParams: Params): Promise<any> {
+    protected async executeRoute(ep: RouteDefinition, pathParams: Params): Promise<any> {
         const paramsObject = this.assembleParams(ep, pathParams);
         this.validateRequestParams(ep, paramsObject);
         this.validateRequestBody(ep, this.ctx.request.body);
@@ -169,7 +175,7 @@ export class Router {
         return await (this as any)[ep.methodKey](...paramsArray);
     }
 
-    private validateRequestParams(ep: RouteDefinition, paramsObject: { [key: string]: any }) {
+    protected validateRequestParams(ep: RouteDefinition, paramsObject: { [key: string]: any }) {
         const valid = ep.paramsSchema(paramsObject);
         if (!valid) {
             const messages = ep.paramsSchema.errors!.map(e => ajvErrorToMessage(e));
@@ -177,7 +183,7 @@ export class Router {
         }
     }
 
-    private validateRequestBody(ep: RouteDefinition, body: any) {
+    protected validateRequestBody(ep: RouteDefinition, body: any) {
         if (!ep.requestBodySchema) {
             return;
         }
@@ -188,7 +194,29 @@ export class Router {
         }
     }
 
-    private assembleParams(ep: RouteDefinition, pathParams: Params): { [key: string]: any } {
+    protected validateResponseBody(ep: RouteDefinition, statusCode: number, body: unknown) {
+        // Only validate JSON bodies
+        if (body == null || typeof body !== 'object') {
+            return;
+        }
+        const responseSchema = ep.responses[statusCode]?.schema;
+        if (!responseSchema) {
+            // Note: we bypass this for now; in future we might want to cover standard error responses too
+            return;
+        }
+        const validator = ajv.compile(responseSchema);
+        const valid = validator(body);
+        if (!valid) {
+            const messages = validator.errors!.map(e => ajvErrorToMessage(e));
+            throw new ResponseValidationError(messages);
+        }
+    }
+
+    protected isResponseValidationEnabled() {
+        return this.frameworkEnv.HTTP_VALIDATE_RESPONSES;
+    }
+
+    protected assembleParams(ep: RouteDefinition, pathParams: Params): { [key: string]: any } {
         const body: any = deepClone(this.ctx.request.body || {});
         const query: any = deepClone(this.ctx.request.query || {});
         // First assemble the parameters into an object and validate them
@@ -392,7 +420,16 @@ export class RequestParametersValidationError extends ClientError {
     status = 400;
 
     constructor(messages: string[]) {
-        super('Invalid request parameters; check details for additional information');
+        super(`Invalid request parameters:\n${messages.map(_ => `    - ${_}`).join('\n')}`);
+        this.details = { messages };
+    }
+}
+
+export class ResponseValidationError extends ClientError {
+    status = 500;
+
+    constructor(messages: string[]) {
+        super(`Response body is not valid:\n${messages.map(_ => `    - ${_}`).join('\n')}`);
         this.details = { messages };
     }
 }
