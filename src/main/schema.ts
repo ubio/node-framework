@@ -7,7 +7,7 @@ import { ajvErrorToMessage } from './util';
  * An utility class that allows validating and decoding objects using JSON Schema.
  */
 export class Schema<T> {
-    schema: object;
+    schema: JsonSchema;
 
     protected ajv: Ajv;
     protected validateFn: ValidateFunction;
