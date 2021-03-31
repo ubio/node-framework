@@ -20,6 +20,7 @@ export class Schema<T> {
             ajvOptions = {},
         } = options;
         this.ajv = new Ajv({
+            strict: false,
             allErrors: true,
             messages: true,
             useDefaults: true,
@@ -58,8 +59,7 @@ export class Schema<T> {
 export class ValidationError extends ClientError {
     status = 400;
     constructor(messages: string[]) {
-        super();
-        this.message = `Validation failed`;
+        super(`Validation failed:\n${messages.map(_ => `    - ${_}`).join('\n')}`);
         this.details = {
             messages
         };
