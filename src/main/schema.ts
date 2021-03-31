@@ -1,4 +1,4 @@
-import Ajv, { ErrorObject, ValidateFunction } from 'ajv';
+import Ajv, { ErrorObject, Options, ValidateFunction } from 'ajv';
 
 import { ClientError } from './exception';
 import { ajvErrorToMessage } from './util';
@@ -17,13 +17,14 @@ export class Schema<T> {
         const {
             schema,
             defaults = {},
-            removeAdditional = 'all',
+            ajvOptions = {},
         } = options;
         this.ajv = new Ajv({
             allErrors: true,
             messages: true,
             useDefaults: true,
-            removeAdditional,
+            removeAdditional: 'all',
+            ...ajvOptions,
         });
         this.schema = schema;
         this.defaults = defaults;
@@ -36,8 +37,12 @@ export class Schema<T> {
     }
 
     construct(obj: any): unknown {
-        const defaults = typeof this.defaults === 'function' ? this.defaults() : this.defaults;
-        return { ...defaults, ...obj };
+        // Defaults are only applied to objects
+        if (obj && typeof obj === 'object') {
+            const defaults = typeof this.defaults === 'function' ? this.defaults() : this.defaults;
+            return { ...defaults, ...obj };
+        }
+        return obj;
     }
 
     decode(obj: any): T {
@@ -64,7 +69,7 @@ export class ValidationError extends ClientError {
 export interface SchemaInit<T> {
     schema: JsonSchema;
     defaults?: SchemaDefaults<T>;
-    removeAdditional?: boolean | 'all' | 'failing';
+    ajvOptions?: Options;
 }
 
 export type SchemaDefaults<T> = (() => Partial<T>) | Partial<T>;
