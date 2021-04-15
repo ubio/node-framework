@@ -22,6 +22,7 @@ export class AutomationCloudJwtService extends JwtService {
     ) {
         super();
         const url = this.env.AC_JWKS_URL;
+        const jwksCacheMaxAge = this.env.AC_JWKS_CACHE_MAX;
         const algorithm = this.env.AC_SIGNING_KEY_ALGORITHM;
         this.jwksClient = new JwksClient({
             url,

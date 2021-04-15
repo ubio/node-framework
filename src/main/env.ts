@@ -67,6 +67,7 @@ export class FrameworkEnv {
     AC_AUTH_HEADER_NAME = readString('AC_AUTH_HEADER_NAME', 'x-ubio-auth');
     AC_AUTH_VERIFY_URL = readString('AC_AUTH_MIDDLEWARE_URL', 'http://auth-middleware.authz.svc.cluster.local:8080/verify');
     AC_JWKS_URL = readString('AC_JWKS_URL', 'http://hydra.authz.svc.cluster.local:4445/keys/internal');
+    AC_JWKS_CACHE_MAX_AGE = readNumber('AC_JWKS_CACHE_MAX_AGE', 10 * 60 * 1000);
     AC_SIGNING_KEY_ALGORITHM = readString('SIGNING_KEY_ALGORITHM', 'HS256');
 
     MONGO_URL = readString('MONGO_URL', '');
