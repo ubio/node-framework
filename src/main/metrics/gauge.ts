@@ -1,8 +1,7 @@
-import { Metric } from './metric';
-import { createMetricLabelsKey, MetricDatum, MetricLabels } from './util';
+import { Metric, MetricDatum, MetricLabels } from './metric';
 
-export class GaugeMetric extends Metric {
-    protected data: Map<string, MetricDatum> = new Map();
+export class GaugeMetric<L extends MetricLabels = MetricLabels> extends Metric<L> {
+    protected data: Map<string, MetricDatum<L>> = new Map();
 
     getType() {
         return 'gauge';
@@ -19,11 +18,11 @@ export class GaugeMetric extends Metric {
     }
 
     get(labels: MetricLabels = {}) {
-        return this.data.get(createMetricLabelsKey(labels));
+        return this.data.get(this.createMetricLabelsKey(labels));
     }
 
-    set(value: number, labels: MetricLabels = {}, timestamp: number = Date.now()) {
-        const key = createMetricLabelsKey(labels);
+    set(value: number, labels: Partial<L> = {}, timestamp: number = Date.now()) {
+        const key = this.createMetricLabelsKey(labels);
         const datum = this.data.get(key);
         if (datum) {
             datum.value = value;

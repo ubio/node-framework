@@ -10,7 +10,7 @@ describe('CounterMetric', () => {
         counter.incr(1, { foo: 'one' });
         const datum = counter.get({ foo: 'one' });
         assert.ok(datum);
-        assert.equal(datum?.value, 1);
+        assert.strictEqual(datum?.value, 1);
     });
 
     it('increments an existing counter', () => {
@@ -19,7 +19,7 @@ describe('CounterMetric', () => {
         counter.incr(1, { foo: 'one' });
         const datum = counter.get({ foo: 'one' });
         assert.ok(datum);
-        assert.equal(datum?.value, 2);
+        assert.strictEqual(datum?.value, 2);
     });
 
     it('increments without labels', () => {
@@ -27,7 +27,7 @@ describe('CounterMetric', () => {
         counter.incr();
         const datum = counter.get();
         assert.ok(datum);
-        assert.equal(datum?.value, 1);
+        assert.strictEqual(datum?.value, 1);
     });
 
     it('compiles a report', () => {
@@ -36,7 +36,7 @@ describe('CounterMetric', () => {
         counter.incr(1, { lbl: 'one' }, 123123123);
         counter.incr(2, { lbl: 'two' });
         counter.incr(3, { lbl: 'three', foo: '1' }, 123123123);
-        assert.equal(counter.report().trim(), theredoc`
+        assert.strictEqual(counter.report().trim(), theredoc`
             # HELP foo Foo help
             # TYPE foo counter
             foo 1 123123123
@@ -55,7 +55,7 @@ describe('GaugeMetric', () => {
         gauge.set(1, { foo: 'one' });
         const datum = gauge.get({ foo: 'one' });
         assert.ok(datum);
-        assert.equal(datum?.value, 1);
+        assert.strictEqual(datum?.value, 1);
     });
 
     it('overwrites a existing value', () => {
@@ -64,7 +64,7 @@ describe('GaugeMetric', () => {
         counter.set(5, { foo: 'one' });
         const datum = counter.get({ foo: 'one' });
         assert.ok(datum);
-        assert.equal(datum?.value, 5);
+        assert.strictEqual(datum?.value, 5);
     });
 
     it('sets without labels', () => {
@@ -72,7 +72,7 @@ describe('GaugeMetric', () => {
         counter.set(5);
         const datum = counter.get();
         assert.ok(datum);
-        assert.equal(datum?.value, 5);
+        assert.strictEqual(datum?.value, 5);
     });
 
     it('compiles a report', () => {
@@ -81,7 +81,7 @@ describe('GaugeMetric', () => {
         counter.set(1, { lbl: 'one' }, 123123123);
         counter.set(2, { lbl: 'two' }, 123123123);
         counter.set(3, { lbl: 'three', foo: '1' }, 123123123);
-        assert.equal(counter.report().trim(), theredoc`
+        assert.strictEqual(counter.report().trim(), theredoc`
             # HELP foo Foo help
             # TYPE foo gauge
             foo 1 123123123
@@ -111,7 +111,7 @@ describe('HistogramMetric', () => {
         histogram.add(2, { lbl: 'two' });
         histogram.add(3, { lbl: 'two' });
 
-        assert.equal(histogram.report().trim(), theredoc`
+        assert.strictEqual(histogram.report().trim(), theredoc`
             # HELP foo Foo help
             # TYPE foo histogram
             foo_bucket{lbl="one",le="0.005"} 0
