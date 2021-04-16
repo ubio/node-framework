@@ -5,4 +5,3 @@ export * from './histogram';
 export * from './metric';
 export * from './registry';
 export * from './route';
-export * from './util';
