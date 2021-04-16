@@ -1,4 +1,5 @@
 import Ajv, { ErrorObject, Options, ValidateFunction } from 'ajv';
+import addFormats from 'ajv-formats';
 
 import { ClientError } from './exception';
 import { JsonSchema } from './schema-types';
@@ -36,6 +37,7 @@ export class Schema<T> {
             keywords: ['optional'],
             ...ajvOptions,
         });
+        addFormats(this.ajv);
         this.schema = this.preprocess(schema);
         this.defaults = defaults;
         this.validateFn = this.ajv.compile(this.schema);
