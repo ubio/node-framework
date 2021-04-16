@@ -24,7 +24,7 @@
         "version": "npm run changelog && git add CHANGELOG.md",
         "postversion": "npm publish --access public && git push origin main --tags"
     },
-    "pre-commmit": [
+    "pre-commit": [
         "lint"
     ],
     "repository": {
