@@ -1,11 +1,10 @@
-import { Metric } from './metric';
-import { createMetricLabelsKey, MetricLabels } from './util';
+import { Metric, MetricLabels } from './metric';
 
 const DEFAULT_BUCKETS = [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10];
 
-export class HistogramMetric extends Metric {
+export class HistogramMetric<L extends MetricLabels = MetricLabels> extends Metric<L> {
     protected buckets: number[];
-    data: Map<string, HistogramDatum> = new Map();
+    data: Map<string, HistogramDatum<L>> = new Map();
 
     constructor(
         name: string,
@@ -20,8 +19,8 @@ export class HistogramMetric extends Metric {
         return 'histogram';
     }
 
-    add(value: number, labels: MetricLabels = {}, timestamp: number = Date.now()) {
-        const key = createMetricLabelsKey(labels);
+    add(value: number, labels: Partial<L> = {}, timestamp: number = Date.now()) {
+        const key = this.createMetricLabelsKey(labels);
         const datum = this.data.get(key);
         if (datum) {
             datum.timestamp = timestamp;
@@ -39,7 +38,7 @@ export class HistogramMetric extends Metric {
         }
     }
 
-    timer(labels: MetricLabels = {}) {
+    timer(labels: Partial<L> = {}) {
         const startedAt = process.hrtime();
         return () => {
             const [sec, nanosec] = process.hrtime(startedAt);
@@ -48,7 +47,7 @@ export class HistogramMetric extends Metric {
         };
     }
 
-    async measure<T>(fn: () => Promise<T>, labels: MetricLabels = {}): Promise<T> {
+    async measure<T>(fn: () => Promise<T>, labels: Partial<L> = {}): Promise<T> {
         const stop = this.timer(labels);
         try {
             return await fn();
@@ -89,8 +88,8 @@ export class HistogramMetric extends Metric {
 
 }
 
-export interface HistogramDatum {
-    labels: MetricLabels;
+export interface HistogramDatum<L extends MetricLabels> {
+    labels: Partial<L>;
     timestamp: number;
     buckets: number[]; // correspond to configured buckets, w/o +Inf
     count: number;

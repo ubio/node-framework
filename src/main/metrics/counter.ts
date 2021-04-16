@@ -1,19 +1,18 @@
-import { Metric } from './metric';
-import { createMetricLabelsKey, MetricDatum, MetricLabels } from './util';
+import { Metric, MetricDatum, MetricLabels } from './metric';
 
-export class CounterMetric extends Metric {
-    protected data: Map<string, MetricDatum> = new Map();
+export class CounterMetric<L extends MetricLabels = MetricLabels> extends Metric<L> {
+    protected data: Map<string, MetricDatum<L>> = new Map();
 
     getType() {
         return 'counter';
     }
 
     get(labels: MetricLabels = {}) {
-        return this.data.get(createMetricLabelsKey(labels));
+        return this.data.get(this.createMetricLabelsKey(labels));
     }
 
-    incr(value: number = 1, labels: MetricLabels = {}, timestamp?: number) {
-        const key = createMetricLabelsKey(labels);
+    incr(value: number = 1, labels: Partial<L> = {}, timestamp?: number) {
+        const key = this.createMetricLabelsKey(labels);
         const datum = this.data.get(key);
         if (datum) {
             datum.value += value;
