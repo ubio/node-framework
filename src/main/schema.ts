@@ -1,35 +1,44 @@
 import Ajv, { ErrorObject, Options, ValidateFunction } from 'ajv';
 
 import { ClientError } from './exception';
+import { JsonSchema } from './schema-types';
 import { ajvErrorToMessage } from './util';
 
 /**
  * An utility class that allows validating and decoding objects using JSON Schema.
  */
 export class Schema<T> {
-    schema: JsonSchema;
+    schema: JsonSchema<T>;
 
     protected ajv: Ajv;
     protected validateFn: ValidateFunction;
     protected defaults: SchemaDefaults<T>;
+    protected options: SchemaPreprocessingOptions;
 
-    constructor(options: SchemaInit<T>) {
+    constructor(init: SchemaInit<T>) {
         const {
             schema,
             defaults = {},
             ajvOptions = {},
-        } = options;
+            options = {},
+        } = init;
+        this.options = {
+            requiredByDefault: true,
+            noAdditionalProperties: true,
+            ...options,
+        };
         this.ajv = new Ajv({
-            strict: false,
+            strict: true,
             allErrors: true,
             messages: true,
             useDefaults: true,
-            removeAdditional: 'all',
+            removeAdditional: this.options.noAdditionalProperties ? 'all' : false,
+            keywords: ['optional'],
             ...ajvOptions,
         });
-        this.schema = schema;
+        this.schema = this.preprocess(schema);
         this.defaults = defaults;
-        this.validateFn = this.ajv.compile(schema);
+        this.validateFn = this.ajv.compile(this.schema);
     }
 
     validate(obj: any): ErrorObject[] {
@@ -54,6 +63,28 @@ export class Schema<T> {
         }
         return _obj as T;
     }
+
+    protected preprocess(schema: JsonSchema<T>) {
+        return JSON.parse(JSON.stringify(schema), (k, v) => {
+            if (v && typeof v === 'object' && v.type === 'object') {
+                if (this.options.requiredByDefault) {
+                    const required: string[] = [];
+                    const properties = v.properties || {};
+                    for (const [key, value] of Object.entries<JsonSchema<any>>(properties)) {
+                        const optional = value.optional || false;
+                        if (!optional) {
+                            required.push(key);
+                        }
+                    }
+                    v.required = required;
+                }
+                if (this.options.noAdditionalProperties) {
+                    v.additionalProperties = false;
+                }
+            }
+            return v;
+        });
+    }
 }
 
 export class ValidationError extends ClientError {
@@ -67,61 +98,17 @@ export class ValidationError extends ClientError {
 }
 
 export interface SchemaInit<T> {
-    schema: JsonSchema;
+    schema: JsonSchema<T>;
     defaults?: SchemaDefaults<T>;
     ajvOptions?: Options;
+    options?: Partial<SchemaPreprocessingOptions>;
+}
+
+export interface SchemaPreprocessingOptions {
+    // Enables `optional` keyword, pre-computes `required` in object schema
+    requiredByDefault: boolean;
+    // Adds `removeAdditional: 'all'` and `additionalProperties: false`
+    noAdditionalProperties: boolean;
 }
 
 export type SchemaDefaults<T> = (() => Partial<T>) | Partial<T>;
-
-export type JsonSchemaTypePrimitive = 'null' | 'string' | 'number' | 'integer' | 'boolean' | 'array' | 'object';
-export type JsonSchemaType = JsonSchemaTypePrimitive | JsonSchemaTypePrimitive[];
-
-/**
- * An utility type for JSON Schema composition.
- * Since every field is optional (as per JSON Schema composition),
- * this type doesn't try to do too much to stop you from composing an incorrect schema;
- * instead it just allows your IDE to provide you with handy autocompletion hints.
- */
-export interface JsonSchema {
-    type?: JsonSchemaType;
-    // number
-    minimum?: number;
-    maximum?: number;
-    exclusiveMinimum?: number;
-    exclusiveMaximum?: number;
-    multipleOf?: number;
-    // string
-    minLength?: number;
-    maxLength?: number;
-    pattern?: string;
-    format?: string;
-    // array
-    minItems?: number;
-    maxItems?: number;
-    uniqueItems?: number;
-    items?: JsonSchema | JsonSchema[];
-    additionalItems?: boolean | JsonSchema;
-    contains?: JsonSchema;
-    // object
-    minProperties?: number;
-    maxProperties?: number;
-    required?: string[];
-    properties?: { [key: string]: JsonSchema };
-    patternProperties?: { [key: string]: JsonSchema };
-    additionalProperties?: boolean | JsonSchema;
-    propertyNames?: JsonSchema;
-    // any
-    enum?: any[];
-    const?: any;
-    // compound
-    not?: JsonSchema;
-    oneOf?: JsonSchema[];
-    anyOf?: JsonSchema[];
-    allOf?: JsonSchema[];
-    if?: JsonSchema[];
-    then?: JsonSchema[];
-    else?: JsonSchema[];
-    // misc
-    [key: string]: any;
-}

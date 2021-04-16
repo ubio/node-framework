@@ -3,17 +3,34 @@ import { v4 as uuid } from 'uuid';
 
 import { Schema } from '../../main';
 
+interface Person {
+    name: string;
+    age?: number;
+    gender: string | null;
+}
+
+const Person = new Schema<Person>({
+    schema: {
+        type: 'object',
+        properties: {
+            name: { type: 'string' },
+            age: { type: 'number', optional: true },
+            gender: { type: 'string', nullable: true },
+        }
+    }
+});
+
 interface Book {
     id: string;
     title: string;
     year: number;
     tags: string[];
+    author: Person;
 }
 
 const Book = new Schema<Book>({
     schema: {
         type: 'object',
-        required: ['id', 'title', 'year', 'tags'],
         properties: {
             id: { type: 'string', minLength: 1 },
             title: { type: 'string', minLength: 1 },
@@ -22,8 +39,8 @@ const Book = new Schema<Book>({
                 type: 'array',
                 items: { type: 'string', minLength: 1 },
             },
+            author: Person.schema,
         },
-        additionalProperties: false,
     },
     defaults: () => {
         return {
@@ -33,14 +50,14 @@ const Book = new Schema<Book>({
     },
 });
 
-describe('Schema', () => {
+describe.only('Schema', () => {
 
-    describe('schema', () => {
+    describe('preprocessed schema', () => {
 
         it('returns JSON Schema object', () => {
             assert.deepStrictEqual(Book.schema, {
                 type: 'object',
-                required: ['id', 'title', 'year', 'tags'],
+                required: ['id', 'title', 'year', 'tags', 'author'],
                 properties: {
                     id: { type: 'string', minLength: 1 },
                     title: { type: 'string', minLength: 1 },
@@ -49,6 +66,16 @@ describe('Schema', () => {
                         type: 'array',
                         items: { type: 'string', minLength: 1 },
                     },
+                    author: {
+                        type: 'object',
+                        required: ['name', 'gender'],
+                        properties: {
+                            name: { type: 'string' },
+                            age: { type: 'number', optional: true },
+                            gender: { type: 'string', nullable: true },
+                        },
+                        additionalProperties: false,
+                    }
                 },
                 additionalProperties: false,
             });
@@ -61,6 +88,7 @@ describe('Schema', () => {
             const book = Book.decode({
                 title: 'The Adventures of Foo',
                 year: 2020,
+                author: { name: 'Joe', gender: null }
             });
             assert(typeof book.id === 'string');
             assert(book.id.length > 0);
@@ -74,6 +102,7 @@ describe('Schema', () => {
                 title: 'The Adventures of Foo',
                 year: 2020,
                 tags: ['foo', 'bar', 'baz'],
+                author: { name: 'Joe', gender: null },
             });
             assert(book.id.length > 0);
             assert.deepStrictEqual(book.tags, ['foo', 'bar', 'baz']);
@@ -84,6 +113,7 @@ describe('Schema', () => {
                 title: 'The Adventures of Foo',
                 year: 2020,
                 something: 'boo',
+                author: { name: 'Joe', gender: null },
             }) as any;
             assert(typeof book.something === 'undefined');
         });
@@ -94,6 +124,7 @@ describe('Schema', () => {
                     title: 'The Adventures of Foo',
                     year: 2020,
                     tags: 'lol wut',
+                    author: { name: 'Joe', age: 'ok' }
                 });
                 throw new Error('UnexpectedSuccess');
             } catch (err) {
