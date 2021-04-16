@@ -32,7 +32,7 @@ export function ajvErrorToMessage(e: AjvErrorObject): string {
         const prop = e.params && (e.params as any).additionalProperty;
         msgs.push(e.schemaPath, 'additional property', prop && `'${prop}'`, 'not allowed');
     } else {
-        msgs.push(e.dataPath, e.message);
+        msgs.push(e.instancePath, e.message);
     }
     return msgs.filter(Boolean).join(' ');
 }
