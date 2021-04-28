@@ -294,7 +294,9 @@ export function tokenizePath(path: string): PathToken[] {
             tokens.push({ type: 'string', value: prefix });
         }
         idx = m.index + m[0].length;
-        tokens.push({ type: 'param', value: m[1] });
+        const [, asterisk, value] = /^(\*)?(.*)/.exec(m[1])!;
+        const wildcard = !!asterisk;
+        tokens.push({ type: 'param', value, wildcard });
         m = re.exec(path);
     }
     const suffix = path.substring(idx);
@@ -315,7 +317,7 @@ export function matchPath(
 ): Params | null {
     const params: Params = {};
     const regex = tokens
-        .map(tok => tok.type === 'string' ? escapeRegexp(tok.value) : '([^/]+?)')
+        .map(tok => pathTokenToRegexp(tok))
         .join('');
     const re = new RegExp('^' + regex + (matchStart ? '(?=$|[/])' : '$'));
     const m = re.exec(path);
@@ -327,6 +329,13 @@ export function matchPath(
         params[name] = m[i + 1];
     }
     return params;
+}
+
+function pathTokenToRegexp(token: PathToken) {
+    if (token.type === 'string') {
+        return escapeRegexp(token.value);
+    }
+    return token.wildcard ? '(.+?)' : '([^/]+?)';
 }
 
 // Helpers for accessing metadata and generating docs
@@ -361,6 +370,7 @@ export interface Params {
 export interface PathToken {
     type: 'string' | 'param';
     value: string;
+    wildcard?: boolean;
 }
 
 export type ParamSource = 'path' | 'query' | 'body';
