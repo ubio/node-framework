@@ -1,14 +1,10 @@
-export interface MetricLabels {
-    [name: string]: string | number;
-}
-
-export interface MetricDatum<L extends MetricLabels> {
+export interface MetricDatum<L> {
     labels: Partial<L>;
     timestamp?: number;
     value: number;
 }
 
-export abstract class Metric<L extends MetricLabels = MetricLabels> {
+export abstract class Metric<L = any> {
 
     constructor(
         public name: string,
@@ -33,8 +29,8 @@ export abstract class Metric<L extends MetricLabels = MetricLabels> {
         return report.join('\n');
     }
 
-    protected createMetricLabelsKey<L extends MetricLabels>(labels: Partial<L> = {}) {
-        return Object.keys(labels).sort().map(k => `${k}="${labels[k]}"`).join(',');
+    protected createMetricLabelsKey<L>(labels: Partial<L> = {}) {
+        return Object.keys(labels).sort().map(k => `${k}="${(labels as any)[k]}"`).join(',');
     }
 
 }

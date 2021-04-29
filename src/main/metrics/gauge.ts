@@ -1,6 +1,6 @@
-import { Metric, MetricDatum, MetricLabels } from './metric';
+import { Metric, MetricDatum } from './metric';
 
-export class GaugeMetric<L extends MetricLabels = MetricLabels> extends Metric<L> {
+export class GaugeMetric<L = any> extends Metric<L> {
     protected data: Map<string, MetricDatum<L>> = new Map();
 
     getType() {
@@ -17,7 +17,7 @@ export class GaugeMetric<L extends MetricLabels = MetricLabels> extends Metric<L
         }
     }
 
-    get(labels: MetricLabels = {}) {
+    get(labels: Partial<L> = {}) {
         return this.data.get(this.createMetricLabelsKey(labels));
     }
 

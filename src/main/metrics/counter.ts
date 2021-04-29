@@ -1,13 +1,13 @@
-import { Metric, MetricDatum, MetricLabels } from './metric';
+import { Metric, MetricDatum } from './metric';
 
-export class CounterMetric<L extends MetricLabels = MetricLabels> extends Metric<L> {
+export class CounterMetric<L = any> extends Metric<L> {
     protected data: Map<string, MetricDatum<L>> = new Map();
 
     getType() {
         return 'counter';
     }
 
-    get(labels: MetricLabels = {}) {
+    get(labels: Partial<L> = {}) {
         return this.data.get(this.createMetricLabelsKey(labels));
     }
 

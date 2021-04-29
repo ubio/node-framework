@@ -1,8 +1,8 @@
-import { Metric, MetricLabels } from './metric';
+import { Metric } from './metric';
 
 const DEFAULT_BUCKETS = [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10];
 
-export class HistogramMetric<L extends MetricLabels = MetricLabels> extends Metric<L> {
+export class HistogramMetric<L = any> extends Metric<L> {
     protected buckets: number[];
     data: Map<string, HistogramDatum<L>> = new Map();
 
@@ -88,7 +88,7 @@ export class HistogramMetric<L extends MetricLabels = MetricLabels> extends Metr
 
 }
 
-export interface HistogramDatum<L extends MetricLabels> {
+export interface HistogramDatum<L> {
     labels: Partial<L>;
     timestamp: number;
     buckets: number[]; // correspond to configured buckets, w/o +Inf

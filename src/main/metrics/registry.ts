@@ -4,25 +4,25 @@ import { Exception } from '../exception';
 import { CounterMetric } from './counter';
 import { GaugeMetric } from './gauge';
 import { HistogramMetric } from './histogram';
-import { Metric, MetricLabels } from './metric';
+import { Metric } from './metric';
 
 @injectable()
 export class MetricsRegistry {
     protected registry: Map<string, Metric> = new Map();
 
-    counter<L extends MetricLabels = any>(name: string, help: string) {
+    counter<L = any>(name: string, help: string) {
         const counter = new CounterMetric<L>(name, help);
         this.register(counter);
         return counter;
     }
 
-    gauge<L extends MetricLabels = any>(name: string, help: string) {
+    gauge<L = any>(name: string, help: string) {
         const gauge = new GaugeMetric<L>(name, help);
         this.register(gauge);
         return gauge;
     }
 
-    histogram<L extends MetricLabels = any>(name: string, help: string, buckets?: number[]) {
+    histogram<L = any>(name: string, help: string, buckets?: number[]) {
         const histogram = new HistogramMetric<L>(name, help, buckets);
         this.register(histogram);
         return histogram;
