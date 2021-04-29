@@ -66,4 +66,5 @@ export class FooRouter extends Router {
     ) {
         return { fooId, bar };
     }
+
 }

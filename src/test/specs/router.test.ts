@@ -7,6 +7,7 @@ import { BarRouter } from '../routes/bar';
 import { FooRouter } from '../routes/foo';
 import { MultipartRouter } from '../routes/multipart';
 import { ResponseSchemaRouter } from '../routes/response-schema';
+import { WildcardRouter } from '../routes/wildcard';
 
 describe('Router', () => {
 
@@ -30,7 +31,7 @@ describe('Router', () => {
             const tokens = tokenizePath('/foo/{fooId}');
             assert.deepStrictEqual(tokens, [
                 { type: 'string', value: '/foo/' },
-                { type: 'param', value: 'fooId' },
+                { type: 'param', value: 'fooId', wildcard: false },
             ]);
         });
 
@@ -38,9 +39,9 @@ describe('Router', () => {
             const tokens = tokenizePath('/foo/{fooId}/bar/{barId}');
             assert.deepStrictEqual(tokens, [
                 { type: 'string', value: '/foo/' },
-                { type: 'param', value: 'fooId' },
+                { type: 'param', value: 'fooId', wildcard: false },
                 { type: 'string', value: '/bar/' },
-                { type: 'param', value: 'barId' },
+                { type: 'param', value: 'barId', wildcard: false },
             ]);
         });
 
@@ -48,11 +49,11 @@ describe('Router', () => {
             const tokens = tokenizePath('/foo/{fooId}/bar/{barId}.{ext}');
             assert.deepStrictEqual(tokens, [
                 { type: 'string', value: '/foo/' },
-                { type: 'param', value: 'fooId' },
+                { type: 'param', value: 'fooId', wildcard: false },
                 { type: 'string', value: '/bar/' },
-                { type: 'param', value: 'barId' },
+                { type: 'param', value: 'barId', wildcard: false },
                 { type: 'string', value: '.' },
-                { type: 'param', value: 'ext' },
+                { type: 'param', value: 'ext', wildcard: false },
             ]);
         });
 
@@ -114,6 +115,14 @@ describe('Router', () => {
             });
         });
 
+        describe('/tags/{*tags}', () => {
+            const tokens = tokenizePath('/tags/{*tags}');
+            it('match all path components', () => {
+                const m = matchPath('/tags/1/2/3', tokens);
+                assert.deepStrictEqual(m, { tags: '1/2/3' });
+            });
+        });
+
     });
 
     describe('request dispatching', () => {
@@ -123,6 +132,7 @@ describe('Router', () => {
                 super();
                 this.container.bind(Router).to(FooRouter);
                 this.container.bind(Router).to(BarRouter);
+                this.container.bind(Router).to(WildcardRouter);
                 this.container.bind(Router).to(MultipartRouter);
             }
             async beforeStart() {
@@ -257,6 +267,16 @@ describe('Router', () => {
                 .send({ invalid: true });
             assert.strictEqual(res.status, 400);
             assert.strictEqual(res.body.name, 'RequestParametersValidationError');
+        });
+
+        it('GET /path/1/2/3', async () => {
+            const request = supertest(app.httpServer.callback());
+            const res = await request.get('/path/1/2/3');
+            assert.strictEqual(res.status, 200);
+            assert.strictEqual(res.header['wildcard-before-all'], 'true');
+            assert(res.header['bar-before-all'] == null);
+            assert(res.header['foo-before-get-one'] == null);
+            assert.deepStrictEqual(res.body, { path: '1/2/3' });
         });
 
         describe('multipart body', () => {
