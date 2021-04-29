@@ -18,18 +18,18 @@ export async function errorHandler(ctx: Context, next: () => Promise<any>) {
     try {
         await next();
     } catch (error) {
-        ctx.logger.warn(`Error: ${error.name} ${error.message}`.trim(), {
+        ctx.logger.warn(`Request failed: ${error.stack}`.trim(), {
             method: ctx.method,
             url: ctx.url,
             requestId: ctx.header['x-request-id'],
-            error,
+            details: error.details ?? {},
         });
         if (error instanceof ClientError) {
             ctx.status = error.status;
             ctx.body = {
                 object: 'error',
                 name: error.name,
-                message: error.message || '',
+                message: error.message,
                 details: error.details,
             };
         } else {
