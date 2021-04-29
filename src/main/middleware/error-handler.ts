@@ -22,7 +22,7 @@ export async function errorHandler(ctx: Context, next: () => Promise<any>) {
             method: ctx.method,
             url: ctx.url,
             requestId: ctx.header['x-request-id'],
-            ...error,
+            error,
         });
         if (error instanceof ClientError) {
             ctx.status = error.status;
