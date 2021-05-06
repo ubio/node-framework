@@ -7,6 +7,7 @@ import bodyParser from 'koa-body';
 import conditional from 'koa-conditional-get';
 import etag from 'koa-etag';
 import stoppable, { StoppableServer } from 'stoppable';
+import compress from 'koa-compress';
 
 import { AcAuth } from './ac-auth';
 import { FrameworkEnv } from './env';
@@ -46,6 +47,21 @@ export class HttpServer extends Koa {
     }
 
     addStandardMiddleware(): this {
+        this.use(async (ctx, next) => {
+            ctx.compress = false;
+            await next();
+        });
+        this.use(
+            compress({
+                threshold: 2048,
+                gzip: {
+                    flush: require('zlib').constants.Z_SYNC_FLUSH,
+                },
+                deflate: {
+                    flush: require('zlib').constants.Z_SYNC_FLUSH,
+                },
+            })
+        );
         this.use(this.createRequestContainerMiddleware());
         this.use(bodyParser({
             json: true,
