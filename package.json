@@ -40,6 +40,7 @@
     "devDependencies": {
         "@types/chalk": "^2.2.0",
         "@types/jsonwebtoken": "^8.5.0",
+        "@types/koa-compress": "^4.0.1",
         "@types/mocha": "^8.2.0",
         "@types/mongodb": "^3.6.4",
         "@types/node": "^14.14.32",
@@ -73,6 +74,7 @@
         "jsonwebtoken": "^8.5.1",
         "koa": "^2.11.0",
         "koa-body": "^4.2.0",
+        "koa-compress": "^5.0.1",
         "koa-conditional-get": "^3.0.0",
         "koa-etag": "^4.0.0",
         "node-fetch": "^2.6.0",

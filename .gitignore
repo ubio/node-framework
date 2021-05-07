@@ -12,3 +12,4 @@ out/
 keyfile.json
 
 .tmp*
+/.history
