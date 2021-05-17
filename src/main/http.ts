@@ -4,10 +4,10 @@ import https from 'https';
 import { Container, inject, injectable } from 'inversify';
 import Koa, { Middleware } from 'koa';
 import bodyParser from 'koa-body';
+import compress from 'koa-compress';
 import conditional from 'koa-conditional-get';
 import etag from 'koa-etag';
 import stoppable, { StoppableServer } from 'stoppable';
-import compress from 'koa-compress';
 
 import { AcAuth } from './ac-auth';
 import { FrameworkEnv } from './env';
