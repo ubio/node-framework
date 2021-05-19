@@ -148,9 +148,7 @@ export class Router {
                     await this.executeRoute(middleware, pathParams);
                 }
                 const response = await this.executeRoute(route, pathParams);
-                if (response != null) {
-                    this.ctx.body = response;
-                }
+                this.ctx.body = response ?? this.ctx.body ?? {};
                 if (this.isResponseValidationEnabled()) {
                     this.validateResponseBody(route, this.ctx.status, this.ctx.body);
                 }
