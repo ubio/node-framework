@@ -1,4 +1,5 @@
 import Ajv, { ValidateFunction as AjvValidateFunction } from 'ajv';
+import addFormats from 'ajv-formats';
 import escapeRegexp from 'escape-string-regexp';
 import { inject, injectable } from 'inversify';
 import * as koa from 'koa';
@@ -20,6 +21,7 @@ const ajv = new Ajv({
     useDefaults: true,
     removeAdditional: true,
 });
+addFormats(ajv);
 
 export function Get(spec: RouteSpec = {}) {
     return routeDecorator('get', spec);

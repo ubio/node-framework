@@ -30,7 +30,7 @@ export class FooRouter extends Router {
         requestBodySchema: {
             type: 'object',
             properties: {
-                fooId: { type: 'string', minLength: 1 }
+                fooId: { type: 'string', minLength: 1, format: 'uuid' },
             },
             required: ['fooId']
         },
