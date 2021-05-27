@@ -20,6 +20,7 @@ const ajv = new Ajv({
     coerceTypes: 'array',
     useDefaults: true,
     removeAdditional: true,
+    keywords: ['optional'],
 });
 addFormats(ajv);
 
