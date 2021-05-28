@@ -158,14 +158,15 @@ describe('Router', () => {
         });
 
         it('POST /foo', async () => {
+            const fooId = '00000000-0000-0000-0000-000000000000';
             const request = supertest(app.httpServer.callback());
-            const res = await request.post('/foo')
-                .send({ fooId: 'blah' });
+            const res = await request.post('/foo').send({ fooId });
+
             assert.strictEqual(res.status, 201);
             assert.strictEqual(res.header['foo-before-all'], 'true');
             assert(res.header['bar-before-all'] == null);
             assert(res.header['foo-before-get-one'] == null);
-            assert.deepStrictEqual(res.body, { fooId: 'blah' });
+            assert.deepStrictEqual(res.body, { fooId });
         });
 
         it('POST /foo with missing params', async () => {
@@ -182,7 +183,7 @@ describe('Router', () => {
         it('POST /foo with incorrect params', async () => {
             const request = supertest(app.httpServer.callback());
             const res = await request.post('/foo')
-                .send({ fooId: '' });
+                .send({ fooId: 'blah' });
             assert.strictEqual(res.status, 400);
             assert.strictEqual(res.header['foo-before-all'], 'true');
             assert(res.header['bar-before-all'] == null);
