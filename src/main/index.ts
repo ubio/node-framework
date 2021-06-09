@@ -3,6 +3,7 @@ import * as util from './util';
 
 export * from './ac-auth';
 export * from './application';
+export * from './config';
 export * from './doc';
 export * from './exception';
 export * from './http';

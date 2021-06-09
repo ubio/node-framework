@@ -1,5 +1,6 @@
 import { Container } from 'inversify';
 
+import { Config, EnvConfig } from './config';
 import { FrameworkEnv } from './env';
 import { HttpServer } from './http';
 import { Logger, StandardLogger } from './logger';
@@ -35,6 +36,7 @@ export class Application {
         this.container = container;
         // Some default implementations are bound for convenience but can be replaced as fit
         this.container.bind('RootContainer').toConstantValue(container);
+        this.container.bind(Config).to(EnvConfig).inSingletonScope();
         this.container.bind(HttpServer).toSelf().inSingletonScope();
         this.container.bind(Logger).to(StandardLogger).inSingletonScope();
         this.container.bind(Router).to(MetricsRouter);
