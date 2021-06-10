@@ -10,7 +10,7 @@ import etag from 'koa-etag';
 import stoppable, { StoppableServer } from 'stoppable';
 
 import { AcAuth } from './ac-auth';
-import { FrameworkEnv } from './env';
+import { Config, config } from './config';
 import { ClientError } from './exception';
 import { Logger, RequestLogger } from './logger';
 import * as middleware from './middleware';
@@ -21,29 +21,24 @@ import { AcAuthProvider } from './services';
 export class HttpServer extends Koa {
     server: StoppableServer | null = null;
 
+    @config({ default: 8080 }) PORT!: number;
+    @config({ default: '5mb' }) HTTP_JSON_LIMIT!: string;
+    @config({ default: '1mb' }) HTTP_FORM_LIMIT!: string;
+    @config({ default: 50 * 1024 * 1024 }) HTTP_MAX_FILE_SIZE_BYTES!: number;
+    @config({ default: 10000 }) HTTP_SHUTDOWN_DELAY!: number;
+    @config({ default: 300000 }) HTTP_TIMEOUT!: number;
+
     constructor(
-        @inject(Logger)
-        protected logger: Logger,
         @inject('RootContainer')
         protected rootContainer: Container,
-        @inject(FrameworkEnv)
-        protected frameworkEnv: FrameworkEnv, // env is used by Koa
+        @inject(Logger)
+        protected logger: Logger,
+        @inject(Config)
+        public config: Config, // env is used by Koa
     ) {
         super();
         this.proxy = true;
         this.addStandardMiddleware();
-    }
-
-    getPort() {
-        return this.frameworkEnv.PORT;
-    }
-
-    getTimeout() {
-        return this.frameworkEnv.HTTP_TIMEOUT;
-    }
-
-    getShutdownDelay() {
-        return this.frameworkEnv.HTTP_SHUTDOWN_DELAY;
     }
 
     addStandardMiddleware(): this {
@@ -67,10 +62,10 @@ export class HttpServer extends Koa {
             json: true,
             urlencoded: true,
             multipart: true,
-            jsonLimit: this.frameworkEnv.HTTP_JSON_LIMIT,
-            formLimit: this.frameworkEnv.HTTP_FORM_LIMIT,
+            jsonLimit: this.HTTP_JSON_LIMIT,
+            formLimit: this.HTTP_FORM_LIMIT,
             formidable: {
-                maxFileSize: this.frameworkEnv.HTTP_MAX_FILE_SIZE_BYTES,
+                maxFileSize: this.HTTP_MAX_FILE_SIZE_BYTES,
             }
         }));
         this.use(conditional());
@@ -92,10 +87,10 @@ export class HttpServer extends Koa {
         if (this.server) {
             return;
         }
-        const port = this.getPort();
-        const server = stoppable(http.createServer(this.callback()), this.getTimeout());
+        const port = this.PORT;
+        const server = stoppable(http.createServer(this.callback()), this.HTTP_TIMEOUT);
         this.server = server;
-        this.server.setTimeout(this.getTimeout());
+        this.server.setTimeout(this.HTTP_TIMEOUT);
         server.listen(port, () => {
             this.logger.info(`Listening on ${port}`);
         });
@@ -105,10 +100,10 @@ export class HttpServer extends Koa {
         if (this.server) {
             return;
         }
-        const port = this.getPort();
-        const server = stoppable(https.createServer(options, this.callback()), this.getTimeout());
+        const port = this.PORT;
+        const server = stoppable(https.createServer(options, this.callback()), this.HTTP_TIMEOUT);
         this.server = server;
-        this.server.setTimeout(this.getTimeout());
+        this.server.setTimeout(this.HTTP_TIMEOUT);
         server.listen(port, () => {
             this.logger.info(`Listening on ${port}`);
         });
@@ -121,7 +116,7 @@ export class HttpServer extends Koa {
         }
         if (process.env.NODE_ENV === 'production') {
             this.logger.info(`Graceful shutdown: wait for traffic to stop being sent`);
-            await new Promise(r => setTimeout(r, this.getShutdownDelay()));
+            await new Promise(r => setTimeout(r, this.HTTP_SHUTDOWN_DELAY));
         }
         this.logger.info('Graceful shutdown: stop accepting new requests, wait for existing requests to finish');
         await new Promise(r => server.stop(r));

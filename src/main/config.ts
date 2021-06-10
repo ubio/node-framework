@@ -117,9 +117,20 @@ export abstract class Config {
 }
 
 @injectable()
-export class EnvConfig extends Config {
+export class DefaultConfig extends Config {
+    map: Map<string, string> = new Map();
+
+    constructor() {
+        super();
+        for (const [k, v] of Object.entries(process.env)) {
+            if (v != null) {
+                this.map.set(k, v);
+            }
+        }
+    }
+
     resolve(key: string): string | null {
-        return process.env[key] ?? null;
+        return this.map.get(key) ?? null;
     }
 }
 

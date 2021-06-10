@@ -1,4 +1,3 @@
-import * as env from './env';
 import * as util from './util';
 
 export * from './ac-auth';
@@ -16,6 +15,5 @@ export * from './services';
 export * from './util';
 
 export {
-    env,
     util,
 };

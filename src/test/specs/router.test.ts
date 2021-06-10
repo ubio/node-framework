@@ -1,8 +1,7 @@
 import assert from 'assert';
 import supertest from 'supertest';
 
-import { Application, matchPath, Router, tokenizePath } from '../../main';
-import { FrameworkEnv } from '../../main/env';
+import { Application, Config, DefaultConfig, matchPath, Router, tokenizePath } from '../../main';
 import { BarRouter } from '../routes/bar';
 import { FooRouter } from '../routes/foo';
 import { MultipartRouter } from '../routes/multipart';
@@ -304,8 +303,11 @@ describe('Router', () => {
             constructor() {
                 super();
                 this.container.bind(Router).to(ResponseSchemaRouter);
-                this.container.rebind(FrameworkEnv).to(class extends FrameworkEnv {
-                    HTTP_VALIDATE_RESPONSES = true;
+                this.container.rebind(Config).to(class extends DefaultConfig {
+                    constructor() {
+                        super();
+                        this.map.set('HTTP_VALIDATE_RESPONSES', 'true');
+                    }
                 });
             }
             async beforeStart() {
