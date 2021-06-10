@@ -91,11 +91,8 @@ export abstract class Config {
         parse: (str: string) => T | null,
         defaultValue?: string | T,
     ): T | null {
-        let str = this.resolve(key);
-        if (str == null) {
-            str = String(defaultValue);
-        }
-        return str == null ? null : parse(str);
+        const str = this.resolve(key) ?? defaultValue;
+        return str == null ? null : parse(String(str));
     }
 
     protected get<T>(key: string, parse: (str: string) => T | null, defaultValue?: string | T): T {
