@@ -1,26 +1,15 @@
 import 'reflect-metadata';
 
-import { injectable } from 'inversify';
+import { Container, injectable } from 'inversify';
 
 import { Exception } from './exception';
+import { addClassMetadata, getBindingsMap, getClassMetadata } from './util';
 
-// const GLOBAL_MAP_KEY = Symbol('configMap');
-//
-// export function getConfigDeclarations(): ConfigDecl[] {
-//     let list: ConfigDecl[] = (global as any)[GLOBAL_MAP_KEY];
-//     if (!Array.isArray(list)) {
-//         list = [];
-//         (global as any)[GLOBAL_MAP_KEY] = list;
-//     }
-//     return list;
-// }
+const CONFIG_METADATA_KEY = Symbol('CONFIG_METADATA_KEY');
 
 export type ConfigType = String | Boolean | Number;
 
-export type Configurable = { config: Config; }
-
 export interface ConfigDecl {
-    prototype: Configurable;
     key: string;
     type: ConfigType;
     defaultValue?: string;
@@ -30,6 +19,8 @@ export interface ConfigOptions {
     default?: ConfigType;
 }
 
+export type Configurable = { config: Config; }
+
 export function config(options: ConfigOptions = {}) {
     return (prototype: Configurable, key: string) => {
         const type = Reflect.getMetadata('design:type', prototype, key);
@@ -37,12 +28,7 @@ export function config(options: ConfigOptions = {}) {
             throw new ConfigError('@config can only be used with string, number or boolean types');
         }
         const defaultValue = options.default == null ? undefined : String(options.default);
-        // getConfigDeclarations().push({
-        //     prototype,
-        //     key,
-        //     type,
-        //     defaultValue,
-        // });
+        addClassMetadata<ConfigDecl>(CONFIG_METADATA_KEY, prototype, { key, type, defaultValue });
         switch (type) {
             case String: {
                 Object.defineProperty(prototype, key, {
@@ -70,6 +56,30 @@ export function config(options: ConfigOptions = {}) {
             }
         }
     };
+}
+
+/**
+ * Returns all `@config()` declared in class and its ancestors.
+ */
+export function getClassConfigs(classOrProto: any): ConfigDecl[] {
+    const target = classOrProto instanceof Function ? classOrProto.prototype : classOrProto;
+    return getClassMetadata(CONFIG_METADATA_KEY, target);
+}
+
+/**
+ * Returns all `@config()` declarations for all classes bound to the container.
+ */
+export function getContainerConfigs(container: Container): ConfigDecl[] {
+    const result: ConfigDecl[] = [];
+    for (const bindings of getBindingsMap(container).values()) {
+        for (const binding of bindings) {
+            if (typeof binding.implementationType === 'function') {
+                const configs = getClassConfigs(binding.implementationType);
+                result.push(...configs);
+            }
+        }
+    }
+    return result.sort((a, b) => a.key > b.key ? 1 : -1);
 }
 
 @injectable()
