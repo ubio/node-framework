@@ -31,6 +31,8 @@ describe('JwksClient', () => {
 
         it('fetches the key from the jwks endpoint', async () => {
             await jwksClient.getSigningKey();
+            assert.ok(fetch.spy.called);
+            assert.strictEqual(fetch.spy.calledCount, 1);
         });
 
         it('retrieves the key from cache when called for the second time', async () => {
@@ -38,7 +40,7 @@ describe('JwksClient', () => {
             await jwksClient.getSigningKey();
 
             assert.ok(fetch.spy.called);
-            assert.equal(fetch.spy.calledCount, 1);
+            assert.strictEqual(fetch.spy.calledCount, 1);
         });
 
         context('value in cache is stale', () => {
@@ -54,7 +56,7 @@ describe('JwksClient', () => {
 
             it('sends request', async () => {
                 const key = await jwksClient.getSigningKey();
-                assert.notEqual(key, 'i-am-stale');
+                assert.notStrictEqual(key, 'i-am-stale');
                 assert.ok(fetch.spy.called);
             });
 
@@ -62,7 +64,31 @@ describe('JwksClient', () => {
                 const key = await jwksClient.getSigningKey();
                 const cache = jwksClient.getCache();
                 const cachedKey = cache?.keys.find(_ => _.k === key);
-                assert.equal(key, cachedKey?.k);
+                assert.strictEqual(key, cachedKey?.k);
+            });
+        });
+
+        describe('configurable cache timeout', () => {
+            it('sets default value (1 minute) if not specified', async () => {
+                await jwksClient.getSigningKey();
+                const cache = jwksClient.getCache();
+                assert.ok(cache);
+                assert.strictEqual(Math.round((cache.validUntil - Date.now()) / 1000), 60);
+            });
+
+            it('caches keys for specified amount of time', async () => {
+                jwksClient = new JwksClient({
+                    url: mockUrl,
+                    retryAttempts: 1,
+                    algorithm,
+                    cacheMaxAge: 3600 * 1000
+                });
+                jwksClient.request.config.fetch = fetchMock({ status: 200 }, { keys: [happyKey] });;
+
+                await jwksClient.getSigningKey();
+                const cache = jwksClient.getCache();
+                assert.ok(cache);
+                assert.strictEqual(Math.round((cache.validUntil - Date.now()) / 1000), 3600);
             });
         });
 
@@ -75,7 +101,7 @@ describe('JwksClient', () => {
                     await jwksClient.getSigningKey();
                     assert(true, 'unexpected success');
                 } catch (error) {
-                    assert.equal(error.name, 'SigningKeyNotFoundError');
+                    assert.strictEqual(error.name, 'SigningKeyNotFoundError');
                 }
             });
 
@@ -114,7 +140,7 @@ describe('JwksClient', () => {
                     await jwksClient.getSigningKey();
                     assert(true, 'unexpected success');
                 } catch (error) {
-                    assert.equal(error.name, 'JwksValidationError');
+                    assert.strictEqual(error.name, 'JwksValidationError');
                     assert.ok(error.details.messages[0].includes('k'));
                 }
             });
@@ -128,7 +154,7 @@ describe('JwksClient', () => {
                     await jwksClient.getSigningKey();
                     assert(true, 'unexpected success');
                 } catch (error) {
-                    assert.equal(error.name, 'JwksValidationError');
+                    assert.strictEqual(error.name, 'JwksValidationError');
                     assert.ok(error.details.messages[0].includes('k'));
                 }
             });
@@ -146,7 +172,7 @@ describe('JwksClient', () => {
                     await jwksClient.getSigningKey();
                     assert(true, 'unexpected success');
                 } catch (error) {
-                    assert.equal(error.name, 'JwksValidationError');
+                    assert.strictEqual(error.name, 'JwksValidationError');
                     assert.ok(error.details.messages[0].includes('k'));
                 }
             });
