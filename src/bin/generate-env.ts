@@ -26,9 +26,7 @@ main()
     });
 
 async function main() {
-    const appModulePath = path.join(process.cwd(), 'out/main/app');
-    const appModule = require(appModulePath);
-    const App = discoverAppClass(appModule);
+    const App = discoverAppClass();
     if (!App) {
         if (opts.silent) {
             return;
@@ -40,13 +38,19 @@ async function main() {
     await writeEnv(configs);
 }
 
-function discoverAppClass(module: any): typeof Application | null {
-    for (const obj of Object.values(module)) {
-        if (Application.isPrototypeOf(obj as any)) {
-            return obj as (typeof Application);
+function discoverAppClass(): typeof Application | null {
+    try {
+        const appModulePath = path.join(process.cwd(), 'out/main/app');
+        const appModule = require(appModulePath);
+        for (const obj of Object.values(appModule)) {
+            if (Application.isPrototypeOf(obj as any)) {
+                return obj as (typeof Application);
+            }
         }
+        return null;
+    } catch (err) {
+        return null;
     }
-    return null;
 }
 
 async function writeEnv(configs: ConfigDecl[]) {
