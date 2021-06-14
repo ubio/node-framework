@@ -59,7 +59,7 @@ export function getClassMetadata<T>(key: Symbol, target: any): T[] {
     let result: T[] = [];
     let proto = target;
     while (proto !== Object.prototype) {
-        const ownMetadata: T[] = Reflect.getOwnMetadata(key, target) || [];
+        const ownMetadata: T[] = Reflect.getOwnMetadata(key, proto) || [];
         result = ownMetadata.concat(result);
         proto = Object.getPrototypeOf(proto);
     }
