@@ -85,8 +85,8 @@ export class Application {
     getMissingConfigKeys() {
         const missingConfigs = new Set<string>();
         const configs = getContainerConfigs(this.container);
-        for (const { key } of configs) {
-            const value = this.config.resolve(key);
+        for (const { key, defaultValue } of configs) {
+            const value = this.config.getString(key, defaultValue);
             if (value == null) {
                 missingConfigs.add(key);
             }
