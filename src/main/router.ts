@@ -4,7 +4,7 @@ import escapeRegexp from 'escape-string-regexp';
 import { inject, injectable } from 'inversify';
 import * as koa from 'koa';
 
-import { FrameworkEnv } from './env';
+import { Config, config } from './config';
 import { ClientError, Exception } from './exception';
 import { Logger } from './logger';
 import { getGlobalMetrics } from './metrics/global';
@@ -129,8 +129,10 @@ export class Router {
     logger!: Logger;
     @inject('KoaContext')
     ctx!: koa.Context;
-    @inject(FrameworkEnv)
-    frameworkEnv!: FrameworkEnv;
+    @inject(Config)
+    config!: Config;
+
+    @config({ default: false }) HTTP_VALIDATE_RESPONSES!: boolean;
 
     params: Params = {};
 
@@ -152,7 +154,7 @@ export class Router {
                 }
                 const response = await this.executeRoute(route, pathParams);
                 this.ctx.body = response ?? this.ctx.body ?? {};
-                if (this.isResponseValidationEnabled()) {
+                if (this.HTTP_VALIDATE_RESPONSES) {
                     this.validateResponseBody(route, this.ctx.status, this.ctx.body);
                 }
                 return true;
@@ -211,10 +213,6 @@ export class Router {
             const messages = validator.errors!.map(e => ajvErrorToMessage(e));
             throw new ResponseValidationError(messages);
         }
-    }
-
-    protected isResponseValidationEnabled() {
-        return this.frameworkEnv.HTTP_VALIDATE_RESPONSES;
     }
 
     protected assembleParams(ep: RouteDefinition, pathParams: Params): { [key: string]: any } {

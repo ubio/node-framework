@@ -1,4 +1,7 @@
+import 'reflect-metadata';
+
 import { ErrorObject as AjvErrorObject } from 'ajv';
+import { Container, interfaces } from 'inversify';
 import { v4 as uuid } from 'uuid';
 
 export type Constructor<T> = new (...args: any[]) => T;
@@ -44,4 +47,26 @@ export function fakeUuid(char: string): string {
 export interface EntityList<T> {
     entities: T[];
     totalCount: number;
+}
+
+export function addClassMetadata<T>(key: Symbol, target: any, datum: T) {
+    const metadata = Reflect.getOwnMetadata(key, target) || [];
+    metadata.push(datum);
+    Reflect.defineMetadata(key, metadata, target);
+}
+
+export function getClassMetadata<T>(key: Symbol, target: any): T[] {
+    let result: T[] = [];
+    let proto = target;
+    while (proto !== Object.prototype) {
+        const ownMetadata: T[] = Reflect.getOwnMetadata(key, target) || [];
+        result = ownMetadata.concat(result);
+        proto = Object.getPrototypeOf(proto);
+    }
+    return result;
+}
+
+export function getBindingsMap(container: Container):
+    Map<interfaces.ServiceIdentifier<any>, interfaces.Binding<any>[]> {
+    return (container as any)._bindingDictionary._map;
 }

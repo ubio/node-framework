@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 import jsonwebtoken from 'jsonwebtoken';
 
-import { FrameworkEnv } from '../env';
+import { Config, config } from '../config';
 import { JwksClient } from '../jwks';
 import { Logger } from '../logger';
 
@@ -14,15 +14,20 @@ export abstract class JwtService {
 export class AutomationCloudJwtService extends JwtService {
     protected jwksClient: JwksClient;
 
+    @config({ default: 'http://hydra.authz.svc.cluster.local:4445/keys/internal' })
+    AC_JWKS_URL!: string;
+    @config({ default: 'HS256' })
+    AC_SIGNING_KEY_ALGORITHM!: string;
+
     constructor(
-        @inject(FrameworkEnv)
-        protected env: FrameworkEnv,
+        @inject(Config)
+        public config: Config,
         @inject(Logger)
         protected logger: Logger,
     ) {
         super();
-        const url = this.env.AC_JWKS_URL;
-        const algorithm = this.env.AC_SIGNING_KEY_ALGORITHM;
+        const url = this.AC_JWKS_URL;
+        const algorithm = this.AC_SIGNING_KEY_ALGORITHM;
         this.jwksClient = new JwksClient({
             url,
             algorithm,

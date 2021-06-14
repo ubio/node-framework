@@ -1,6 +1,6 @@
 import { Container } from 'inversify';
 
-import { FrameworkEnv } from './env';
+import { Config, DefaultConfig } from './config';
 import { HttpServer } from './http';
 import { Logger, StandardLogger } from './logger';
 import { MetricsRegistry } from './metrics';
@@ -35,11 +35,11 @@ export class Application {
         this.container = container;
         // Some default implementations are bound for convenience but can be replaced as fit
         this.container.bind('RootContainer').toConstantValue(container);
+        this.container.bind(Config).to(DefaultConfig).inSingletonScope();
         this.container.bind(HttpServer).toSelf().inSingletonScope();
         this.container.bind(Logger).to(StandardLogger).inSingletonScope();
         this.container.bind(Router).to(MetricsRouter);
         this.container.bind(MetricsRegistry).toConstantValue(getGlobalMetrics());
-        this.container.bind(FrameworkEnv).toSelf().inSingletonScope();
         this.container.bind(JwtService).to(AutomationCloudJwtService).inSingletonScope();
         this.container.bind(AcAuthProvider).to(DefaultAcAuthProvider);
     }
