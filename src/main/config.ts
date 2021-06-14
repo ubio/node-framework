@@ -13,6 +13,7 @@ export interface ConfigDecl {
     key: string;
     type: ConfigType;
     defaultValue?: string;
+    prototype: Configurable;
 }
 
 export interface ConfigOptions {
@@ -28,7 +29,7 @@ export function config(options: ConfigOptions = {}) {
             throw new ConfigError('@config can only be used with string, number or boolean types');
         }
         const defaultValue = options.default == null ? undefined : String(options.default);
-        addClassMetadata<ConfigDecl>(CONFIG_METADATA_KEY, prototype, { key, type, defaultValue });
+        addClassMetadata<ConfigDecl>(CONFIG_METADATA_KEY, prototype, { key, type, defaultValue, prototype });
         switch (type) {
             case String: {
                 Object.defineProperty(prototype, key, {

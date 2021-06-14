@@ -28,7 +28,7 @@ function discoverAppClass(module: any): typeof Application {
 
 async function writeEnv(configs: ConfigDecl[]) {
     const dotEnvPath = path.join(process.cwd(), '.env.example');
-    const lines = configs.map(_ => `${_.key}=${_.defaultValue ?? ''}`);
-    const text = lines.join('\n') + '\n';
+    const lines = new Set(configs.map(_ => `${_.key}=${_.defaultValue ?? ''}`));
+    const text = [...lines].join('\n') + '\n';
     await fs.writeFile(dotEnvPath, text);
 }
