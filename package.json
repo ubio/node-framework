@@ -11,7 +11,8 @@
     ],
     "bin": {
         "generate-openapi": "out/bin/generate-openapi.js",
-        "generate-docs": "out/bin/generate-docs.js"
+        "generate-docs": "out/bin/generate-docs.js",
+        "generate-env": "out/bin/generate-env.js"
     },
     "scripts": {
         "dev": "npm run clean && tsc -w",
