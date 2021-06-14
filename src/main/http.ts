@@ -21,7 +21,7 @@ import { AcAuthProvider } from './services';
 export class HttpServer extends Koa {
     server: StoppableServer | null = null;
 
-    @config({ default: 8080 }) PORT!: number;
+    @config({ default: 8080 }) HTTP_PORT!: number;
     @config({ default: '5mb' }) HTTP_JSON_LIMIT!: string;
     @config({ default: '1mb' }) HTTP_FORM_LIMIT!: string;
     @config({ default: 50 * 1024 * 1024 }) HTTP_MAX_FILE_SIZE_BYTES!: number;
@@ -87,7 +87,7 @@ export class HttpServer extends Koa {
         if (this.server) {
             return;
         }
-        const port = this.PORT;
+        const port = this.HTTP_PORT;
         const server = stoppable(http.createServer(this.callback()), this.HTTP_TIMEOUT);
         this.server = server;
         this.server.setTimeout(this.HTTP_TIMEOUT);
@@ -100,7 +100,7 @@ export class HttpServer extends Koa {
         if (this.server) {
             return;
         }
-        const port = this.PORT;
+        const port = this.HTTP_PORT;
         const server = stoppable(https.createServer(options, this.callback()), this.HTTP_TIMEOUT);
         this.server = server;
         this.server.setTimeout(this.HTTP_TIMEOUT);
