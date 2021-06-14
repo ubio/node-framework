@@ -1,6 +1,6 @@
 import { Container } from 'inversify';
 
-import { Config, ConfigError, DefaultConfig, getContainerConfigs } from './config';
+import { Config, config, ConfigError, DefaultConfig, getContainerConfigs } from './config';
 import { HttpServer } from './http';
 import { Logger, StandardLogger } from './logger';
 import { MetricsRegistry } from './metrics';
@@ -17,18 +17,11 @@ import {
 /**
  * Application provides an IoC container where all modules should be registered
  * and provides minimal lifecycle framework (start, stop, beforeStart, afterStop).
- *
- * Note: it is convenient (less typing, fewer possibilities for human errors)
- * for a typical http server application to bind its lifecycle to http server lifecycle,
- * so currently Application combines concerns of both http server and IoC composition root.
- * If this proves problematic in future, we may choose to change that and decouple the two.
- *
- * Despite depending on Koa, Application can run just fine without starting an http server.
- * Simply avoid invoking `app.startServer()` and manage the app lifecycle separately
- * (e.g invoke `app.runStartHooks()` instead of `app.startServer()`).
  */
 export class Application {
     container: Container;
+
+    @config({ default: true }) ASSERT_CONFIGS_ON_START!: boolean;
 
     constructor() {
         const container = new Container({ skipBaseClassChecks: true });
@@ -56,7 +49,12 @@ export class Application {
         return this.container.get(HttpServer);
     }
 
-    async beforeStart(): Promise<void> {}
+    async beforeStart(): Promise<void> {
+        if (this.ASSERT_CONFIGS_ON_START) {
+            this.assertConfigs();
+        }
+    }
+
     async afterStop(): Promise<void> {}
 
     bindMetrics(constructor: (new(...args: any[]) => MetricsRegistry)): this {
