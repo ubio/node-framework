@@ -1,6 +1,6 @@
 import { Container } from 'inversify';
 
-import { Config, DefaultConfig } from './config';
+import { Config, ConfigError, DefaultConfig, getContainerConfigs } from './config';
 import { HttpServer } from './http';
 import { Logger, StandardLogger } from './logger';
 import { MetricsRegistry } from './metrics';
@@ -48,6 +48,10 @@ export class Application {
         return this.container.get(Logger);
     }
 
+    get config(): Config {
+        return this.container.get(Config);
+    }
+
     get httpServer(): HttpServer {
         return this.container.get(HttpServer);
     }
@@ -78,6 +82,26 @@ export class Application {
         // TODO uninstall process signals handlers better
         process.removeAllListeners();
         await this.afterStop();
+    }
+
+    getMissingConfigKeys() {
+        const missingConfigs = new Set<string>();
+        const configs = getContainerConfigs(this.container);
+        for (const { key } of configs) {
+            const value = this.config.resolve(key);
+            if (value == null) {
+                missingConfigs.add(key);
+            }
+        }
+        return [...missingConfigs];
+    }
+
+    assertConfigs() {
+        const missingConfigs = this.getMissingConfigKeys();
+        if (missingConfigs.length > 0) {
+            throw new ConfigError('Missing required configuration:\n' +
+                missingConfigs.map(_ => `    - ${_}`).join('\n'));
+        }
     }
 
 }
