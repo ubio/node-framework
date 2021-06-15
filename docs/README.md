@@ -2,7 +2,7 @@
 
 - [Installation](install.md)
 - [Application Structure](structure.md)
-- [Environment Variables](env.md)
+- [Configuration](config.md)
 - [Schema and Domain Model](schema.md)
 - [Application Container](application.md)
 - [MongoDB](mongodb.md)

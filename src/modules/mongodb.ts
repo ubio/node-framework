@@ -1,8 +1,7 @@
 import { inject, injectable } from 'inversify';
 import { Db, MongoClient, MongoClientOptions } from 'mongodb';
 
-import { getGlobalMetrics, Logger } from '../main';
-import { FrameworkEnv } from '../main/env';
+import { Config, config, getGlobalMetrics, Logger } from '../main';
 
 interface MongoClientOptionsExtended extends MongoClientOptions {
     useUnifiedTopology: boolean;
@@ -14,13 +13,17 @@ export class MongoDb {
 
     protected refreshingMetrics = false;
 
+    @config() MONGO_URL!: string;
+    @config({ default: process.env.NODE_ENV !== 'test' }) MONGO_METRICS_ENABLED!: boolean;
+    @config({ default: 10000 }) MONGO_METRICS_REFRESH_INTERVAL!: number;
+
     constructor(
-        @inject(FrameworkEnv)
-        protected env: FrameworkEnv,
+        @inject(Config)
+        public config: Config,
         @inject(Logger)
         protected logger: Logger,
     ) {
-        this.client = new MongoClient(env.MONGO_URL, {
+        this.client = new MongoClient(this.MONGO_URL, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
             connectWithNoPrimary: true,
@@ -34,7 +37,7 @@ export class MongoDb {
 
     async start() {
         await this.client.connect();
-        if (this.env.MONGO_METRICS_ENABLED) {
+        if (this.MONGO_METRICS_ENABLED) {
             this.startRefreshMetrics();
         }
     }
@@ -69,7 +72,7 @@ export class MongoDb {
             } catch (error) {
                 this.logger.warn('Could not refresh MongoDB metrics', { error });
             } finally {
-                await new Promise(r => setTimeout(r, this.env.METRICS_REFRESH_INTERVAL).unref());
+                await new Promise(r => setTimeout(r, this.MONGO_METRICS_REFRESH_INTERVAL).unref());
             }
         }
     }

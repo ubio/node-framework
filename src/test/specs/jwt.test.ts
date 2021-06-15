@@ -3,8 +3,7 @@ import crypto from 'crypto';
 import jsonwebtoken from 'jsonwebtoken';
 import { v4 as uuid } from 'uuid';
 
-import { AutomationCloudJwtService, ConsoleLogger } from '../../main';
-import { FrameworkEnv } from '../../main/env';
+import { AutomationCloudJwtService, ConsoleLogger, DefaultConfig } from '../../main';
 
 describe('AutomationCloudJwt', () => {
     describe('decodeAndVerify', () => {
@@ -22,8 +21,8 @@ describe('AutomationCloudJwt', () => {
         };
 
         beforeEach(async () => {
-            const env = new FrameworkEnv();
-            jwtService = new AutomationCloudJwtService(env, new ConsoleLogger());
+            const config = new DefaultConfig();
+            jwtService = new AutomationCloudJwtService(config, new ConsoleLogger());
             secretKey = getSecretKey();
             (jwtService as any).jwksClient.getSigningKey = async () => secretKey;
         });
@@ -32,9 +31,9 @@ describe('AutomationCloudJwt', () => {
             const token = jsonwebtoken.sign(payload, secretKey, { algorithm: 'HS256' });
             const decoded = await jwtService.decodeAndVerify(token);
 
-            assert.deepEqual(decoded.context, payload.context);
-            assert.deepEqual(decoded.authorization, payload.authorization);
-            assert.deepEqual(decoded.authentication, payload.authentication);
+            assert.deepStrictEqual(decoded.context, payload.context);
+            assert.deepStrictEqual(decoded.authorization, payload.authorization);
+            assert.deepStrictEqual(decoded.authentication, payload.authentication);
         });
 
         it('throws when secret is wrong', async () => {
@@ -43,8 +42,8 @@ describe('AutomationCloudJwt', () => {
                 await jwtService.decodeAndVerify(token);
                 assert.ok(true, 'Unexpected success');
             } catch (err) {
-                assert.equal(err.name, 'JsonWebTokenError');
-                assert.equal(err.message, 'invalid signature');
+                assert.strictEqual(err.name, 'JsonWebTokenError');
+                assert.strictEqual(err.message, 'invalid signature');
             }
         });
 
@@ -54,8 +53,8 @@ describe('AutomationCloudJwt', () => {
                 await jwtService.decodeAndVerify(token);
                 assert.ok(true, 'Unexpected success');
             } catch (err) {
-                assert.equal(err.name, 'TokenExpiredError');
-                assert.equal(err.message, 'jwt expired');
+                assert.strictEqual(err.name, 'TokenExpiredError');
+                assert.strictEqual(err.message, 'jwt expired');
             }
         });
 

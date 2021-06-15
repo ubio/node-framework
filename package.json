@@ -1,6 +1,6 @@
 {
     "name": "@ubio/framework",
-    "version": "11.4.5",
+    "version": "12.2.0",
     "description": "ubio Microservices Framework",
     "main": "out/main/index.js",
     "files": [
@@ -10,7 +10,8 @@
     ],
     "bin": {
         "generate-openapi": "out/bin/generate-openapi.js",
-        "generate-docs": "out/bin/generate-docs.js"
+        "generate-docs": "out/bin/generate-docs.js",
+        "generate-env": "out/bin/generate-env.js"
     },
     "scripts": {
         "dev": "npm run clean && tsc -w",
@@ -67,6 +68,7 @@
         "ajv": "^8.1.0",
         "ajv-formats": "^2.0.2",
         "chalk": "^4.1.0",
+        "commander": "^7.2.0",
         "dotenv": "^8.2.0",
         "escape-string-regexp": "^4.0.0",
         "inversify": "^5.1.1",

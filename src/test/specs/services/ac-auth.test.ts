@@ -5,14 +5,15 @@ import { Container } from 'inversify';
 import {
     AcAuthProvider,
     AuthenticationError,
+    Config,
     ConsoleLogger,
     DefaultAcAuthProvider,
+    DefaultConfig,
     JwtService,
     Logger,
 } from '../../../main';
-import { FrameworkEnv } from '../../../main/env';
 
-describe('RequestAuthService', () => {
+describe('AcAuthProvider', () => {
 
     const container = new Container({ skipBaseClassChecks: true });
     container.bind(Logger).to(ConsoleLogger);
@@ -29,7 +30,7 @@ describe('RequestAuthService', () => {
             return jwt;
         }
     }));
-    container.bind(FrameworkEnv).toSelf().inSingletonScope();
+    container.bind(Config).to(DefaultConfig);
 
     let fetchMock: request.FetchMock;
     let authProvider: DefaultAcAuthProvider;
@@ -51,13 +52,13 @@ describe('RequestAuthService', () => {
     describe('new auth header exists', () => {
 
         beforeEach(() => {
-            const authHeader = container.get(FrameworkEnv).AC_AUTH_HEADER_NAME;
+            const authHeader = container.get(DefaultAcAuthProvider).AC_AUTH_HEADER_NAME;
             headers[authHeader] = 'Bearer jwt-token-here';
         });
 
         it('does not send request to s-api', async () => {
             await authProvider.provide();
-            assert.equal(fetchMock.spy.called, false);
+            assert.strictEqual(fetchMock.spy.called, false);
         });
 
         it('sets authenticated = true', async () => {
@@ -69,9 +70,9 @@ describe('RequestAuthService', () => {
             it('sets auth.organisationId', async () => {
                 jwt.context = { organisation_id: 'some-user-org-id' };
                 const auth = await authProvider.provide();
-                assert.equal(fetchMock.spy.called, false);
+                assert.strictEqual(fetchMock.spy.called, false);
                 const organisationId = auth.getOrganisationId();
-                assert.equal(organisationId, 'some-user-org-id');
+                assert.strictEqual(organisationId, 'some-user-org-id');
             });
         });
 
@@ -80,7 +81,7 @@ describe('RequestAuthService', () => {
                 headers['x-ubio-organisation-id'] = 'org-id-from-header';
                 const auth = await authProvider.provide();
                 const organisationId = auth.getOrganisationId();
-                assert.equal(organisationId, 'org-id-from-header');
+                assert.strictEqual(organisationId, 'org-id-from-header');
             });
         });
 
@@ -89,18 +90,18 @@ describe('RequestAuthService', () => {
                 jwt.context = { service_user_id: 'some-service-user-id' };
                 const auth = await authProvider.provide();
                 const serviceAccountId = auth.getServiceAccountId();
-                assert.equal(serviceAccountId, 'some-service-user-id');
+                assert.strictEqual(serviceAccountId, 'some-service-user-id');
             });
         });
 
         it('throws when jwt is not valid', async () => {
-            const authHeader = container.get(FrameworkEnv).AC_AUTH_HEADER_NAME;
+            const authHeader = container.get(DefaultAcAuthProvider).AC_AUTH_HEADER_NAME;
             headers[authHeader] = 'Bearer unknown-jwt-token';
             try {
                 await authProvider.provide();
                 throw new Error('UnexpectedSuccess');
             } catch (err) {
-                assert.equal(err.name, 'AuthenticationError');
+                assert.strictEqual(err.name, 'AuthenticationError');
             }
         });
 
@@ -110,12 +111,12 @@ describe('RequestAuthService', () => {
 
         it('sends a request with Authorization header', async () => {
             headers['authorization'] = 'AUTH';
-            assert.equal(fetchMock.spy.called, false);
+            assert.strictEqual(fetchMock.spy.called, false);
             const auth = await authProvider.provide();
-            assert.equal(fetchMock.spy.called, true);
+            assert.strictEqual(fetchMock.spy.called, true);
             const requestHeaders = fetchMock.spy.params[0]?.fetchOptions.headers;
-            assert.equal(requestHeaders?.authorization, 'AUTH');
-            assert.equal(auth.isAuthenticated(), true);
+            assert.strictEqual(requestHeaders?.authorization, 'AUTH');
+            assert.strictEqual(auth.isAuthenticated(), true);
         });
 
         it('does not send request if Authorization is cached', async () => {
@@ -127,10 +128,10 @@ describe('RequestAuthService', () => {
                 authorisedAt: Date.now() - ttl + margin
             });
             headers['authorization'] = 'AUTH';
-            assert.equal(fetchMock.spy.called, false);
+            assert.strictEqual(fetchMock.spy.called, false);
             const auth = await authProvider.provide();
-            assert.equal(fetchMock.spy.called, false);
-            assert.equal(auth.isAuthenticated(), true);
+            assert.strictEqual(fetchMock.spy.called, false);
+            assert.strictEqual(auth.isAuthenticated(), true);
         });
 
         it('still sends request if cache expires', async () => {
@@ -139,10 +140,10 @@ describe('RequestAuthService', () => {
             DefaultAcAuthProvider.legacyCacheTtl = ttl;
             DefaultAcAuthProvider.legacyTokensCache.set('AUTH', { token: 'jwt-token-here', authorisedAt: Date.now() - ttl - margin });
             headers['authorization'] = 'AUTH';
-            assert.equal(fetchMock.spy.called, false);
+            assert.strictEqual(fetchMock.spy.called, false);
             const auth = await authProvider.provide();
-            assert.equal(fetchMock.spy.called, true);
-            assert.equal(auth.isAuthenticated(), true);
+            assert.strictEqual(fetchMock.spy.called, true);
+            assert.strictEqual(auth.isAuthenticated(), true);
         });
 
         it('throws 401 if upstream request fails', async () => {
@@ -152,7 +153,7 @@ describe('RequestAuthService', () => {
                 await authProvider.provide();
                 throw new Error('UnexpectedSuccess');
             } catch (err) {
-                assert.equal(err.status, 401);
+                assert.strictEqual(err.status, 401);
             }
         });
 
@@ -161,9 +162,9 @@ describe('RequestAuthService', () => {
                 headers['authorization'] = 'AUTH';
                 jwt.context = { organisation_id: 'some-user-org-id' };
                 const auth = await authProvider.provide();
-                assert.equal(fetchMock.spy.called, true);
+                assert.strictEqual(fetchMock.spy.called, true);
                 const organisationId = auth.getOrganisationId();
-                assert.equal(organisationId, 'some-user-org-id');
+                assert.strictEqual(organisationId, 'some-user-org-id');
             });
         });
 
@@ -177,7 +178,7 @@ describe('RequestAuthService', () => {
                 headers['x-ubio-organisation-id'] = 'org-id-from-header';
                 const auth = await authProvider.provide();
                 const organisationId = auth.getOrganisationId();
-                assert.equal(organisationId, 'org-id-from-header');
+                assert.strictEqual(organisationId, 'org-id-from-header');
             });
 
             it('sets jwt.context.organisation_id if both present', async () => {
@@ -185,7 +186,7 @@ describe('RequestAuthService', () => {
                 jwt.context = { organisation_id: 'org-id-from-jwt' };
                 const auth = await authProvider.provide();
                 const organisationId = auth.getOrganisationId();
-                assert.equal(organisationId, 'org-id-from-jwt');
+                assert.strictEqual(organisationId, 'org-id-from-jwt');
             });
         });
 
@@ -195,7 +196,7 @@ describe('RequestAuthService', () => {
                 jwt.context = { service_user_id: 'some-service-user-id' };
                 const auth = await authProvider.provide();
                 const serviceAccountId = auth.getServiceAccountId();
-                assert.equal(serviceAccountId, 'some-service-user-id');
+                assert.strictEqual(serviceAccountId, 'some-service-user-id');
             });
         });
     });
@@ -204,7 +205,7 @@ describe('RequestAuthService', () => {
 
         it('leaves auth unauthenticated', async () => {
             const auth = await authProvider.provide();
-            assert.equal(auth.isAuthenticated(), false);
+            assert.strictEqual(auth.isAuthenticated(), false);
         });
 
     });

@@ -3,7 +3,7 @@ import { inject, injectable } from 'inversify';
 import Koa from 'koa';
 
 import { AcAuth, AuthenticationError } from '../ac-auth';
-import { FrameworkEnv } from '../env';
+import { Config, config } from '../config';
 import { Logger } from '../logger';
 import { JwtService } from './jwt';
 
@@ -19,13 +19,17 @@ export class DefaultAcAuthProvider {
     static legacyCacheTtl: number = 60000;
     static legacyTokensCache: Map<string, { token: string, authorisedAt: number }> = new Map();
 
+    @config({ default: 'x-ubio-auth' }) AC_AUTH_HEADER_NAME!: string;
+    @config({ default: 'http://auth-middleware.authz.svc.cluster.local:8080/verify' })
+    AC_AUTH_VERIFY_URL!: string;
+
     constructor(
         @inject(Logger)
         protected logger: Logger,
         @inject(JwtService)
         protected jwt: JwtService,
-        @inject(FrameworkEnv)
-        protected env: FrameworkEnv,
+        @inject(Config)
+        public config: Config,
         @inject('KoaContext')
         protected ctx: Koa.Context,
     ) {
@@ -58,7 +62,7 @@ export class DefaultAcAuthProvider {
     }
 
     protected async getToken(headers: { [name: string]: string | undefined }) {
-        const authHeaderName = this.env.AC_AUTH_HEADER_NAME;
+        const authHeaderName = this.AC_AUTH_HEADER_NAME;
         const newAuthHeader = headers[authHeaderName];
         if (newAuthHeader) {
             const [prefix, token] = newAuthHeader.split(' ');
@@ -81,7 +85,7 @@ export class DefaultAcAuthProvider {
         const invalid = cached.authorisedAt + DefaultAcAuthProvider.legacyCacheTtl < Date.now();
         if (invalid) {
             try {
-                const url = this.env.AC_AUTH_VERIFY_URL;
+                const url = this.AC_AUTH_VERIFY_URL;
                 const { token } = await this.clientRequest.get(url, {
                     headers: {
                         authorization: legacyAuthHeader,
