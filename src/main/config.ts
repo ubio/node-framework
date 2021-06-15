@@ -7,11 +7,16 @@ import { addClassMetadata, getBindingsMap, getClassMetadata } from './util';
 
 const CONFIG_METADATA_KEY = Symbol('CONFIG_METADATA_KEY');
 
-export type ConfigType = String | Boolean | Number;
+export type ConfigType = string | boolean | number;
+export type ConfigParser<T> = (str: string) => T | null;
+export type ConfigTypeCtor<T extends ConfigType> =
+    T extends string ? typeof String :
+    T extends number ? typeof Number :
+    T extends boolean ? typeof Boolean : never;
 
 export interface ConfigDecl {
     key: string;
-    type: ConfigType;
+    type: ConfigTypeCtor<any>;
     defaultValue?: string;
     prototype: Configurable;
 }
@@ -30,32 +35,11 @@ export function config(options: ConfigOptions = {}) {
         }
         const defaultValue = options.default == null ? undefined : String(options.default);
         addClassMetadata<ConfigDecl>(CONFIG_METADATA_KEY, prototype, { key, type, defaultValue, prototype });
-        switch (type) {
-            case String: {
-                Object.defineProperty(prototype, key, {
-                    get() {
-                        return (this as Configurable).config.getString(key, defaultValue);
-                    }
-                });
-                break;
+        Object.defineProperty(prototype, key, {
+            get() {
+                return (this as Configurable).config.get(key, type, defaultValue);
             }
-            case Number: {
-                Object.defineProperty(prototype, key, {
-                    get() {
-                        return (this as Configurable).config.getNumber(key, defaultValue);
-                    }
-                });
-                break;
-            }
-            case Boolean: {
-                Object.defineProperty(prototype, key, {
-                    get() {
-                        return (this as Configurable).config.getBoolean(key, defaultValue);
-                    }
-                });
-                break;
-            }
-        }
+        });
     };
 }
 
@@ -85,36 +69,45 @@ export function getContainerConfigs(container: Container): ConfigDecl[] {
 
 @injectable()
 export abstract class Config {
+
     abstract resolve(key: string): string | null;
 
-    protected getOrNull<T>(
-        key: string,
-        parse: (str: string) => T | null,
-        defaultValue?: string | T,
-    ): T | null {
+    static parsers: { [key: string]: ConfigParser<ConfigType> } = {
+        String: parseString,
+        Number: parseNumber,
+        Boolean: parseBoolean,
+    };
+
+    getOrNull<T extends ConfigType>(key: string, type: ConfigTypeCtor<T>, defaultValue?: string | T): T | null {
         const str = this.resolve(key) ?? defaultValue;
-        return str == null ? null : parse(String(str));
+        const parser = Config.parsers[type.name] as ConfigParser<T>;
+        return str == null ? null : parser(String(str));
     }
 
-    protected get<T>(key: string, parse: (str: string) => T | null, defaultValue?: string | T): T {
-        const val = this.getOrNull(key, parse, defaultValue);
+    get<T extends ConfigType>(key: string, type: ConfigTypeCtor<T>, defaultValue?: string | T): T {
+        const val = this.getOrNull(key, type, defaultValue);
         if (val == null) {
             throw new ConfigError(`Configuration ${key} is missing`);
         }
         return val;
     }
 
+    hasKey(key: string) {
+        return this.resolve(key) != null;
+    }
+
     getString(key: string, defaultValue?: string): string {
-        return this.get(key, parseString, defaultValue);
+        return this.get<string>(key, String, defaultValue);
     }
 
     getNumber(key: string, defaultValue?: string | number): number {
-        return this.get(key, parseNumber, defaultValue);
+        return this.get<number>(key, Number, defaultValue);
     }
 
     getBoolean(key: string, defaultValue?: string | boolean): boolean {
-        return this.get(key, parseBoolean, defaultValue);
+        return this.get<boolean>(key, Boolean, defaultValue);
     }
+
 }
 
 @injectable()
@@ -135,7 +128,7 @@ export class DefaultConfig extends Config {
     }
 }
 
-function parseString(str: string) {
+function parseString(str: string): string | null {
     return str;
 }
 

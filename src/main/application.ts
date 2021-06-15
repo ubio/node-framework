@@ -49,11 +49,7 @@ export class Application {
         return this.container.get(HttpServer);
     }
 
-    async beforeStart(): Promise<void> {
-        if (this.ASSERT_CONFIGS_ON_START) {
-            this.assertConfigs();
-        }
-    }
+    async beforeStart(): Promise<void> {}
 
     async afterStop(): Promise<void> {}
 
@@ -73,6 +69,9 @@ export class Application {
     async start() {
         process.on('SIGTERM', () => this.stop());
         process.on('SIGINT', () => this.stop());
+        if (this.ASSERT_CONFIGS_ON_START) {
+            this.assertConfigs();
+        }
         await this.beforeStart();
     }
 
@@ -85,8 +84,8 @@ export class Application {
     getMissingConfigKeys() {
         const missingConfigs = new Set<string>();
         const configs = getContainerConfigs(this.container);
-        for (const { key, defaultValue } of configs) {
-            const value = this.config.getString(key, defaultValue);
+        for (const { key, type, defaultValue } of configs) {
+            const value = this.config.getOrNull<any>(key, type, defaultValue);
             if (value == null) {
                 missingConfigs.add(key);
             }
