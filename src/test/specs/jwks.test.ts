@@ -83,7 +83,7 @@ describe('JwksClient', () => {
                     algorithm,
                     cacheMaxAge: 60 * 1000
                 });
-                jwksClient.request.config.fetch = fetchMock({ status: 200 }, { keys: [happyKey] });;
+                jwksClient.request.config.fetch = fetchMock({ status: 200 }, { keys: [happyKey] });
 
                 await jwksClient.getSigningKey();
                 const cache = jwksClient.getCache();
