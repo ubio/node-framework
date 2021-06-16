@@ -69,11 +69,11 @@ describe('JwksClient', () => {
         });
 
         describe('configurable cache timeout', () => {
-            it('sets default value (1 minute) if not specified', async () => {
+            it('sets default value (1hour) if not specified', async () => {
                 await jwksClient.getSigningKey();
                 const cache = jwksClient.getCache();
                 assert.ok(cache);
-                assert.strictEqual(Math.round((cache.validUntil - Date.now()) / 1000), 60);
+                assert.strictEqual(Math.round((cache.validUntil - Date.now()) / 1000), 3600);
             });
 
             it('caches keys for specified amount of time', async () => {
@@ -81,14 +81,14 @@ describe('JwksClient', () => {
                     url: mockUrl,
                     retryAttempts: 1,
                     algorithm,
-                    cacheMaxAge: 3600 * 1000
+                    cacheMaxAge: 60 * 1000
                 });
                 jwksClient.request.config.fetch = fetchMock({ status: 200 }, { keys: [happyKey] });;
 
                 await jwksClient.getSigningKey();
                 const cache = jwksClient.getCache();
                 assert.ok(cache);
-                assert.strictEqual(Math.round((cache.validUntil - Date.now()) / 1000), 3600);
+                assert.strictEqual(Math.round((cache.validUntil - Date.now()) / 1000), 60);
             });
         });
 

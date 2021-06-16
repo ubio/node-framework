@@ -84,7 +84,7 @@ export class JwksClient {
     setCache(keys: SigningKey[], maxAge?: number) {
         const ttl = maxAge ??
             this.options.cacheMaxAge ??
-            60 * 1000;
+            60 * 60 * 1000;
 
         const validUntil = Date.now() + ttl;
         this._cache = { keys, validUntil };
