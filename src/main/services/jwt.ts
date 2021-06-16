@@ -18,6 +18,8 @@ export class AutomationCloudJwtService extends JwtService {
     AC_JWKS_URL!: string;
     @config({ default: 'HS256' })
     AC_SIGNING_KEY_ALGORITHM!: string;
+    @config({ default: 60 * 60 * 1000 })
+    AC_JWKS_CACHE_MAX_AGE!: number;
 
     constructor(
         @inject(Config)
@@ -28,10 +30,12 @@ export class AutomationCloudJwtService extends JwtService {
         super();
         const url = this.AC_JWKS_URL;
         const algorithm = this.AC_SIGNING_KEY_ALGORITHM;
+        const cacheMaxAge = this.AC_JWKS_CACHE_MAX_AGE;
         this.jwksClient = new JwksClient({
             url,
             algorithm,
             retryAttempts: 3,
+            cacheMaxAge,
         });
     }
 

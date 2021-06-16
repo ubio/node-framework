@@ -10,8 +10,37 @@ const ajv = new Ajv({
     validateFormats: false,
 });
 
-// eslint-disable-next-line import/no-commonjs
-const validateFunction = ajv.compile(require('../../schema/ac-jwks.json'));
+const jwksSchema = {
+    type: 'object',
+    properties: {
+        keys: {
+            type: 'array',
+            items: {
+                type: 'object',
+                properties: {
+                    use: { type: 'string' },
+                    kty: { type: 'string' },
+                    kid: { type: 'string' },
+                    k: { type: 'string' },
+                    alg: {
+                        type: 'string',
+                        enum: [
+                            'HS256', 'HS384', 'HS512',
+                            'RS256', 'RS384', 'RS512',
+                            'ES256', 'ES384', 'ES512',
+                            'PS256', 'PS384', 'PS512'
+                        ]
+                    },
+                },
+                required: ['alg', 'k', 'kid']
+            }
+        }
+    },
+    required: ['keys'],
+    additionalProperties: true
+};
+
+const validateFunction = ajv.compile(jwksSchema);
 
 export class JwksClient {
     protected _cache: JwksCache | null = null;
@@ -29,6 +58,7 @@ export class JwksClient {
         const alg = this.options.algorithm;
         const matchingKey = keys.find(k => k.alg === alg && k.kid === 'services');
         if (!matchingKey) {
+            this.clearCache();
             throw new SigningKeyNotFoundError();
         }
         return matchingKey.k;
@@ -54,7 +84,7 @@ export class JwksClient {
     setCache(keys: SigningKey[], maxAge?: number) {
         const ttl = maxAge ??
             this.options.cacheMaxAge ??
-            60 * 1000;
+            60 * 60 * 1000;
 
         const validUntil = Date.now() + ttl;
         this._cache = { keys, validUntil };

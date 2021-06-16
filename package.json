@@ -6,8 +6,7 @@
     "files": [
         "out/main/**/*",
         "out/modules/**/*",
-        "out/bin/**/*",
-        "schema/**/*"
+        "out/bin/**/*"
     ],
     "bin": {
         "generate-openapi": "out/bin/generate-openapi.js",
