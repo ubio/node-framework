@@ -49,11 +49,17 @@ export class DefaultAcAuthProvider {
     protected async createAuthFromToken(token: string): Promise<AcAuth> {
         const organisationIdHeader = this.ctx.req.headers['x-ubio-organisation-id'] as string;
         try {
-            const jwt = await this.jwt.decodeAndVerify(token);
+            const { context = {} } = await this.jwt.decodeAndVerify(token);
             return new AcAuth({
                 authenticated: true,
-                organisationId: jwt.context?.organisation_id ?? organisationIdHeader ?? null,
-                serviceAccountId: jwt.context?.service_user_id ?? null,
+                organisationId: context.organisation_id ?? organisationIdHeader,
+                serviceAccountId: context.service_account_id,
+                serviceAccountName: context.service_account_name,
+                userId: context.user_id,
+                userName: context.user_name,
+                clientId: context.client_id,
+                clientName: context.client_name,
+                endUserId: context.end_user_id,
             });
         } catch (err) {
             this.logger.warn(`Authentication from token failed`, { details: err });
