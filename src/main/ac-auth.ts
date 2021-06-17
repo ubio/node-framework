@@ -2,37 +2,51 @@ import { ClientError } from './exception';
 
 export interface AcAuthSpec {
     authenticated: boolean;
-    organisationId?: string;
-    serviceAccountId?: string;
-    serviceAccountName?: string;
-    userId?: string;
-    userName?: string;
-    clientId?: string;
-    clientName?: string;
-    endUserId?: string;
+    data: AcJwtContext,
+};
+
+export interface AcJwtContext {
+    organisation_id?: string;
+    service_account_id?: string;
+    service_account_name?: string;
+    user_id?: string;
+    user_name?: string;
+    client_id?: string;
+    client_name?: string;
+    job_id?: string;
 }
 
-type Role = 'ServiceAccount' | 'User' | 'Client' | 'EndUser';
-interface Actor {
-    role: Role;
+export type AcRole = 'ServiceAccount' | 'User' | 'Client' | 'JobAccessToken';
+export type AcActor = AcServiceAccount | AcUser | AcClient | AcJobAccessToken;
+
+export interface AcServiceAccount {
+    type: 'ServiceAccount';
     id: string;
-    name?: string;
+    name: string;
 }
 
+export interface AcUser {
+    type: 'User';
+    id: string;
+    name: string;
+}
+export interface AcClient {
+    type: 'Client';
+    id: string;
+    name: string;
+}
 
-export class AcAuth implements AcAuthSpec{
+export interface AcJobAccessToken {
+    type: 'JobAccessToken';
+    job_id: string;
+}
+
+export class AcAuth {
     authenticated: boolean = false;
-    organisationId?: string;
-    serviceAccountId?: string;
-    serviceAccountName?: string;
-    userId?: string;
-    userName?: string;
-    clientId?: string;
-    clientName?: string;
-    endUserId?: string;
-
-    constructor(spec: Partial<AcAuthSpec> = {}) {
-        Object.assign(this, spec);
+    data: AcJwtContext = {}
+    constructor(spec?: AcAuthSpec) {
+        this.authenticated = spec?.authenticated ?? false;
+        this.data = spec?.data ?? {};
     }
 
     isAuthenticated() {
@@ -46,79 +60,93 @@ export class AcAuth implements AcAuthSpec{
     }
 
     getOrganisationId(): string | null {
-        return this.organisationId ?? null;
+        return this.data.organisation_id ?? null;
     }
 
     requireOrganisationId(): string {
-        if (!this.organisationId) {
+        if (!this.data.organisation_id) {
             throw new AccessForbidden('organisationId is required');
         }
-        return this.organisationId;
+        return this.data.organisation_id;
     }
 
-    /**
-     * @deprecated use serviceAccountId instead, or use getActor()
-     */
-    getServiceAccountId(): string | null {
-        return this.serviceAccountId ?? null;
-    }
 
-    /**
-     * @deprecated use getActor()
-     */
-    requireServiceAccountId(): string {
-        if (!this.serviceAccountId) {
-            throw new AccessForbidden('serviceAccountId is required');
-        }
-        return this.serviceAccountId;
-    }
-
-    requireActor(roles: Role[] = ['ServiceAccount', 'User', 'Client', 'EndUser']) {
-        const actor = this.getActor();
-        if (!actor || !roles.includes(actor.role)) {
+    requireAuthorisedActor(roles: AcRole[] = ['ServiceAccount', 'User', 'Client', 'JobAccessToken']) {
+        const actor = this.getAuthorisedActor(roles);
+        if (!actor) {
             throw new AccessForbidden('Insufficient peremission');
         }
 
         return actor;
     }
 
-    getActor(): Actor | null {
-        if (this.serviceAccountId) {
-            return {
-                role: 'ServiceAccount',
-                id: this.serviceAccountId,
-                name: this.serviceAccountName,
+    getAuthorisedActor(roles: AcRole[] = ['ServiceAccount', 'User', 'Client', 'JobAccessToken']): AcActor | null {
+        for (const role of roles) {
+            const actor = this.getActorByRole(role);
+            if (actor != null) {
+                return actor;
             }
         }
+        return null;
+    }
 
-        if (this.userId) {
-            return {
-                role: 'User',
-                id: this.userId,
-                name: this.userName,
-            };
+    getActorByRole(role: AcRole): AcActor | null {
+        switch (role) {
+            case 'ServiceAccount':
+                return this.getServiceAccount();
+            case 'User':
+                return this.getUser();
+            case 'Client':
+                return this.getClient();
+            case 'JobAccessToken':
+                return this.getJobAccessToken();
+            default:
+                return null;
         }
+    }
 
-        if (this.clientId) {
+    getServiceAccount(): AcServiceAccount | null {
+        if (this.data.service_account_id && this.data.service_account_name) {
             return {
-                role: 'Client',
-                id: this.clientId,
-                name: this.clientName,
+                type: 'ServiceAccount',
+                id: this.data.service_account_id,
+                name: this.data.service_account_name,
             }
         }
+        return null;
+    }
 
-        if (this.endUserId) {
+    getUser(): AcUser | null {
+        if (this.data.user_id && this.data.user_name) {
             return {
-                role: 'EndUser',
-                id: this.endUserId,
+                type: 'User',
+                id: this.data.user_id,
+                name: this.data.user_name,
             };
+        }
+        return null;
+    }
+
+    getClient(): AcClient | null {
+        if (this.data.client_id && this.data.client_name) {
+            return {
+                type: 'Client',
+                id: this.data.client_id,
+                name: this.data.client_name,
+            }
         }
 
         return null;
     }
 
-    getRole(): Role | null {
-        return this.getActor()?.role ?? null
+    getJobAccessToken(): AcJobAccessToken | null {
+        if (this.data.job_id) {
+            return {
+                type: 'JobAccessToken',
+                job_id: this.data.job_id,
+            };
+        }
+        return null;
     }
 }
 

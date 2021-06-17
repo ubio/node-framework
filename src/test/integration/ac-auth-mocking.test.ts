@@ -28,8 +28,11 @@ describe('Mocking AcAuth', () => {
         async provide() {
             return new AcAuth({
                 authenticated: true,
-                organisationId: 'foo',
-                serviceAccountId: 'bar',
+                data: {
+                    organisation_id: 'foo',
+                    service_account_id: 'service-account-worker',
+                    service_account_name: 'Bot',
+                }
             });
         }
     });
@@ -41,10 +44,13 @@ describe('Mocking AcAuth', () => {
     it('returns mocked data', async () => {
         const request = supertest(app.httpServer.callback());
         const res = await request.get('/foo');
-        assert.deepEqual(res.body, {
+        assert.deepStrictEqual(res.body, {
             authenticated: true,
-            organisationId: 'foo',
-            serviceAccountId: 'bar',
+            data: {
+                organisation_id: 'foo',
+                service_account_id: 'service-account-worker',
+                service_account_name: 'Bot',
+            }
         });
     });
 

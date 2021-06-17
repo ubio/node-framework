@@ -56,7 +56,7 @@ describe('AcAuthProvider', () => {
             headers[authHeader] = 'Bearer jwt-token-here';
         });
 
-        it('does not send request to s-api', async () => {
+        it('does not send request to auth-middleware', async () => {
             await authProvider.provide();
             assert.strictEqual(fetchMock.spy.called, false);
         });
@@ -85,12 +85,17 @@ describe('AcAuthProvider', () => {
             });
         });
 
-        context('jwt has service_user_id', () => {
+        context('jwt has service_account_id', () => {
             it('returns serviceAccount from auth', async () => {
-                jwt.context = { service_user_id: 'some-service-user-id' };
+                jwt.context = {
+                    service_account_id: 'some-service-account-id',
+                    service_account_name: 'Bot'
+                };
                 const auth = await authProvider.provide();
-                const serviceAccountId = auth.getServiceAccountId();
-                assert.strictEqual(serviceAccountId, 'some-service-user-id');
+                const serviceAccount = auth.getServiceAccount();
+                assert.ok(serviceAccount);
+                assert.strictEqual(serviceAccount.id, 'some-service-account-id');
+                assert.strictEqual(serviceAccount.name, 'Bot');
             });
         });
 
@@ -108,8 +113,7 @@ describe('AcAuthProvider', () => {
     });
 
     describe('legacy auth', () => {
-
-        it('sends a request with Authorization header', async () => {
+        it('sends a request to auth middleware with Authorization header', async () => {
             headers['authorization'] = 'AUTH';
             assert.strictEqual(fetchMock.spy.called, false);
             const auth = await authProvider.provide();
@@ -134,7 +138,7 @@ describe('AcAuthProvider', () => {
             assert.strictEqual(auth.isAuthenticated(), true);
         });
 
-        it('still sends request if cache expires', async () => {
+        it('sends request if cache has expired', async () => {
             const ttl = 60000;
             const margin = 1000;
             DefaultAcAuthProvider.legacyCacheTtl = ttl;
@@ -190,19 +194,20 @@ describe('AcAuthProvider', () => {
             });
         });
 
-        context('jwt has service_user_id', () => {
+        context('jwt has service_account_id', () => {
             it('returns serviceAccount from auth', async () => {
                 headers['authorization'] = 'AUTH';
-                jwt.context = { service_user_id: 'some-service-user-id' };
+                jwt.context = { service_account_id: 'Bot', service_account_name: 'Ron Swanson' };
                 const auth = await authProvider.provide();
-                const serviceAccountId = auth.getServiceAccountId();
-                assert.strictEqual(serviceAccountId, 'some-service-user-id');
+                const serviceAccount = auth.getServiceAccount();
+                assert.ok(serviceAccount);
+                assert.strictEqual(serviceAccount.id, 'Bot');
+                assert.strictEqual(serviceAccount.name, 'Ron Swanson');
             });
         });
     });
 
     context('authorization header does not exist', () => {
-
         it('leaves auth unauthenticated', async () => {
             const auth = await authProvider.provide();
             assert.strictEqual(auth.isAuthenticated(), false);
