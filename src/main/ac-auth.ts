@@ -70,6 +70,26 @@ export class AcAuth {
         return this.data.organisation_id;
     }
 
+    /**
+     *
+     * @deprecated - use getServiceAccount() instead
+     */
+    getServiceAccountId(): string | null {
+        return this.data.service_account_id ?? null;
+    }
+
+    /**
+     *
+     * @deprecated - use requireAuthorisedActor('ServiceAccount') or getServiceAccount() instead
+     */
+    requireServiceAccountId(): string {
+        const serviceAccountId = this.data.service_account_id ?? null;
+        if (!serviceAccountId) {
+            throw new AccessForbidden('serviceAccountId is required');
+        }
+
+        return serviceAccountId;
+    }
 
     requireAuthorisedActor(roles: AcRole[] = ['ServiceAccount', 'User', 'Client', 'JobAccessToken']) {
         const actor = this.getAuthorisedActor(roles);

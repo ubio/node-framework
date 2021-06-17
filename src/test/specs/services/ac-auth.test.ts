@@ -46,17 +46,17 @@ describe('AcAuthProvider', () => {
     afterEach(() => {
         jwt = {};
         headers = {};
-        DefaultAcAuthProvider.legacyTokensCache = new Map();
+        DefaultAcAuthProvider.middlewareTokensCache = new Map();
     });
 
-    describe('new auth header exists', () => {
+    describe('x-ubio-auth header exists', () => {
 
         beforeEach(() => {
             const authHeader = container.get(DefaultAcAuthProvider).AC_AUTH_HEADER_NAME;
             headers[authHeader] = 'Bearer jwt-token-here';
         });
 
-        it('does not send request to auth-middleware', async () => {
+        it('does not send request to authMiddleware', async () => {
             await authProvider.provide();
             assert.strictEqual(fetchMock.spy.called, false);
         });
@@ -112,7 +112,7 @@ describe('AcAuthProvider', () => {
 
     });
 
-    describe('legacy auth', () => {
+    describe('middleware auth', () => {
         it('sends a request to auth middleware with Authorization header', async () => {
             headers['authorization'] = 'AUTH';
             assert.strictEqual(fetchMock.spy.called, false);
@@ -126,8 +126,8 @@ describe('AcAuthProvider', () => {
         it('does not send request if Authorization is cached', async () => {
             const ttl = 60000;
             const margin = 1000;
-            DefaultAcAuthProvider.legacyCacheTtl = ttl;
-            DefaultAcAuthProvider.legacyTokensCache.set('AUTH', {
+            DefaultAcAuthProvider.middlewareCacheTtl = ttl;
+            DefaultAcAuthProvider.middlewareTokensCache.set('AUTH', {
                 token: 'jwt-token-here',
                 authorisedAt: Date.now() - ttl + margin
             });
@@ -141,8 +141,8 @@ describe('AcAuthProvider', () => {
         it('sends request if cache has expired', async () => {
             const ttl = 60000;
             const margin = 1000;
-            DefaultAcAuthProvider.legacyCacheTtl = ttl;
-            DefaultAcAuthProvider.legacyTokensCache.set('AUTH', { token: 'jwt-token-here', authorisedAt: Date.now() - ttl - margin });
+            DefaultAcAuthProvider.middlewareCacheTtl = ttl;
+            DefaultAcAuthProvider.middlewareTokensCache.set('AUTH', { token: 'jwt-token-here', authorisedAt: Date.now() - ttl - margin });
             headers['authorization'] = 'AUTH';
             assert.strictEqual(fetchMock.spy.called, false);
             const auth = await authProvider.provide();
