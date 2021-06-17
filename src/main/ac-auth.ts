@@ -71,16 +71,14 @@ export class AcAuth {
     }
 
     /**
-     *
-     * @deprecated - use getServiceAccount() instead
+     * @deprecated use getServiceAccount() instead
      */
     getServiceAccountId(): string | null {
         return this.data.service_account_id ?? null;
     }
 
     /**
-     *
-     * @deprecated - use requireAuthorisedActor('ServiceAccount') or getServiceAccount() instead
+     * @deprecated use requireAuthorisedActor('ServiceAccount') or getServiceAccount() instead
      */
     requireServiceAccountId(): string {
         const serviceAccountId = this.data.service_account_id ?? null;
@@ -91,6 +89,10 @@ export class AcAuth {
         return serviceAccountId;
     }
 
+    /**
+     * @param roles list of permitted roles. default to all.
+     * @returns Authorised AcActor. Throws when authorised actor's role is not included in the list
+     */
     requireAuthorisedActor(roles: AcRole[] = ['ServiceAccount', 'User', 'Client', 'JobAccessToken']) {
         const actor = this.getAuthorisedActor(roles);
         if (!actor) {
@@ -100,6 +102,10 @@ export class AcAuth {
         return actor;
     }
 
+    /**
+     * @param roles List of permitted roles. default to all.
+     * @returns Authorised AcActor or null. Returns null when authorised actor's role is not included in the list
+     */
     getAuthorisedActor(roles: AcRole[] = ['ServiceAccount', 'User', 'Client', 'JobAccessToken']): AcActor | null {
         for (const role of roles) {
             const actor = this.getActorByRole(role);
@@ -110,6 +116,11 @@ export class AcAuth {
         return null;
     }
 
+    /**
+     *
+     * @param role role of authorised actor
+     * @returns AcActor or null. Returns null when not authorised or authorised user's role is different to given `role` param.
+     */
     getActorByRole(role: AcRole): AcActor | null {
         switch (role) {
             case 'ServiceAccount':
@@ -125,6 +136,7 @@ export class AcAuth {
         }
     }
 
+    // explicit methods for calling each role
     getServiceAccount(): AcServiceAccount | null {
         if (this.data.service_account_id && this.data.service_account_name) {
             return {

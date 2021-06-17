@@ -89,11 +89,10 @@ export class DefaultAcAuthProvider {
         if (invalid) {
             try {
                 const url = this.AC_AUTH_VERIFY_URL;
-                const { token } = await this.clientRequest.get(url, {
-                    headers: {
-                        authorization: authorization,
-                    }
-                });
+                const options = {
+                    headers: { authorization },
+                };
+                const { token } = await this.clientRequest.get(url, options);
                 DefaultAcAuthProvider.middlewareTokensCache.set(authorization, {
                     token,
                     authorisedAt: Date.now(),
