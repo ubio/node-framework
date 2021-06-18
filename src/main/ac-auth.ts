@@ -1,9 +1,11 @@
+/* eslint-disable camelcase */
+
 import { ClientError } from './exception';
 
 export interface AcAuthSpec {
     authenticated: boolean;
-    data: AcJwtContext,
-};
+    data: AcJwtContext;
+}
 
 export interface AcJwtContext {
     organisation_id?: string;
@@ -23,22 +25,27 @@ export interface AcServiceAccount {
     type: 'ServiceAccount';
     id: string;
     name: string;
+    organisationId?: string;
 }
 
 export interface AcUser {
     type: 'User';
     id: string;
     name: string;
+    organisationId: string;
 }
 export interface AcClient {
     type: 'Client';
     id: string;
     name: string;
+    organisationId: string;
 }
 
 export interface AcJobAccessToken {
     type: 'JobAccessToken';
-    job_id: string;
+    jobId: string;
+    organisationId: string;
+    // clientId: string;
 }
 
 export class AcAuth {
@@ -96,7 +103,7 @@ export class AcAuth {
     requireAuthorisedActor(roles: AcRole[] = ['ServiceAccount', 'User', 'Client', 'JobAccessToken']) {
         const actor = this.getAuthorisedActor(roles);
         if (!actor) {
-            throw new AccessForbidden('Insufficient peremission');
+            throw new AccessForbidden('Insufficient permission');
         }
 
         return actor;
@@ -143,39 +150,46 @@ export class AcAuth {
                 type: 'ServiceAccount',
                 id: this.data.service_account_id,
                 name: this.data.service_account_name,
-            }
+                organisationId: this.data.organisation_id,
+            };
         }
         return null;
     }
 
     getUser(): AcUser | null {
-        if (this.data.user_id && this.data.user_name) {
+        const { user_id, user_name, organisation_id } = this.data;
+        if (user_id && user_name && organisation_id) {
             return {
                 type: 'User',
-                id: this.data.user_id,
-                name: this.data.user_name,
+                id: user_id,
+                name: user_name,
+                organisationId: organisation_id,
             };
         }
         return null;
     }
 
     getClient(): AcClient | null {
-        if (this.data.client_id && this.data.client_name) {
+        const { client_id, client_name, organisation_id } = this.data;
+        if (client_id && client_name && organisation_id) {
             return {
                 type: 'Client',
-                id: this.data.client_id,
-                name: this.data.client_name,
-            }
+                id: client_id,
+                name: client_name,
+                organisationId: organisation_id,
+            };
         }
 
         return null;
     }
 
     getJobAccessToken(): AcJobAccessToken | null {
-        if (this.data.job_id) {
+        const { job_id, organisation_id } = this.data;
+        if (job_id && organisation_id) {
             return {
                 type: 'JobAccessToken',
-                job_id: this.data.job_id,
+                jobId: job_id,
+                organisationId: organisation_id,
             };
         }
         return null;

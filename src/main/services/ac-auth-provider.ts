@@ -53,7 +53,7 @@ export class DefaultAcAuthProvider {
             const data = {
                 organisation_id: organisationIdHeader,
                 ...payload.context
-            }
+            };
             return new AcAuth({
                 authenticated: true,
                 data
