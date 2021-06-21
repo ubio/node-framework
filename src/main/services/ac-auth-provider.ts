@@ -97,6 +97,7 @@ export class DefaultAcAuthProvider {
                     token,
                     authorisedAt: Date.now(),
                 });
+                this.pruneCache();
                 return token;
             } catch (error) {
                 this.logger.warn('AuthMiddleware authentication failed', { ...error });
@@ -104,5 +105,15 @@ export class DefaultAcAuthProvider {
             }
         }
         return cached.token;
+    }
+
+    pruneCache() {
+        const now = Date.now();
+        const entries = DefaultAcAuthProvider.middlewareTokensCache.entries();
+        for (const [k, v] of entries) {
+            if (v.authorisedAt + DefaultAcAuthProvider.middlewareCacheTtl < now) {
+                DefaultAcAuthProvider.middlewareTokensCache.delete(k);
+            }
+        }
     }
 }

@@ -45,7 +45,7 @@ export interface AcJobAccessToken {
     type: 'JobAccessToken';
     jobId: string;
     organisationId: string;
-    // clientId: string;
+    clientId: string;
 }
 
 export class AcAuth {
@@ -184,11 +184,12 @@ export class AcAuth {
     }
 
     getJobAccessToken(): AcJobAccessToken | null {
-        const { job_id, organisation_id } = this.data;
-        if (job_id && organisation_id) {
+        const { job_id, client_id, organisation_id } = this.data;
+        if (job_id && client_id && organisation_id) {
             return {
                 type: 'JobAccessToken',
                 jobId: job_id,
+                clientId: client_id,
                 organisationId: organisation_id,
             };
         }
