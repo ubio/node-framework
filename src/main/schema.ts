@@ -50,7 +50,7 @@ export class Schema<T> {
 
     construct(obj: any): unknown {
         // Defaults are only applied to objects
-        if (obj && typeof obj === 'object') {
+        if (obj && typeof obj === 'object' && this.schema.type === 'object') {
             const defaults = typeof this.defaults === 'function' ? this.defaults() : this.defaults;
             return { ...defaults, ...obj };
         }

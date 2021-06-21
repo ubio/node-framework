@@ -20,6 +20,13 @@ const Person = new Schema<Person>({
     }
 });
 
+const People = new Schema<Person[]>({
+    schema: {
+        type: 'array',
+        items: Person.schema
+    }
+});
+
 interface Book {
     id: string;
     title: string;
@@ -130,6 +137,14 @@ describe('Schema', () => {
             } catch (err) {
                 assert.strictEqual(err.name, 'ValidationError');
             }
+        });
+
+        it('works with top level arrays', () => {
+            const nobody = People.decode([]);
+            const people = People.decode([{ name: 'Ron', gender: null }]);
+            assert(Array.isArray(nobody));
+            assert.strictEqual(people[0].name, 'Ron');
+            assert.strictEqual(people[0].gender, null);
         });
     });
 });
