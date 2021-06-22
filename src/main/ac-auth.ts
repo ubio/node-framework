@@ -25,6 +25,8 @@ export interface AcServiceAccount {
     type: 'ServiceAccount';
     id: string;
     name: string;
+    clientId?: string;
+    clientName?: string;
     organisationId?: string;
 }
 
@@ -34,6 +36,7 @@ export interface AcUser {
     name: string;
     organisationId: string;
 }
+
 export interface AcClient {
     type: 'Client';
     id: string;
@@ -46,14 +49,26 @@ export interface AcJobAccessToken {
     jobId: string;
     organisationId: string;
     clientId: string;
+    clientName: string;
 }
 
 export class AcAuth {
     authenticated: boolean = false;
-    data: AcJwtContext = {}
+    data: AcJwtContext = {};
+    protected actor: AcActor | null = null;
     constructor(spec?: AcAuthSpec) {
         this.authenticated = spec?.authenticated ?? false;
         this.data = spec?.data ?? {};
+        this.actor = this.getAuthorisedActor();
+    }
+
+    protected getAuthorisedActor() {
+        // Note: order matters
+        return this.getServiceAccount() ??
+            this.getJobAccessToken() ??
+            this.getClient() ??
+            this.getUser() ??
+            null;
     }
 
     isAuthenticated() {
@@ -78,17 +93,17 @@ export class AcAuth {
     }
 
     /**
-     * @deprecated use getServiceAccount() instead
+     * @deprecated use getActor('ServiceAccount') or getServiceAccount() instead
      */
     getServiceAccountId(): string | null {
-        return this.data.service_account_id ?? null;
+        return this.getServiceAccount()?.id ?? null;
     }
 
     /**
-     * @deprecated use requireAuthorisedActor('ServiceAccount') or getServiceAccount() instead
+     * @deprecated use requireActor('ServiceAccount') instead
      */
     requireServiceAccountId(): string {
-        const serviceAccountId = this.data.service_account_id ?? null;
+        const serviceAccountId = this.getServiceAccount()?.id ?? null;
         if (!serviceAccountId) {
             throw new AccessForbidden('serviceAccountId is required');
         }
@@ -97,11 +112,11 @@ export class AcAuth {
     }
 
     /**
-     * @param roles list of permitted roles. default to all.
-     * @returns Authorised AcActor. Throws when authorised actor's role is not included in the list
+     * @param allowedRoles list of permitted roles.
+     * @returns Authorised AcActor. Throws when not authorised or the actor doesn't meet the allowedRoles criteria
      */
-    requireAuthorisedActor(roles: AcRole[] = ['ServiceAccount', 'User', 'Client', 'JobAccessToken']) {
-        const actor = this.getAuthorisedActor(roles);
+    requireActor(...allowedRoles: AcRole[]) {
+        const actor = this.getActor(...allowedRoles);
         if (!actor) {
             throw new AccessForbidden('Insufficient permission');
         }
@@ -110,46 +125,24 @@ export class AcAuth {
     }
 
     /**
-     * @param roles List of permitted roles. default to all.
-     * @returns Authorised AcActor or null. Returns null when authorised actor's role is not included in the list
+     * @param allowedRoles list of permitted roles.
+     * @returns Authorised AcActor or null when authorised actor's role is not included or not authorised
      */
-    getAuthorisedActor(roles: AcRole[] = ['ServiceAccount', 'User', 'Client', 'JobAccessToken']): AcActor | null {
-        for (const role of roles) {
-            const actor = this.getActorByRole(role);
-            if (actor != null) {
-                return actor;
-            }
+    getActor(...allowedRoles: AcRole[]): AcActor | null {
+        if (this.actor && allowedRoles.includes(this.actor.type)) {
+            return this.actor;
         }
         return null;
     }
 
-    /**
-     *
-     * @param role role of authorised actor
-     * @returns AcActor or null. Returns null when not authorised or authorised user's role is different to given `role` param.
-     */
-    getActorByRole(role: AcRole): AcActor | null {
-        switch (role) {
-            case 'ServiceAccount':
-                return this.getServiceAccount();
-            case 'User':
-                return this.getUser();
-            case 'Client':
-                return this.getClient();
-            case 'JobAccessToken':
-                return this.getJobAccessToken();
-            default:
-                return null;
-        }
-    }
-
-    // explicit methods for calling each role
     getServiceAccount(): AcServiceAccount | null {
         if (this.data.service_account_id && this.data.service_account_name) {
             return {
                 type: 'ServiceAccount',
                 id: this.data.service_account_id,
                 name: this.data.service_account_name,
+                clientId: this.data.client_id,
+                clientName: this.data.client_name,
                 organisationId: this.data.organisation_id,
             };
         }
@@ -170,6 +163,10 @@ export class AcAuth {
     }
 
     getClient(): AcClient | null {
+        // if actor is jobAccessToken and claim AcClient, it should refuse it.
+        if (this.data.job_id) {
+            return null;
+        }
         const { client_id, client_name, organisation_id } = this.data;
         if (client_id && client_name && organisation_id) {
             return {
@@ -184,12 +181,13 @@ export class AcAuth {
     }
 
     getJobAccessToken(): AcJobAccessToken | null {
-        const { job_id, client_id, organisation_id } = this.data;
-        if (job_id && client_id && organisation_id) {
+        const { job_id, client_id, client_name, organisation_id } = this.data;
+        if (job_id && client_id && client_name && organisation_id) {
             return {
                 type: 'JobAccessToken',
                 jobId: job_id,
                 clientId: client_id,
+                clientName: client_name,
                 organisationId: organisation_id,
             };
         }

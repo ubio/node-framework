@@ -50,8 +50,13 @@ describe('Mocking AcAuth', () => {
                 organisation_id: 'foo',
                 service_account_id: 'service-account-worker',
                 service_account_name: 'Bot',
+            },
+            actor: {
+                type: 'ServiceAccount',
+                id: 'service-account-worker',
+                name: 'Bot',
+                organisationId: 'foo',
             }
         });
     });
-
 });

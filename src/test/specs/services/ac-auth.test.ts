@@ -66,39 +66,6 @@ describe('AcAuthProvider', () => {
             assert(auth.isAuthenticated());
         });
 
-        context('jwt has organisation_id', () => {
-            it('sets auth.organisationId', async () => {
-                jwt.context = { organisation_id: 'some-user-org-id' };
-                const auth = await authProvider.provide();
-                assert.strictEqual(fetchMock.spy.called, false);
-                const organisationId = auth.getOrganisationId();
-                assert.strictEqual(organisationId, 'some-user-org-id');
-            });
-        });
-
-        context('x-ubio-organisation-id presents in header', () => {
-            it('sets auth.organisationId', async () => {
-                headers['x-ubio-organisation-id'] = 'org-id-from-header';
-                const auth = await authProvider.provide();
-                const organisationId = auth.getOrganisationId();
-                assert.strictEqual(organisationId, 'org-id-from-header');
-            });
-        });
-
-        context('jwt has service_account_id', () => {
-            it('returns serviceAccount from auth', async () => {
-                jwt.context = {
-                    service_account_id: 'some-service-account-id',
-                    service_account_name: 'Bot'
-                };
-                const auth = await authProvider.provide();
-                const serviceAccount = auth.getServiceAccount();
-                assert.ok(serviceAccount);
-                assert.strictEqual(serviceAccount.id, 'some-service-account-id');
-                assert.strictEqual(serviceAccount.name, 'Bot');
-            });
-        });
-
         it('throws when jwt is not valid', async () => {
             const authHeader = container.get(DefaultAcAuthProvider).AC_AUTH_HEADER_NAME;
             headers[authHeader] = 'Bearer unknown-jwt-token';
@@ -160,59 +127,205 @@ describe('AcAuthProvider', () => {
                 assert.strictEqual(err.status, 401);
             }
         });
-
-        context('jwt has organisation_id', () => {
-            it('sets auth.organisationId', async () => {
-                headers['authorization'] = 'AUTH';
-                jwt.context = { organisation_id: 'some-user-org-id' };
-                const auth = await authProvider.provide();
-                assert.strictEqual(fetchMock.spy.called, true);
-                const organisationId = auth.getOrganisationId();
-                assert.strictEqual(organisationId, 'some-user-org-id');
-            });
-        });
-
-        context('x-ubio-organisation-id presents in header', () => {
-
-            beforeEach(() => {
-                headers['authorization'] = 'AUTH';
-            });
-
-            it('sets auth.organisationId', async () => {
-                headers['x-ubio-organisation-id'] = 'org-id-from-header';
-                const auth = await authProvider.provide();
-                const organisationId = auth.getOrganisationId();
-                assert.strictEqual(organisationId, 'org-id-from-header');
-            });
-
-            it('sets jwt.context.organisation_id if both present', async () => {
-                headers['x-ubio-organisation-id'] = 'org-id-from-header';
-                jwt.context = { organisation_id: 'org-id-from-jwt' };
-                const auth = await authProvider.provide();
-                const organisationId = auth.getOrganisationId();
-                assert.strictEqual(organisationId, 'org-id-from-jwt');
-            });
-        });
-
-        context('jwt has service_account_id', () => {
-            it('returns serviceAccount from auth', async () => {
-                headers['authorization'] = 'AUTH';
-                jwt.context = { service_account_id: 'Bot', service_account_name: 'Ron Swanson' };
-                const auth = await authProvider.provide();
-                const serviceAccount = auth.getServiceAccount();
-                assert.ok(serviceAccount);
-                assert.strictEqual(serviceAccount.id, 'Bot');
-                assert.strictEqual(serviceAccount.name, 'Ron Swanson');
-            });
-        });
     });
 
     context('authorization header does not exist', () => {
-        it('leaves auth unauthenticated', async () => {
+        it('leaves auth unauthenticated without throwing', async () => {
             const auth = await authProvider.provide();
             assert.strictEqual(auth.isAuthenticated(), false);
         });
 
     });
 
+    describe('acAuth', () => {
+        beforeEach(() => {
+            const authHeader = container.get(DefaultAcAuthProvider).AC_AUTH_HEADER_NAME;
+            headers[authHeader] = 'Bearer jwt-token-here';
+        });
+
+        describe('organisation_id', () => {
+            context('jwt has `organisation_id`', () => {
+                it('sets auth.organisationId', async () => {
+                    jwt.context = { organisation_id: 'some-user-org-id' };
+                    const auth = await authProvider.provide();
+                    const organisationId = auth.getOrganisationId();
+                    assert.strictEqual(organisationId, 'some-user-org-id');
+                });
+            });
+
+            context('x-ubio-organisation-id presents in header', () => {
+                it('sets auth.organisationId', async () => {
+                    headers['x-ubio-organisation-id'] = 'org-id-from-header';
+                    const auth = await authProvider.provide();
+                    const organisationId = auth.getOrganisationId();
+                    assert.strictEqual(organisationId, 'org-id-from-header');
+                });
+            });
+
+            context('both jwt and x-ubio-organisation-id present', () => {
+                it('sets auth.organisationId with value from jwt', async () => {
+                    jwt.context = { organisation_id: 'org-id-from-jwt' };
+                    headers['x-ubio-organisation-id'] = 'org-id-from-header';
+                    const auth = await authProvider.provide();
+                    const organisationId = auth.getOrganisationId();
+                    assert.strictEqual(organisationId, 'org-id-from-jwt');
+                });
+            });
+        });
+
+        describe('getActor#ServiceAccount', () => {
+            context('jwt has service_account_id and service_account_name', () => {
+                it('returns serviceAccount from auth', async () => {
+                    jwt.context = {
+                        service_account_id: 'some-service-account-id',
+                        service_account_name: 'Bot'
+                    };
+                    const auth = await authProvider.provide();
+                    const serviceAccount = auth.getActor('ServiceAccount');
+                    assert.ok(serviceAccount?.type === 'ServiceAccount');
+                    assert.strictEqual(serviceAccount.id, 'some-service-account-id');
+                    assert.strictEqual(serviceAccount.name, 'Bot');
+                });
+
+                it('returns organisationId if available', async () => {
+                    jwt.context = {
+                        service_account_id: 'some-service-account-id',
+                        service_account_name: 'Bot',
+                        organisation_id: 'ubio-organisation-id',
+                    };
+                    const auth = await authProvider.provide();
+                    const serviceAccount = auth.getActor('ServiceAccount');
+                    assert.ok(serviceAccount?.type === 'ServiceAccount');
+                    assert.strictEqual(serviceAccount.id, 'some-service-account-id');
+                    assert.strictEqual(serviceAccount.name, 'Bot');
+                });
+
+                it('returns contains client info', async () => {
+                    jwt.context = {
+                        service_account_id: 'Bot',
+                        service_account_name: 'Nick Offerman',
+                        client_id: 'ClientA',
+                        client_name: 'Ron Swanson',
+                    };
+                    const auth = await authProvider.provide();
+                    const serviceAccount = auth.getActor('ServiceAccount');
+                    assert.ok(serviceAccount?.type === 'ServiceAccount');
+                    assert.strictEqual(serviceAccount.clientId, 'ClientA');
+                    assert.strictEqual(serviceAccount.clientName, 'Ron Swanson');
+                });
+
+                it('returns null if `allowedRoles` do not include ServiceAccount', async () => {
+                    jwt.context = {
+                        service_account_id: 'Bot',
+                        service_account_name: 'Nick Offerman',
+                        client_id: 'ClientA',
+                        client_name: 'Ron Swanson',
+                    };
+                    const auth = await authProvider.provide();
+                    const serviceAccount = auth.getActor('Client');
+                    assert.ok(serviceAccount == null);
+                });
+            });
+        });
+
+        describe('getActor#Client', () => {
+            context('jwt has client_id and client_name', () => {
+                it('returns Client actor from auth', async () => {
+                    jwt.context = {
+                        client_id: 'some-client-id',
+                        client_name: 'UbioAir',
+                        organisation_id: 'ubio-organisation-id',
+                    };
+                    const auth = await authProvider.provide();
+                    const client = auth.getActor('Client');
+                    assert.ok(client?.type === 'Client');
+                    assert.strictEqual(client.id, 'some-client-id');
+                    assert.strictEqual(client.name, 'UbioAir');
+                });
+
+                it('does not return Client actor if job_id is present', async () => {
+                    headers['authorization'] = 'AUTH';
+                    jwt.context = {
+                        job_id: 'some-job-id-from-cliend-ubio-air',
+                        organisation_id: 'ubio-organisation-id',
+                        client_id: 'some-client-id',
+                        client_name: 'UbioAir',
+                    };
+                    const auth = await authProvider.provide();
+                    const client = auth.getActor('Client');
+                    assert.ok(client == null);
+                });
+            });
+        });
+
+        describe('getActor#User', () => {
+            context('jwt has user_id, user_name and organisation_id', () => {
+                it('returns User actor', async () => {
+                    jwt.context = {
+                        user_id: 'some-user-id',
+                        user_name: 'Travel Aggregator',
+                        organisation_id: 'ubio-organisation-id',
+                    };
+                    const auth = await authProvider.provide();
+                    const user = auth.getActor('User');
+                    assert.ok(user?.type === 'User');
+                    assert.strictEqual(user.id, 'some-user-id');
+                    assert.strictEqual(user.name, 'Travel Aggregator');
+                });
+            });
+
+            context('missing some info', () => {
+                it('does not return Client actor when user_name is missing', async () => {
+                    jwt.context = {
+                        user_id: 'some-user-id',
+                        organisation_id: 'ubio-organisation-id',
+                    };
+                    const auth = await authProvider.provide();
+                    const user = auth.getActor('User');
+                    assert.ok(user == null);
+                });
+            });
+        });
+
+        describe('JobAccessToken', () => {
+            context('jwt has job_id, client_id, client_name and organisation_id', () => {
+                it('returns JobAccessToken actor', async () => {
+                    jwt.context = {
+                        job_id: 'some-job-id',
+                        client_id: 'some-client-id',
+                        client_name: 'UbioAir',
+                        organisation_id: 'ubio-organisation-id',
+                    };
+                    const auth = await authProvider.provide();
+                    const jobAccessToken = auth.getActor('JobAccessToken');
+                    assert.ok(jobAccessToken?.type === 'JobAccessToken');
+                    assert.strictEqual(jobAccessToken.jobId, 'some-job-id');
+                    assert.strictEqual(jobAccessToken.clientId, 'some-client-id');
+                    assert.strictEqual(jobAccessToken.clientName, 'UbioAir');
+                });
+            });
+
+            context('missing required data', () => {
+                it('does not return Client actor when user_name is missing', async () => {
+                    jwt.context = {
+                        job_id: 'some-job-id',
+                        organisation_id: 'ubio-organisation-id',
+                    };
+                    const auth = await authProvider.provide();
+                    const jobAccessToken = auth.getActor('JobAccessToken');
+                    assert.ok(jobAccessToken == null);
+                });
+
+                it('does not return Client actor when organisation_id is missing', async () => {
+                    jwt.context = {
+                        user_id: 'some-user-id',
+                        user_name: 'Travel Aggregator',
+                    };
+                    const auth = await authProvider.provide();
+                    const jobAccessToken = auth.getActor('JobAccessToken');
+                    assert.ok(jobAccessToken == null);
+                });
+            });
+        });
+    });
 });

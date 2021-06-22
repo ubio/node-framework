@@ -56,7 +56,7 @@ export class DefaultAcAuthProvider {
             };
             return new AcAuth({
                 authenticated: true,
-                data
+                data,
             });
         } catch (err) {
             this.logger.warn(`Authentication from token failed`, { details: err });
