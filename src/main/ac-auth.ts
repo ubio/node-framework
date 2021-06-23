@@ -3,8 +3,7 @@
 import { ClientError } from './exception';
 
 export interface AcAuthSpec {
-    authenticated: boolean;
-    data: AcJwtContext;
+    jwtContext?: AcJwtContext;
 }
 
 export interface AcJwtContext {
@@ -53,104 +52,79 @@ export interface AcJobAccessToken {
 }
 
 export class AcAuth {
-    authenticated: boolean = false;
-    data: AcJwtContext = {};
-    protected actor: AcActor | null = null;
-    constructor(spec?: AcAuthSpec) {
-        this.authenticated = spec?.authenticated ?? false;
-        this.data = spec?.data ?? {};
-        this.actor = this.getAuthorisedActor();
-    }
+    actor: AcActor | null = null;
 
-    protected getAuthorisedActor() {
-        // Note: order matters
-        return this.getServiceAccount() ??
-            this.getJobAccessToken() ??
-            this.getClient() ??
-            this.getUser() ??
-            null;
+    constructor(spec: AcAuthSpec = {}) {
+        this.actor = spec.jwtContext == null ? null : this.parseActor(spec.jwtContext);
     }
 
     isAuthenticated() {
-        return this.authenticated;
+        return this.actor != null;
     }
 
     checkAuthenticated(): void {
-        if (!this.authenticated) {
+        if (!this.isAuthenticated()) {
             throw new AuthenticationError();
         }
     }
 
     getOrganisationId(): string | null {
-        return this.data.organisation_id ?? null;
+        return this.actor?.organisationId ?? null;
     }
 
     requireOrganisationId(): string {
-        if (!this.data.organisation_id) {
+        const organisationId = this.getOrganisationId();
+        if (!organisationId) {
             throw new AccessForbidden('organisationId is required');
         }
-        return this.data.organisation_id;
+        return organisationId;
     }
 
-    /**
-     * @deprecated use getActor('ServiceAccount') or getServiceAccount() instead
-     */
-    getServiceAccountId(): string | null {
-        return this.getServiceAccount()?.id ?? null;
-    }
-
-    /**
-     * @deprecated use requireActor('ServiceAccount') instead
-     */
-    requireServiceAccountId(): string {
-        const serviceAccountId = this.getServiceAccount()?.id ?? null;
-        if (!serviceAccountId) {
-            throw new AccessForbidden('serviceAccountId is required');
+    getClientId(): string | null {
+        if (this.actor?.type === 'Client') {
+            return this.actor.id;
         }
-
-        return serviceAccountId;
-    }
-
-    /**
-     * @param allowedRoles list of permitted roles.
-     * @returns Authorised AcActor. Throws when not authorised or the actor doesn't meet the allowedRoles criteria
-     */
-    requireActor(...allowedRoles: AcRole[]) {
-        const actor = this.getActor(...allowedRoles);
-        if (!actor) {
-            throw new AccessForbidden('Insufficient permission');
-        }
-
-        return actor;
-    }
-
-    /**
-     * @param allowedRoles list of permitted roles.
-     * @returns Authorised AcActor or null when authorised actor's role is not included or not authorised
-     */
-    getActor(...allowedRoles: AcRole[]): AcActor | null {
-        if (this.actor && allowedRoles.includes(this.actor.type)) {
-            return this.actor;
+        if (this.actor?.type === 'ServiceAccount' && this.actor.clientId) {
+            return this.actor.clientId;
         }
         return null;
     }
 
-    getServiceAccount(): AcServiceAccount | null {
-        if (this.data.service_account_id && this.data.service_account_name) {
+    requireClientId(): string {
+        const clientId = this.getClientId();
+        if (!clientId) {
+            throw new AccessForbidden('clientId is required');
+        }
+        return clientId;
+    }
+
+    // JWT parsing
+
+    protected parseActor(jwtContext: AcJwtContext) {
+        // Note: order matters
+        return this.parseServiceAccount(jwtContext) ??
+            this.parseJobAccessToken(jwtContext) ??
+            this.parseClient(jwtContext) ??
+            this.parseUser(jwtContext) ??
+            null;
+    }
+
+    protected parseServiceAccount(jwtContext: AcJwtContext): AcServiceAccount | null {
+        if (jwtContext.service_account_id && jwtContext.service_account_name) {
             return {
                 type: 'ServiceAccount',
-                id: this.data.service_account_id,
-                name: this.data.service_account_name,
-                clientId: this.data.client_id,
-                clientName: this.data.client_name,
-                organisationId: this.data.organisation_id,
+                id: jwtContext.service_account_id,
+                name: jwtContext.service_account_name,
+                clientId: jwtContext.client_id,
+                clientName: jwtContext.client_name,
+                organisationId: jwtContext.organisation_id,
             };
         }
         return null;
     }
 
-    getUser(): AcUser | null {
-        const { user_id, user_name, organisation_id } = this.data;
+    protected parseUser(jwtContext: AcJwtContext): AcUser | null {
+        const { user_id, user_name, organisation_id } = jwtContext;
         if (user_id && user_name && organisation_id) {
             return {
                 type: 'User',
@@ -162,12 +136,12 @@ export class AcAuth {
         return null;
     }
 
-    getClient(): AcClient | null {
+    protected parseClient(jwtContext: AcJwtContext): AcClient | null {
         // if actor is jobAccessToken and claim AcClient, it should refuse it.
-        if (this.data.job_id) {
+        if (jwtContext.job_id) {
             return null;
         }
-        const { client_id, client_name, organisation_id } = this.data;
+        const { client_id, client_name, organisation_id } = jwtContext;
         if (client_id && client_name && organisation_id) {
             return {
                 type: 'Client',
@@ -176,12 +150,11 @@ export class AcAuth {
                 organisationId: organisation_id,
             };
         }
-
         return null;
     }
 
-    getJobAccessToken(): AcJobAccessToken | null {
-        const { job_id, client_id, client_name, organisation_id } = this.data;
+    protected parseJobAccessToken(jwtContext: AcJwtContext): AcJobAccessToken | null {
+        const { job_id, client_id, client_name, organisation_id } = jwtContext;
         if (job_id && client_id && client_name && organisation_id) {
             return {
                 type: 'JobAccessToken',
