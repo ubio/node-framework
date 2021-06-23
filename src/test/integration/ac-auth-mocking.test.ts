@@ -27,8 +27,7 @@ describe('Mocking AcAuth', () => {
     app.container.rebind(AcAuthProvider).toConstantValue({
         async provide() {
             return new AcAuth({
-                authenticated: true,
-                data: {
+                jwtContext: {
                     organisation_id: 'foo',
                     service_account_id: 'service-account-worker',
                     service_account_name: 'Bot',
@@ -45,12 +44,6 @@ describe('Mocking AcAuth', () => {
         const request = supertest(app.httpServer.callback());
         const res = await request.get('/foo');
         assert.deepStrictEqual(res.body, {
-            authenticated: true,
-            data: {
-                organisation_id: 'foo',
-                service_account_id: 'service-account-worker',
-                service_account_name: 'Bot',
-            },
             actor: {
                 type: 'ServiceAccount',
                 id: 'service-account-worker',

@@ -55,8 +55,7 @@ export class DefaultAcAuthProvider {
                 ...payload.context
             };
             return new AcAuth({
-                authenticated: true,
-                data,
+                jwtContext: data,
             });
         } catch (err) {
             this.logger.warn(`Authentication from token failed`, { details: err });
