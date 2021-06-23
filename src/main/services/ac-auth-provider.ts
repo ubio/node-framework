@@ -16,8 +16,8 @@ export abstract class AcAuthProvider {
 export class DefaultAcAuthProvider {
     clientRequest: Request;
 
-    static legacyCacheTtl: number = 60000;
-    static legacyTokensCache: Map<string, { token: string, authorisedAt: number }> = new Map();
+    static middlewareCacheTtl: number = 60000;
+    static middlewareTokensCache: Map<string, { token: string, authorisedAt: number }> = new Map();
 
     @config({ default: 'x-ubio-auth' }) AC_AUTH_HEADER_NAME!: string;
     @config({ default: 'http://auth-middleware.authz.svc.cluster.local:8080/verify' })
@@ -47,13 +47,15 @@ export class DefaultAcAuthProvider {
     }
 
     protected async createAuthFromToken(token: string): Promise<AcAuth> {
-        const organisationIdHeader = this.ctx.req.headers['x-ubio-organisation-id'] as string;
+        const organisationIdHeader = this.ctx.req.headers['x-ubio-organisation-id'] as string | undefined;
         try {
-            const jwt = await this.jwt.decodeAndVerify(token);
+            const payload = await this.jwt.decodeAndVerify(token);
+            const data = {
+                organisation_id: organisationIdHeader,
+                ...payload.context
+            };
             return new AcAuth({
-                authenticated: true,
-                organisationId: jwt.context?.organisation_id ?? organisationIdHeader ?? null,
-                serviceAccountId: jwt.context?.service_user_id ?? null,
+                jwtContext: data,
             });
         } catch (err) {
             this.logger.warn(`Authentication from token failed`, { details: err });
@@ -63,9 +65,9 @@ export class DefaultAcAuthProvider {
 
     protected async getToken(headers: { [name: string]: string | undefined }) {
         const authHeaderName = this.AC_AUTH_HEADER_NAME;
-        const newAuthHeader = headers[authHeaderName];
-        if (newAuthHeader) {
-            const [prefix, token] = newAuthHeader.split(' ');
+        const upstreamAuth = headers[authHeaderName];
+        if (upstreamAuth) {
+            const [prefix, token] = upstreamAuth.split(' ');
             if (prefix !== 'Bearer' || !token) {
                 this.logger.warn(`Incorrect authorization header`, {
                     details: { prefix, token }
@@ -74,33 +76,43 @@ export class DefaultAcAuthProvider {
             }
             return token;
         }
-        const legacyHeader = headers['authorization'];
-        if (legacyHeader) {
-            return this.getTokenFromLegacyAuth(legacyHeader);
+        const authorization = headers['authorization'];
+        if (authorization) {
+            return this.getTokenFromAuthMiddleware(authorization);
         }
     }
 
-    protected async getTokenFromLegacyAuth(legacyAuthHeader: string): Promise<string> {
-        const cached = DefaultAcAuthProvider.legacyTokensCache.get(legacyAuthHeader) || { authorisedAt: 0, token: '' };
-        const invalid = cached.authorisedAt + DefaultAcAuthProvider.legacyCacheTtl < Date.now();
+    protected async getTokenFromAuthMiddleware(authorization: string): Promise<string> {
+        const cached = DefaultAcAuthProvider.middlewareTokensCache.get(authorization) || { authorisedAt: 0, token: '' };
+        const invalid = cached.authorisedAt + DefaultAcAuthProvider.middlewareCacheTtl < Date.now();
         if (invalid) {
             try {
                 const url = this.AC_AUTH_VERIFY_URL;
-                const { token } = await this.clientRequest.get(url, {
-                    headers: {
-                        authorization: legacyAuthHeader,
-                    }
-                });
-                DefaultAcAuthProvider.legacyTokensCache.set(legacyAuthHeader, {
+                const options = {
+                    headers: { authorization },
+                };
+                const { token } = await this.clientRequest.get(url, options);
+                DefaultAcAuthProvider.middlewareTokensCache.set(authorization, {
                     token,
                     authorisedAt: Date.now(),
                 });
+                this.pruneCache();
                 return token;
             } catch (error) {
-                this.logger.warn('Legacy authentication failed', { ...error });
+                this.logger.warn('AuthMiddleware authentication failed', { ...error });
                 throw new AuthenticationError();
             }
         }
         return cached.token;
+    }
+
+    pruneCache() {
+        const now = Date.now();
+        const entries = DefaultAcAuthProvider.middlewareTokensCache.entries();
+        for (const [k, v] of entries) {
+            if (v.authorisedAt + DefaultAcAuthProvider.middlewareCacheTtl < now) {
+                DefaultAcAuthProvider.middlewareTokensCache.delete(k);
+            }
+        }
     }
 }

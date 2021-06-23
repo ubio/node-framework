@@ -27,9 +27,11 @@ describe('Mocking AcAuth', () => {
     app.container.rebind(AcAuthProvider).toConstantValue({
         async provide() {
             return new AcAuth({
-                authenticated: true,
-                organisationId: 'foo',
-                serviceAccountId: 'bar',
+                jwtContext: {
+                    organisation_id: 'foo',
+                    service_account_id: 'service-account-worker',
+                    service_account_name: 'Bot',
+                }
             });
         }
     });
@@ -41,11 +43,13 @@ describe('Mocking AcAuth', () => {
     it('returns mocked data', async () => {
         const request = supertest(app.httpServer.callback());
         const res = await request.get('/foo');
-        assert.deepEqual(res.body, {
-            authenticated: true,
-            organisationId: 'foo',
-            serviceAccountId: 'bar',
+        assert.deepStrictEqual(res.body, {
+            actor: {
+                type: 'ServiceAccount',
+                id: 'service-account-worker',
+                name: 'Bot',
+                organisationId: 'foo',
+            }
         });
     });
-
 });
