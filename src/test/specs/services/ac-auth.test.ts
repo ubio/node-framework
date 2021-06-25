@@ -56,7 +56,6 @@ describe('AcAuthProvider', () => {
     });
 
     describe('x-ubio-auth header exists', () => {
-
         beforeEach(() => {
             const authHeader = container.get(DefaultAcAuthProvider).AC_AUTH_HEADER_NAME;
             headers[authHeader] = 'Bearer jwt-token-here';
@@ -266,13 +265,27 @@ describe('AcAuthProvider', () => {
                     assert.strictEqual(user.id, 'some-user-id');
                     assert.strictEqual(user.name, 'Travel Aggregator');
                 });
-            });
 
-            context('missing some info', () => {
-                it('does not return Client actor when user_name is missing', async () => {
+                it('returns User actor even when user_name is missing', async () => {
+                    // some keycloak users missing names.
                     jwt.context = {
                         user_id: 'some-user-id',
                         organisation_id: 'ubio-organisation-id',
+                    };
+                    const auth = await authProvider.provide();
+                    const user = auth.actor;
+                    assert.ok(user?.type === 'User');
+                    assert.strictEqual(user.id, 'some-user-id');
+                    assert.strictEqual(user.name, '');
+                    assert.strictEqual(user.organisationId, 'ubio-organisation-id');
+                });
+            });
+
+            context('missing some info', () => {
+                it('does not return User actor when organisation_id is missing', async () => {
+                    jwt.context = {
+                        user_id: 'some-user-id',
+                        user_name: 'some-user-name'
                     };
                     const auth = await authProvider.provide();
                     const user = auth.actor;
@@ -300,7 +313,7 @@ describe('AcAuthProvider', () => {
             });
 
             context('missing required data', () => {
-                it('does not return Client actor when user_name is missing', async () => {
+                it('does not return actor when client_id is missing', async () => {
                     jwt.context = {
                         job_id: 'some-job-id',
                         organisation_id: 'ubio-organisation-id',
@@ -310,10 +323,11 @@ describe('AcAuthProvider', () => {
                     assert.ok(jobAccessToken == null);
                 });
 
-                it('does not return Client actor when organisation_id is missing', async () => {
+                it('does not return actor when organisation_id is missing', async () => {
                     jwt.context = {
-                        user_id: 'some-user-id',
-                        user_name: 'Travel Aggregator',
+                        job_id: 'some-job-id',
+                        client_id: 'some-client-id',
+                        client_name: 'Travel Aggregator',
                     };
                     const auth = await authProvider.provide();
                     const jobAccessToken = auth.actor;
