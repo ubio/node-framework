@@ -125,11 +125,11 @@ export class AcAuth {
 
     protected parseUser(jwtContext: AcJwtContext): AcUser | null {
         const { user_id, user_name, organisation_id } = jwtContext;
-        if (user_id && user_name && organisation_id) {
+        if (user_id && organisation_id) {
             return {
                 type: 'User',
                 id: user_id,
-                name: user_name,
+                name: user_name ?? '',
                 organisationId: organisation_id,
             };
         }
@@ -142,11 +142,11 @@ export class AcAuth {
             return null;
         }
         const { client_id, client_name, organisation_id } = jwtContext;
-        if (client_id && client_name && organisation_id) {
+        if (client_id && organisation_id) {
             return {
                 type: 'Client',
                 id: client_id,
-                name: client_name,
+                name: client_name ?? '',
                 organisationId: organisation_id,
             };
         }
@@ -155,12 +155,12 @@ export class AcAuth {
 
     protected parseJobAccessToken(jwtContext: AcJwtContext): AcJobAccessToken | null {
         const { job_id, client_id, client_name, organisation_id } = jwtContext;
-        if (job_id && client_id && client_name && organisation_id) {
+        if (job_id && client_id && organisation_id) {
             return {
                 type: 'JobAccessToken',
                 jobId: job_id,
                 clientId: client_id,
-                clientName: client_name,
+                clientName: client_name ?? '',
                 organisationId: organisation_id,
             };
         }
