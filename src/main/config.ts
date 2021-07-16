@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 
+import dotenv from 'dotenv';
 import { Container, injectable } from 'inversify';
 
 import { Exception } from './exception';
@@ -116,6 +117,7 @@ export class DefaultConfig extends Config {
 
     constructor() {
         super();
+        dotenv.config();
         for (const [k, v] of Object.entries(process.env)) {
             if (v != null) {
                 this.map.set(k, v);
