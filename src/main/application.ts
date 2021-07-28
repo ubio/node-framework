@@ -5,6 +5,7 @@ import { HttpServer } from './http';
 import { Logger, StandardLogger } from './logger';
 import { MetricsRegistry } from './metrics';
 import { getGlobalMetrics } from './metrics/global';
+import { MetricsPushGateway } from './metrics/push-gateway';
 import { MetricsRouter } from './metrics/route';
 import { Router } from './router';
 import {
@@ -32,6 +33,7 @@ export class Application {
         this.container.bind(HttpServer).toSelf().inSingletonScope();
         this.container.bind(Logger).to(StandardLogger).inSingletonScope();
         this.container.bind(Router).to(MetricsRouter);
+        this.container.bind(MetricsPushGateway).toSelf();
         this.container.bind(MetricsRegistry).toConstantValue(getGlobalMetrics());
         this.container.bind(JwtService).to(AutomationCloudJwtService).inSingletonScope();
         this.container.bind(AcAuthProvider).to(DefaultAcAuthProvider);
