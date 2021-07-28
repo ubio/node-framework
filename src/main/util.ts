@@ -1,8 +1,12 @@
 import 'reflect-metadata';
 
 import { ErrorObject as AjvErrorObject } from 'ajv';
+import { promises as fs } from 'fs';
 import { Container, interfaces } from 'inversify';
+import path from 'path';
 import { v4 as uuid } from 'uuid';
+
+import { Exception } from './exception';
 
 export type Constructor<T> = new (...args: any[]) => T;
 export type AnyConstructor = new (...args: any[]) => {};
@@ -69,4 +73,26 @@ export function getClassMetadata<T>(key: Symbol, target: any): T[] {
 export function getBindingsMap(container: Container):
     Map<interfaces.ServiceIdentifier<any>, interfaces.Binding<any>[]> {
     return (container as any)._bindingDictionary._map;
+}
+
+export async function getAppDetails() {
+    const { name, version } = await getPackageJson();
+    return {
+        name: name.replace(/^@.*\//, ''),
+        version
+    };
+}
+
+async function getPackageJson() {
+    const pkgPath = path.join(process.cwd(), 'package.json');
+    try {
+        const packageJsonFile = path.join(pkgPath);
+        const pkg = await fs.readFile(packageJsonFile, 'utf-8');
+        return JSON.parse(pkg);
+
+    } catch (error) {
+        const reason = error instanceof SyntaxError ? 'package.json is malformed' :
+            error.code === 'ENOENT' ? 'package.json not found' : error.message;
+        throw new Exception(`Cannot get App Details: ${reason}`);
+    }
 }
