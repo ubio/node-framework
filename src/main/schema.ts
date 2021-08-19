@@ -33,7 +33,7 @@ export class Schema<T> {
             allErrors: true,
             messages: true,
             useDefaults: true,
-            removeAdditional: this.options.noAdditionalProperties ? 'all' : false,
+            removeAdditional: this.options.noAdditionalProperties,
             keywords: ['optional'],
             ...ajvOptions,
         });
