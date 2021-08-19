@@ -80,7 +80,7 @@ export class Schema<T> {
                     }
                     v.required = required;
                 }
-                if (this.options.noAdditionalProperties) {
+                if (v.additionalProperties === undefined && this.options.noAdditionalProperties) {
                     v.additionalProperties = false;
                 }
             }
