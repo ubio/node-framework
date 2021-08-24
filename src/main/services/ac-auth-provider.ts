@@ -13,7 +13,7 @@ export abstract class AcAuthProvider {
 }
 
 @injectable()
-export class DefaultAcAuthProvider {
+export class DefaultAcAuthProvider extends AcAuthProvider {
     clientRequest: Request;
 
     static middlewareCacheTtl: number = 60000;
@@ -33,6 +33,7 @@ export class DefaultAcAuthProvider {
         @inject('KoaContext')
         protected ctx: Koa.Context,
     ) {
+        super();
         this.clientRequest = new Request({
             retryAttempts: 3,
         });
@@ -114,5 +115,12 @@ export class DefaultAcAuthProvider {
                 DefaultAcAuthProvider.middlewareTokensCache.delete(k);
             }
         }
+    }
+}
+
+@injectable()
+export class BypassAcAuthProvider extends AcAuthProvider {
+    async provide() {
+        return new AcAuth();
     }
 }
