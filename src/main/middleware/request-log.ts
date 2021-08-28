@@ -1,18 +1,17 @@
 import { Context } from 'koa';
 
-import { Logger } from '../logger';
 
 export async function requestLog(ctx: Context, next: () => Promise<any>) {
     const startedAt = Date.now();
-    const enabled = process.env.REQUEST_LOG !== 'false';
+    const level = process.env.REQUEST_LOG ?? 'debug';
     try {
         await next();
     } finally {
         const logger = ctx.logger;
-        if (enabled && logger instanceof Logger) {
+        if (['info', 'debug'].includes(level)) {
             const latency = ((Date.now() - startedAt) / 1000).toFixed(2);
             // https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#HttpRequest
-            logger.debug(`${ctx.status} ${ctx.method} ${ctx.path}`, {
+            logger[level](`${ctx.status} ${ctx.method} ${ctx.path}`, {
                 httpRequest: {
                     requestMethod: ctx.method,
                     requestUrl: ctx.path,
