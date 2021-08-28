@@ -74,7 +74,7 @@ export class HttpServer extends Koa {
             exposeHeaders: ['Date', 'Content-Length'],
             maxAge: 15 * 60
         }));
-        this.use(middleware.debugRequestLog);
+        this.use(middleware.requestLog);
         this.use(middleware.requestId);
         this.use(middleware.responseTime);
         this.use(middleware.errorHandler);

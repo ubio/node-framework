@@ -2,9 +2,9 @@ import { Context } from 'koa';
 
 import { Logger } from '../logger';
 
-export async function debugRequestLog(ctx: Context, next: () => Promise<any>) {
+export async function requestLog(ctx: Context, next: () => Promise<any>) {
     const startedAt = Date.now();
-    const enabled = process.env.DEBUG_REQUEST_LOG === 'true';
+    const enabled = process.env.REQUEST_LOG !== 'false';
     try {
         await next();
     } finally {
