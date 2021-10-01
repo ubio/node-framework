@@ -318,7 +318,10 @@ export function matchPath(
     const regex = tokens
         .map(tok => pathTokenToRegexp(tok))
         .join('');
-    const re = new RegExp('^' + regex + (matchStart ? '(?=$|[/])' : '$'));
+    const lastTokenValue = tokens[tokens.length - 1]?.value || '';
+    const routerPathTrailingSlash = lastTokenValue[lastTokenValue.length - 1] === '/';
+    const startWith = routerPathTrailingSlash ? '.' : '[/]';
+    const re = new RegExp('^' + regex + (matchStart ? `(?=$|${startWith})` : '/?$'));
     const m = re.exec(path);
     if (m == null) {
         return null;
