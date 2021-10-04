@@ -1,3 +1,5 @@
+- feat: match requests with a trailing slash
+
 ## 7.1.0
 
 - feat: multipart requests supported
