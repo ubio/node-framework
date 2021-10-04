@@ -75,7 +75,7 @@ describe('Router', () => {
                 const m2 = matchPath('/hello/world/123', tokens);
                 assert.deepStrictEqual(m2, null);
             });
-            it('match path with trailing "/"', () => {
+            it('match trailing "/"', () => {
                 const m = matchPath('/hello/world/', tokens);
                 assert.deepStrictEqual(m, {});
             });
@@ -83,9 +83,9 @@ describe('Router', () => {
 
         describe('/hello/world/', () => {
             const tokens = tokenizePath('/hello/world/');
-            it('no match', () => {
-                const m = matchPath('/hello/world', tokens);
-                assert.deepStrictEqual(m, null);
+            it('match whole', () => {
+                const m = matchPath('/hello/world/', tokens);
+                assert.deepStrictEqual(m, {});
             });
             it('match start', () => {
                 const m = matchPath('/hello/world/blah', tokens, true);
@@ -97,9 +97,9 @@ describe('Router', () => {
                 const m2 = matchPath('/hello/world/123', tokens);
                 assert.deepStrictEqual(m2, null);
             });
-            it('match path with trailing "/"', () => {
-                const m = matchPath('/hello/world/', tokens);
-                assert.deepStrictEqual(m, {});
+            it('no match lack of trailing slash', () => {
+                const m = matchPath('/hello/world', tokens);
+                assert.deepStrictEqual(m, null);
             });
         });
 

@@ -307,7 +307,7 @@ export function tokenizePath(path: string): PathToken[] {
 
 /**
  * Matches `path` against a list of path tokens, obtained from `tokenizePath`.
- * If `matchStart` is true, allows path to have prefix which does not match the tokens.
+ * If `matchStart` is true, allows path to have suffix which does not match the tokens.
  */
 export function matchPath(
     path: string,
@@ -318,10 +318,16 @@ export function matchPath(
     const regex = tokens
         .map(tok => pathTokenToRegexp(tok))
         .join('');
-    const lastTokenValue = tokens[tokens.length - 1]?.value || '';
-    const routerPathTrailingSlash = lastTokenValue[lastTokenValue.length - 1] === '/';
-    const startWith = routerPathTrailingSlash ? '.' : '[/]';
-    const re = new RegExp('^' + regex + (matchStart ? `(?=$|${startWith})` : '/?$'));
+
+    let re = new RegExp('^' + regex + '/?$');
+
+    if (matchStart) {
+        // tokenized '/foo' matches paths '/foo', '/foo/' and 'foo/bar' but not '/foobar`
+        // tokenized '/foo/' matches paths '/foo/' and '/foo/bar' but not '/foo' or '/foobar'
+        const routeHasTrailingSlash = tokens[tokens.length - 1]?.value.slice(-1) === '/';
+        re = new RegExp('^' + regex + `(?=$|${routeHasTrailingSlash ? '.' : '[/]'})`);
+    }
+
     const m = re.exec(path);
     if (m == null) {
         return null;
