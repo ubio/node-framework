@@ -1,3 +1,5 @@
+## 13.4.0
+
 - feat: match requests with a trailing slash
 
 ## 7.1.0
