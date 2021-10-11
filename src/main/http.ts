@@ -25,6 +25,7 @@ export class HttpServer extends Koa {
     @config({ default: '5mb' }) HTTP_JSON_LIMIT!: string;
     @config({ default: '1mb' }) HTTP_FORM_LIMIT!: string;
     @config({ default: 50 * 1024 * 1024 }) HTTP_MAX_FILE_SIZE_BYTES!: number;
+    @config({ default: false }) HTTP_INCLUDE_UNPARSED_BODY!: boolean;
     @config({ default: 10000 }) HTTP_SHUTDOWN_DELAY!: number;
     @config({ default: 300000 }) HTTP_TIMEOUT!: number;
 
@@ -66,7 +67,8 @@ export class HttpServer extends Koa {
             formLimit: this.HTTP_FORM_LIMIT,
             formidable: {
                 maxFileSize: this.HTTP_MAX_FILE_SIZE_BYTES,
-            }
+            },
+            includeUnparsed: this.HTTP_INCLUDE_UNPARSED_BODY
         }));
         this.use(conditional());
         this.use(etag());
