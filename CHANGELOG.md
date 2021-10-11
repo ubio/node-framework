@@ -1,3 +1,5 @@
+- add a HTTP_INCLUDE_UNPARSED_BODY config option
+
 ## 13.4.0
 
 - feat: match requests with a trailing slash
