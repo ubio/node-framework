@@ -14,6 +14,7 @@ import {
     DefaultAcAuthProvider,
     JwtService,
 } from './services';
+import { MiddlewareWrapper } from './middleware/middleware-wrapper';
 
 /**
  * Application provides an IoC container where all modules should be registered
@@ -37,6 +38,7 @@ export class Application {
         this.container.bind(MetricsRegistry).toConstantValue(getGlobalMetrics());
         this.container.bind(JwtService).to(AutomationCloudJwtService).inSingletonScope();
         this.container.bind(AcAuthProvider).to(DefaultAcAuthProvider);
+        this.container.bind(MiddlewareWrapper).toSelf().inSingletonScope();
     }
 
     get logger(): Logger {

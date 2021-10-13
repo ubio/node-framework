@@ -1,19 +1,14 @@
-import cors from '@koa/cors';
 import http from 'http';
 import https from 'https';
 import { Container, inject, injectable } from 'inversify';
 import Koa, { Middleware } from 'koa';
-import bodyParser from 'koa-body';
-import compress from 'koa-compress';
-import conditional from 'koa-conditional-get';
-import etag from 'koa-etag';
 import stoppable, { StoppableServer } from 'stoppable';
 
 import { AcAuth } from './ac-auth';
 import { Config, config } from './config';
 import { ClientError } from './exception';
 import { Logger, RequestLogger } from './logger';
-import * as middleware from './middleware';
+import { MiddlewareWrapper } from './middleware/middleware-wrapper';
 import { Router } from './router';
 import { AcAuthProvider } from './services';
 
@@ -36,6 +31,8 @@ export class HttpServer extends Koa {
         protected logger: Logger,
         @inject(Config)
         public config: Config, // env is used by Koa
+        @inject(MiddlewareWrapper)
+        protected middlewareWrapper: MiddlewareWrapper
     ) {
         super();
         this.proxy = true;
@@ -43,45 +40,47 @@ export class HttpServer extends Koa {
     }
 
     addStandardMiddleware(): this {
-        this.use(async (ctx, next) => {
-            ctx.compress = false;
-            await next();
-        });
-        this.use(
-            compress({
-                threshold: 2048,
-                gzip: {
-                    flush: require('zlib').constants.Z_SYNC_FLUSH,
-                },
-                deflate: {
-                    flush: require('zlib').constants.Z_SYNC_FLUSH,
-                },
-            })
-        );
-        this.use(this.createRequestContainerMiddleware());
-        this.use(bodyParser({
-            json: true,
-            urlencoded: true,
-            multipart: true,
-            jsonLimit: this.HTTP_JSON_LIMIT,
-            formLimit: this.HTTP_FORM_LIMIT,
-            formidable: {
-                maxFileSize: this.HTTP_MAX_FILE_SIZE_BYTES,
-            },
-            includeUnparsed: this.HTTP_INCLUDE_UNPARSED_BODY
-        }));
-        this.use(conditional());
-        this.use(etag());
-        this.use(cors({
-            exposeHeaders: ['Date', 'Content-Length'],
-            maxAge: 15 * 60
-        }));
-        this.use(middleware.requestLog);
-        this.use(middleware.requestId);
-        this.use(middleware.responseTime);
-        this.use(middleware.errorHandler);
-        this.use(this.createAcAuthMiddleware());
-        this.use(this.createRoutingMiddleware());
+        const middlewares = this.middlewareWrapper.getAllMiddlewares();
+        middlewares.forEach(m => this.use(m.middleware));
+        // this.use(async (ctx, next) => {
+        //     ctx.compress = false;
+        //     await next();
+        // });
+        // this.use(
+        //     compress({
+        //         threshold: 2048,
+        //         gzip: {
+        //             flush: require('zlib').constants.Z_SYNC_FLUSH,
+        //         },
+        //         deflate: {
+        //             flush: require('zlib').constants.Z_SYNC_FLUSH,
+        //         },
+        //     })
+        // );
+        // this.use(this.createRequestContainerMiddleware());
+        // this.use(bodyParser({
+        //     json: true,
+        //     urlencoded: true,
+        //     multipart: true,
+        //     jsonLimit: this.HTTP_JSON_LIMIT,
+        //     formLimit: this.HTTP_FORM_LIMIT,
+        //     formidable: {
+        //         maxFileSize: this.HTTP_MAX_FILE_SIZE_BYTES,
+        //     },
+        //     includeUnparsed: this.HTTP_INCLUDE_UNPARSED_BODY
+        // }));
+        // this.use(conditional());
+        // this.use(etag());
+        // this.use(cors({
+        //     exposeHeaders: ['Date', 'Content-Length'],
+        //     maxAge: 15 * 60
+        // }));
+        // this.use(middleware.requestLog);
+        // this.use(middleware.requestId);
+        // this.use(middleware.responseTime);
+        // this.use(middleware.errorHandler);
+        // this.use(this.createAcAuthMiddleware());
+        // this.use(this.createRoutingMiddleware());
         return this;
     }
 
