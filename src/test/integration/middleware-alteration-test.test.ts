@@ -12,13 +12,12 @@ describe('Altering Middlewares', () => {
         foo() {
             this.ctx.body = 'OK';
         }
-
     }
 
     const customMiddleware = {
         name: 'customMiddleware',
         middleware: async (ctx: Koa.Context, next: Koa.Next) => {
-            ctx.set('customHeader', 'foo');
+            ctx.set('custom-header', 'foo');
 
             return next();
         }
@@ -37,7 +36,6 @@ describe('Altering Middlewares', () => {
             super();
             this.bindRouter(MyRouter);
             this.container.rebind(HttpServer).to(CustomServer).inSingletonScope();
-
         }
     }
 
@@ -50,6 +48,6 @@ describe('Altering Middlewares', () => {
         const request = supertest(app.httpServer.callback());
         const res = await request.get('/foo');
 
-        assert.strictEqual(res.headers.customheader, 'foo');
+        assert.strictEqual(res.headers['custom-header'], 'foo');
     });
 });

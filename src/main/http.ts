@@ -209,6 +209,7 @@ export class HttpServer extends Koa {
             throw new RouteNotFoundError();
         };
     }
+
 }
 
 export class RouteNotFoundError extends ClientError {
