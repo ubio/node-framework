@@ -39,14 +39,14 @@ export class HttpServer extends Koa {
 
     protected middlewares: MiddlewareSpec[] = [
         {
-            name: 'preCompressMiddleware',
+            name: 'preCompress',
             middleware: async (ctx, next) => {
                 ctx.compress = false;
                 await next();
             },
         },
         {
-            name: 'compressMiddleware',
+            name: 'compress',
             middleware: compress({
                 threshold: 2048,
                 gzip: {
@@ -58,7 +58,7 @@ export class HttpServer extends Koa {
             }),
         },
         {
-            name: 'requestContainerMiddleware',
+            name: 'requestContainer',
             middleware: this.createRequestContainerMiddleware(),
         },
         {
@@ -76,7 +76,7 @@ export class HttpServer extends Koa {
             })
         },
         {
-            name: 'bodyParser',
+            name: 'conditional',
             middleware: conditional()
         },
         {
@@ -107,11 +107,11 @@ export class HttpServer extends Koa {
             middleware: middleware.errorHandler,
         },
         {
-            name: 'acAuthMiddleware',
+            name: 'acAuth',
             middleware: this.createAcAuthMiddleware(),
         },
         {
-            name: 'routingMiddleware',
+            name: 'routing',
             middleware: this.createRoutingMiddleware(),
         }
     ];
