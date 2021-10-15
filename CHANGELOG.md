@@ -1,3 +1,5 @@
+## 13.6.0
+
 - make altering middlewares a bit easier by moving them to the field on a HttpServer class as a list of objects
 
 ## 13.5.0
