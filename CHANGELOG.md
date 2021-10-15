@@ -1,3 +1,5 @@
+- make altering middlewares a bit easier by moving them to the field on a HttpServer class as a list of objects
+
 ## 13.5.0
 
 - add a HTTP_INCLUDE_UNPARSED_BODY config option
