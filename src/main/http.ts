@@ -8,6 +8,7 @@ import compress from 'koa-compress';
 import conditional from 'koa-conditional-get';
 import etag from 'koa-etag';
 import stoppable, { StoppableServer } from 'stoppable';
+import { constants } from 'zlib';
 
 import { AcAuth } from './ac-auth';
 import { Config, config } from './config';
@@ -16,6 +17,13 @@ import { Logger, RequestLogger } from './logger';
 import * as middleware from './middleware';
 import { Router } from './router';
 import { AcAuthProvider } from './services';
+
+
+interface MiddlewareSpec {
+    name: string,
+    middleware: Middleware,
+}
+
 
 @injectable()
 export class HttpServer extends Koa {
@@ -28,6 +36,85 @@ export class HttpServer extends Koa {
     @config({ default: false }) HTTP_INCLUDE_UNPARSED_BODY!: boolean;
     @config({ default: 10000 }) HTTP_SHUTDOWN_DELAY!: number;
     @config({ default: 300000 }) HTTP_TIMEOUT!: number;
+
+    protected middlewares: MiddlewareSpec[] = [
+        {
+            name: 'preCompress',
+            middleware: async (ctx, next) => {
+                ctx.compress = false;
+                await next();
+            },
+        },
+        {
+            name: 'compress',
+            middleware: compress({
+                threshold: 2048,
+                gzip: {
+                    flush: constants.Z_SYNC_FLUSH,
+                },
+                deflate: {
+                    flush: constants.Z_SYNC_FLUSH,
+                },
+            }),
+        },
+        {
+            name: 'requestContainer',
+            middleware: this.createRequestContainerMiddleware(),
+        },
+        {
+            name: 'bodyParser',
+            middleware: bodyParser({
+                json: true,
+                urlencoded: true,
+                multipart: true,
+                jsonLimit: this.HTTP_JSON_LIMIT,
+                formLimit: this.HTTP_FORM_LIMIT,
+                formidable: {
+                    maxFileSize: this.HTTP_MAX_FILE_SIZE_BYTES,
+                },
+                includeUnparsed: this.HTTP_INCLUDE_UNPARSED_BODY
+            })
+        },
+        {
+            name: 'conditional',
+            middleware: conditional()
+        },
+        {
+            name: 'etag',
+            middleware: etag()
+        },
+        {
+            name: 'cors',
+            middleware: cors({
+                exposeHeaders: ['Date', 'Content-Length'],
+                maxAge: 15 * 60
+            })
+        },
+        {
+            name: 'requestLog',
+            middleware: middleware.requestLog,
+        },
+        {
+            name: 'requestId',
+            middleware: middleware.requestId,
+        },
+        {
+            name: 'responseTime',
+            middleware: middleware.responseTime,
+        },
+        {
+            name: 'errorHandler',
+            middleware: middleware.errorHandler,
+        },
+        {
+            name: 'acAuth',
+            middleware: this.createAcAuthMiddleware(),
+        },
+        {
+            name: 'routing',
+            middleware: this.createRoutingMiddleware(),
+        }
+    ];
 
     constructor(
         @inject('RootContainer')
@@ -43,45 +130,8 @@ export class HttpServer extends Koa {
     }
 
     addStandardMiddleware(): this {
-        this.use(async (ctx, next) => {
-            ctx.compress = false;
-            await next();
-        });
-        this.use(
-            compress({
-                threshold: 2048,
-                gzip: {
-                    flush: require('zlib').constants.Z_SYNC_FLUSH,
-                },
-                deflate: {
-                    flush: require('zlib').constants.Z_SYNC_FLUSH,
-                },
-            })
-        );
-        this.use(this.createRequestContainerMiddleware());
-        this.use(bodyParser({
-            json: true,
-            urlencoded: true,
-            multipart: true,
-            jsonLimit: this.HTTP_JSON_LIMIT,
-            formLimit: this.HTTP_FORM_LIMIT,
-            formidable: {
-                maxFileSize: this.HTTP_MAX_FILE_SIZE_BYTES,
-            },
-            includeUnparsed: this.HTTP_INCLUDE_UNPARSED_BODY
-        }));
-        this.use(conditional());
-        this.use(etag());
-        this.use(cors({
-            exposeHeaders: ['Date', 'Content-Length'],
-            maxAge: 15 * 60
-        }));
-        this.use(middleware.requestLog);
-        this.use(middleware.requestId);
-        this.use(middleware.responseTime);
-        this.use(middleware.errorHandler);
-        this.use(this.createAcAuthMiddleware());
-        this.use(this.createRoutingMiddleware());
+        this.middlewares.forEach(m => this.use(m.middleware));
+
         return this;
     }
 
