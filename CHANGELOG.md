@@ -1,3 +1,5 @@
+- Use a route path template instead of an actual path with params for the routes' execution histogram metric
+
 ## 13.6.0
 
 - make altering middlewares a bit easier by moving them to the field on a HttpServer class as a list of objects
