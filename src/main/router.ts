@@ -157,7 +157,7 @@ export class Router {
                 if (this.HTTP_VALIDATE_RESPONSES) {
                     this.validateResponseBody(route, this.ctx.status, this.ctx.body);
                 }
-            }, { method: this.ctx.method, path: route.path, protocol: this.ctx.protocol });
+            }, { method: route.method, path: route.path, protocol: this.ctx.protocol });
             return true;
         }
         // No routes match
