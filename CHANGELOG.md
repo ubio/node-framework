@@ -1,3 +1,5 @@
+## 13.7.0
+
 - Use a route path template instead of an actual path with params for the routes' execution histogram metric
 
 ## 13.6.0
