@@ -1,7 +1,16 @@
 import assert from 'assert';
+import supertest from 'supertest';
 import theredoc from 'theredoc';
 
-import { CounterMetric, GaugeMetric, HistogramMetric } from '../../main';
+import {
+    Application,
+    CounterMetric,
+    GaugeMetric,
+    getGlobalMetrics,
+    HistogramMetric,
+    Router
+} from '../../main';
+import { FooRouter } from '../routes/foo';
 
 describe('CounterMetric', () => {
 
@@ -145,4 +154,36 @@ describe('HistogramMetric', () => {
         `.trim());
     });
 
+});
+
+describe('Routes execution histogram metric', () => {
+    class App extends Application {
+        constructor() {
+            super();
+            this.container.bind(Router).to(FooRouter);
+        }
+        async beforeStart() {
+            await this.httpServer.startServer();
+        }
+        async afterStop() {
+            await this.httpServer.stopServer();
+        }
+    }
+
+    const app = new App();
+    beforeEach(() => app.start());
+    afterEach(() => app.stop());
+
+    it('checks that the metric uses a route path template instead of an actual path with params', async () => {
+        const request = supertest(app.httpServer.callback());
+
+        await request.get('/foo/1');
+        await request.get('/foo/2');
+
+        const metricsReport = getGlobalMetrics().report();
+
+        assert.match(metricsReport, /path="\/foo\/{fooId}"/);
+        assert.doesNotMatch(metricsReport, /path="\/foo\/1"/);
+        assert.doesNotMatch(metricsReport, /path="\/foo\/2"/);
+    });
 });

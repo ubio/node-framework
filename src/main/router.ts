@@ -136,14 +136,14 @@ export class Router {
 
     params: Params = {};
 
-    handle(): Promise<boolean> {
-        return getGlobalMetrics().handlerDuration.measure(async () => {
-            // Route matched; now validate parameters
-            for (const route of getEndpointRoutes(this.constructor as Constructor<Router>)) {
-                const pathParams = matchRoute(route, this.ctx.method, this.ctx.path);
-                if (pathParams == null) {
-                    continue;
-                }
+    async handle(): Promise<boolean> {
+        // Route matched; now validate parameters
+        for (const route of getEndpointRoutes(this.constructor as Constructor<Router>)) {
+            const pathParams = matchRoute(route, this.ctx.method, this.ctx.path);
+            if (pathParams == null) {
+                continue;
+            }
+            await getGlobalMetrics().handlerDuration.measure(async () => {
                 // Route matched, now execute all middleware first, then execute the route itself
                 for (const middleware of getMiddlewareRoutes(this.constructor as Constructor<Router>)) {
                     const pathParams = matchRoute(middleware, this.ctx.method, this.ctx.path);
@@ -157,11 +157,11 @@ export class Router {
                 if (this.HTTP_VALIDATE_RESPONSES) {
                     this.validateResponseBody(route, this.ctx.status, this.ctx.body);
                 }
-                return true;
-            }
-            // No routes match
-            return false;
-        }, { method: this.ctx.method, path: this.ctx.path, protocol: this.ctx.protocol });
+            }, { method: route.method, path: route.path, protocol: this.ctx.protocol });
+            return true;
+        }
+        // No routes match
+        return false;
     }
 
     protected async executeRoute(ep: RouteDefinition, pathParams: Params): Promise<any> {
