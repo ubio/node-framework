@@ -43,12 +43,10 @@ export class MetricsPushGateway {
             await request.send('post', path, {
                 body: payload + '\n',
             });
-        } catch (error) {
-            let response = error.response ? await error.response.text() : error.message;
-            if (!response || response.length === 0) { response = 'No response information found'; }
-
+        } catch (error: any) {
+            const response = error.response ? await error.response.text() : 'No response information found';
             this.logger.error('Push gateway failed', {
-                details: error,
+                error,
                 response,
             });
         }
