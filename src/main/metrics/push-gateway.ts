@@ -34,11 +34,10 @@ export class MetricsPushGateway {
 
     protected async pushMetrics(payload: string) {
         const { name: job } = await util.getAppDetails();
-        const instance = process.env.HOSTNAME!;
         const request = new Request({
             baseUrl: this.PUSH_GATEWAY_URL,
         });
-        const path = `/job/${job}/instance/${instance}`;
+        const path = `/job/${job}`;
         try {
             await request.send('post', path, {
                 body: payload + '\n',
