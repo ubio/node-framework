@@ -2,7 +2,7 @@ import { Request } from '@automationcloud/request';
 import { inject, injectable } from 'inversify';
 import Koa from 'koa';
 
-import { AcAuth, AuthenticationError } from '../ac-auth';
+import { AcAuth, AcAuthFactory, AuthenticationError } from '../ac-auth';
 import { Config, config } from '../config';
 import { Logger } from '../logger';
 import { JwtService } from './jwt';
@@ -55,9 +55,7 @@ export class DefaultAcAuthProvider extends AcAuthProvider {
                 organisation_id: organisationIdHeader,
                 ...payload.context
             };
-            return new AcAuth({
-                jwtContext: data,
-            });
+            return AcAuthFactory.createAuthByJwt(data);
         } catch (err) {
             this.logger.warn(`Authentication from token failed`, { details: err });
             throw new AuthenticationError();

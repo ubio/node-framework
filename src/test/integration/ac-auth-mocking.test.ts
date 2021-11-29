@@ -2,7 +2,7 @@ import assert from 'assert';
 import { inject } from 'inversify';
 import supertest from 'supertest';
 
-import { AcAuth, AcAuthProvider, Application, Get, Router } from '../../main';
+import { AcAuth, AcAuthFactory, AcAuthProvider, Application, Get, Router } from '../../main';
 
 describe('Mocking AcAuth', () => {
 
@@ -26,12 +26,10 @@ describe('Mocking AcAuth', () => {
     const app = new Application();
     app.container.rebind(AcAuthProvider).toConstantValue({
         async provide() {
-            return new AcAuth({
-                jwtContext: {
-                    organisation_id: 'foo',
-                    service_account_id: 'service-account-worker',
-                    service_account_name: 'Bot',
-                }
+            return AcAuthFactory.createServiceAccountAuth({
+                organisationId: 'foo',
+                id: 'service-account-worker',
+                name: 'Bot',
             });
         }
     });
