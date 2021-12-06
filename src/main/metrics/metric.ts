@@ -30,7 +30,13 @@ export abstract class Metric<L = any> {
     }
 
     protected createMetricLabelsKey<L>(labels: Partial<L> = {}) {
-        return Object.keys(labels).sort().map(k => `${k}="${(labels as any)[k]}"`).join(',');
+        return Object.keys(labels)
+            .sort()
+            .map(k => {
+                const v = (labels as any)[k];
+                return `${k}=${JSON.stringify(String(v))}`;
+            })
+            .join(',');
     }
 
 }
