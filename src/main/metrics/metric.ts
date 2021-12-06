@@ -32,7 +32,10 @@ export abstract class Metric<L = any> {
     protected createMetricLabelsKey<L>(labels: Partial<L> = {}) {
         return Object.keys(labels)
             .sort()
-            .map(k => `${k}=${JSON.stringify((labels as any)[k])}`)
+            .map(k => {
+                const v = (labels as any)[k];
+                return `${k}=${JSON.stringify(String(v))}`;
+            })
             .join(',');
     }
 
