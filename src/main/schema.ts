@@ -57,7 +57,11 @@ export class Schema<T> {
         return obj;
     }
 
-    decode(obj: any): T {
+    create(spec: Partial<T>): T {
+        return this.decode(spec);
+    }
+
+    decode(obj: unknown): T {
         const _obj = this.construct(obj);
         const valid = this.validateFn(_obj);
         if (!valid) {
