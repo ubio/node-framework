@@ -69,6 +69,14 @@ export class Application {
     }
 
     async start() {
+        process.on('uncaughtException', error => {
+            this.logger.error('uncaughtException', { error });
+        });
+        process.on('unhandledRejection', error => {
+            this.logger.error('unhandledRejection', { error });
+        });
+        process.on('SIGTERM', () => this.logger.info('Received SIGTERM'));
+        process.on('SIGINT', () => this.logger.info('Received SIGINT'));
         process.on('SIGTERM', () => this.stop());
         process.on('SIGINT', () => this.stop());
         if (this.ASSERT_CONFIGS_ON_START) {
