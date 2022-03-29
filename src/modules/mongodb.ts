@@ -26,7 +26,6 @@ export class MongoDb {
         this.client = new MongoClient(this.MONGO_URL, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
-            connectWithNoPrimary: true,
             ignoreUndefined: true,
         } as MongoClientOptionsExtended);
     }
