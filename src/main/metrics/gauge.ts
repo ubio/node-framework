@@ -13,7 +13,7 @@ export class GaugeMetric<L = any> extends Metric<L> {
                 this.getMetricLineName(datum.labels),
                 datum.value,
                 datum.timestamp,
-            ].join(' ');
+            ].filter(x => x != null).join(' ');
         }
     }
 
