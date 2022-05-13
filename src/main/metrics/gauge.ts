@@ -21,7 +21,7 @@ export class GaugeMetric<L = any> extends Metric<L> {
         return this.data.get(this.createMetricLabelsKey(labels));
     }
 
-    set(value: number, labels: Partial<L> = {}, timestamp: number = Date.now()) {
+    set(value: number, labels: Partial<L> = {}, timestamp?: number) {
         const key = this.createMetricLabelsKey(labels);
         const datum = this.data.get(key);
         if (datum) {
