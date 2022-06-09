@@ -10,6 +10,9 @@ export class GlobalMetricsRegistry extends MetricsRegistry {
 
     mongoDocumentsTotal = this.gauge('mongo_documents_total',
         'Estimated count of MongoDB documents, per collection');
+
+    logsBySeverityTotal = this.counter('logs_by_severity_total',
+        'Total count of log lines by severity');
 }
 
 export function getGlobalMetrics(): GlobalMetricsRegistry {
