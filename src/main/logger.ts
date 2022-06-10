@@ -4,6 +4,8 @@ import * as koa from 'koa';
 
 import { safeStringify } from './stringify';
 
+import { getGlobalMetrics } from './metrics/global';
+
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'mute';
 
 export const LOG_LEVELS: LogLevel[] = ['debug', 'info', 'warn', 'error', 'mute'];
@@ -35,6 +37,9 @@ export abstract class Logger implements ILogger {
         if (level === 'mute' || LOG_LEVELS.indexOf(level) < LOG_LEVELS.indexOf(this.level)) {
             return;
         }
+
+        getGlobalMetrics().appLogsTotal.incr(1, { severity: level });
+
         return this.write(level, message, data);
     }
 
