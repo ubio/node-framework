@@ -38,7 +38,7 @@ export abstract class Logger implements ILogger {
             return;
         }
 
-        getGlobalMetrics().logsBySeverityTotal.incr(1, { severity: level });
+        getGlobalMetrics().appLogsTotal.incr(1, { severity: level });
 
         return this.write(level, message, data);
     }
