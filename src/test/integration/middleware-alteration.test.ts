@@ -24,7 +24,7 @@ describe('Altering Middlewares', () => {
     };
 
     class CustomServer extends HttpServer {
-        addStandardMiddleware(): this {
+        override addStandardMiddleware(): this {
             [customMiddleware, ...this.middlewares].forEach(m => this.use(m.middleware));
 
             return this;

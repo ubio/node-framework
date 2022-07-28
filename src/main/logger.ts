@@ -144,7 +144,7 @@ export class RequestLogger extends StandardLogger {
     @inject('KoaContext')
     ctx!: koa.Context;
 
-    log(level: LogLevel, message: string, data: object = {}) {
+    override log(level: LogLevel, message: string, data: object = {}) {
         const { requestId } = this.ctx.state;
         super.log(level, message, {
             ...data,

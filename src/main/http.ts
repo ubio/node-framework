@@ -215,6 +215,6 @@ export class HttpServer extends Koa {
 }
 
 export class RouteNotFoundError extends ClientError {
-    status = 404;
-    message = 'Route not found';
+    override status = 404;
+    override message = 'Route not found';
 }

@@ -16,10 +16,10 @@ describe('BypassAuthProvider', () => {
             this.container.bind(Router).to(AccessRouter);
             this.container.rebind(AcAuthProvider).to(BypassAcAuthProvider);
         }
-        async beforeStart() {
+        override async beforeStart() {
             await this.httpServer.startServer();
         }
-        async afterStop() {
+        override async afterStop() {
             await this.httpServer.stopServer();
         }
     }

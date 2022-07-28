@@ -160,10 +160,10 @@ describe('Router', () => {
                 this.container.bind(Router).to(WildcardRouter);
                 this.container.bind(Router).to(MultipartRouter);
             }
-            async beforeStart() {
+            override async beforeStart() {
                 await this.httpServer.startServer();
             }
-            async afterStop() {
+            override async afterStop() {
                 await this.httpServer.stopServer();
             }
         }
@@ -336,10 +336,10 @@ describe('Router', () => {
                     }
                 });
             }
-            async beforeStart() {
+            override async beforeStart() {
                 await this.httpServer.startServer();
             }
-            async afterStop() {
+            override async afterStop() {
                 await this.httpServer.stopServer();
             }
         }

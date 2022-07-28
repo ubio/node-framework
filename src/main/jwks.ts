@@ -126,11 +126,11 @@ export interface SigningKey {
 }
 
 export class SigningKeyNotFoundError extends Exception {
-    message = 'Expected signing key not found in JWKS response';
+    override message = 'Expected signing key not found in JWKS response';
 }
 
 export class JwksValidationError extends ClientError {
-    message = 'JWKS validation failed';
+    override message = 'JWKS validation failed';
     constructor(messages: string[]) {
         super();
         this.details = {
