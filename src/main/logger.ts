@@ -2,9 +2,8 @@ import chalk, { Chalk } from 'chalk';
 import { inject, injectable } from 'inversify';
 import * as koa from 'koa';
 
-import { safeStringify } from './stringify';
-
 import { getGlobalMetrics } from './metrics/global';
+import { safeStringify } from './stringify';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'mute';
 
