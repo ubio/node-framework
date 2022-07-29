@@ -7,7 +7,7 @@
  * If you need to communicate additional details to clients, use `ClientError` instead.
  */
 export class Exception extends Error {
-    name = this.constructor.name;
+    override name = this.constructor.name;
     status: number = 500;
     details: any = {};
 }
@@ -21,5 +21,5 @@ export class Exception extends Error {
  * Class name should be interpreted as error code.
  */
 export class ClientError extends Exception {
-    status: number = 400;
+    override status: number = 400;
 }

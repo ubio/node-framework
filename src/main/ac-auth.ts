@@ -169,10 +169,10 @@ export class AcAuth {
 }
 
 export class AuthenticationError extends ClientError {
-    status = 401;
-    message = 'Authentication is required';
+    override status = 401;
+    override message = 'Authentication is required';
 }
 
 export class AccessForbidden extends ClientError {
-    status = 403;
+    override status = 403;
 }

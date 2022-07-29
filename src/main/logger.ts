@@ -2,9 +2,8 @@ import chalk, { Chalk } from 'chalk';
 import { inject, injectable } from 'inversify';
 import * as koa from 'koa';
 
-import { safeStringify } from './stringify';
-
 import { getGlobalMetrics } from './metrics/global';
+import { safeStringify } from './stringify';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'mute';
 
@@ -144,7 +143,7 @@ export class RequestLogger extends StandardLogger {
     @inject('KoaContext')
     ctx!: koa.Context;
 
-    log(level: LogLevel, message: string, data: object = {}) {
+    override log(level: LogLevel, message: string, data: object = {}) {
         const { requestId } = this.ctx.state;
         super.log(level, message, {
             ...data,

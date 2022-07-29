@@ -94,7 +94,7 @@ export class Schema<T> {
 }
 
 export class ValidationError extends ClientError {
-    status = 400;
+    override status = 400;
     constructor(messages: string[]) {
         super(`Validation failed:\n${messages.map(_ => `    - ${_}`).join('\n')}`);
         this.details = {

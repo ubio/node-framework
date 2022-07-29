@@ -162,10 +162,10 @@ describe('Routes execution histogram metric', () => {
             super();
             this.container.bind(Router).to(FooRouter);
         }
-        async beforeStart() {
+        override async beforeStart() {
             await this.httpServer.startServer();
         }
-        async afterStop() {
+        override async afterStop() {
             await this.httpServer.stopServer();
         }
     }

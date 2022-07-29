@@ -12,7 +12,7 @@ describe('Exception', () => {
 
     it('allows overriding message by property assignment', () => {
         class MyCustomError extends Exception {
-            message = 'Custom message';
+            override message = 'Custom message';
         }
         const err = new MyCustomError();
         assert.strictEqual(err.message, 'Custom message');
@@ -20,7 +20,7 @@ describe('Exception', () => {
 
     it('supports custom details', () => {
         class MyCustomError extends Exception {
-            message = 'Custom message';
+            override message = 'Custom message';
             constructor(foo: string) {
                 super();
                 this.details = { foo };
@@ -37,7 +37,7 @@ describe('ClientError', () => {
 
     it('supports custom status code', () => {
         class MyCustomError extends ClientError {
-            status = 400;
+            override status = 400;
         }
         const err = new MyCustomError();
         assert.strictEqual(err.status, 400);

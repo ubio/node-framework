@@ -435,7 +435,7 @@ export interface ResponseSpec {
 }
 
 export class RequestParametersValidationError extends ClientError {
-    status = 400;
+    override status = 400;
 
     constructor(messages: string[]) {
         super(`Invalid request parameters:\n${messages.map(_ => `    - ${_}`).join('\n')}`);
@@ -444,7 +444,7 @@ export class RequestParametersValidationError extends ClientError {
 }
 
 export class ResponseValidationError extends ClientError {
-    status = 500;
+    override status = 500;
 
     constructor(messages: string[]) {
         super(`Response body is not valid:\n${messages.map(_ => `    - ${_}`).join('\n')}`);
