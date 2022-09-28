@@ -1,6 +1,6 @@
 import assert from 'assert';
 
-import { groupBy, sortBy } from '../../main';
+import { groupBy, sortBy } from '../../main/index.js';
 
 describe('util', () => {
 
@@ -35,7 +35,7 @@ describe('util', () => {
 
         it('sorts by property', () => {
             const names = sortBy(records, _ => _.age).map(_ => _.name);
-            assert.deepEqual(names, ['Janice', 'Joe', 'Jennifer', 'Jane']);
+            assert.deepStrictEqual(names, ['Janice', 'Joe', 'Jennifer', 'Jane']);
         });
 
     });

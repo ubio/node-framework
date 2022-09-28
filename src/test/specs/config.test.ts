@@ -1,7 +1,7 @@
 import assert from 'assert';
 import { Container, inject, injectable } from 'inversify';
 
-import { Application, Config, config, getClassConfigs, getContainerConfigs } from '../../main';
+import { Application, Config, config, getClassConfigs, getContainerConfigs } from '../../main/index.js';
 
 describe('Config', () => {
 
@@ -47,7 +47,7 @@ describe('Config', () => {
             for (const key of keys) {
                 try {
                     void (service as any)[key];
-                } catch (err) {
+                } catch (err: any) {
                     assert.strictEqual(err.name, 'ConfigError');
                 }
             }

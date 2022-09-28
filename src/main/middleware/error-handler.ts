@@ -1,6 +1,6 @@
 import { Context } from 'koa';
 
-import { ClientError } from '../exception';
+import { ClientError } from '../exception.js';
 
 /**
  * Handles error thrown during request processing.
@@ -17,7 +17,7 @@ import { ClientError } from '../exception';
 export async function errorHandler(ctx: Context, next: () => Promise<any>) {
     try {
         await next();
-    } catch (error) {
+    } catch (error: any) {
         ctx.logger.warn(`Request failed: ${error.stack}`.trim(), {
             method: ctx.method,
             url: ctx.url,

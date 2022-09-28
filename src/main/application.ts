@@ -1,19 +1,20 @@
+import { Logger } from '@flexent/logger';
 import { Container } from 'inversify';
 
-import { Config, config, ConfigError, DefaultConfig, getContainerConfigs } from './config';
-import { HttpServer } from './http';
-import { Logger, StandardLogger } from './logger';
-import { MetricsRegistry } from './metrics';
-import { getGlobalMetrics } from './metrics/global';
-import { MetricsPushGateway } from './metrics/push-gateway';
-import { MetricsRouter } from './metrics/route';
-import { Router } from './router';
+import { Config, config, ConfigError, DefaultConfig, getContainerConfigs } from './config.js';
+import { HttpServer } from './http.js';
+import { StandardLogger } from './logger.js';
+import { getGlobalMetrics } from './metrics/global.js';
+import { MetricsRegistry } from './metrics/index.js';
+import { MetricsPushGateway } from './metrics/push-gateway.js';
+import { MetricsRouter } from './metrics/route.js';
+import { Router } from './router.js';
 import {
     AcAuthProvider,
     AutomationCloudJwtService,
     DefaultAcAuthProvider,
     JwtService,
-} from './services';
+} from './services/index.js';
 
 /**
  * Application provides an IoC container where all modules should be registered

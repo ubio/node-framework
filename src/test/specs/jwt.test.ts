@@ -1,9 +1,10 @@
+import { ConsoleLogger } from '@flexent/logger';
 import assert from 'assert';
 import crypto from 'crypto';
 import jsonwebtoken from 'jsonwebtoken';
 import { v4 as uuid } from 'uuid';
 
-import { AutomationCloudJwtService, ConsoleLogger, DefaultConfig } from '../../main';
+import { AutomationCloudJwtService, DefaultConfig } from '../../main/index.js';
 
 describe('AutomationCloudJwt', () => {
     describe('decodeAndVerify', () => {
@@ -41,7 +42,7 @@ describe('AutomationCloudJwt', () => {
             try {
                 await jwtService.decodeAndVerify(token);
                 assert.ok(true, 'Unexpected success');
-            } catch (err) {
+            } catch (err: any) {
                 assert.strictEqual(err.name, 'JsonWebTokenError');
                 assert.strictEqual(err.message, 'invalid signature');
             }
@@ -52,7 +53,7 @@ describe('AutomationCloudJwt', () => {
             try {
                 await jwtService.decodeAndVerify(token);
                 assert.ok(true, 'Unexpected success');
-            } catch (err) {
+            } catch (err: any) {
                 assert.strictEqual(err.name, 'TokenExpiredError');
                 assert.strictEqual(err.message, 'jwt expired');
             }

@@ -1,18 +1,21 @@
 {
     "compilerOptions": {
+        "target": "ES2020",
+        "module": "ESNext",
+        "moduleResolution": "NodeNext",
+        "strict": true,
         "declaration": true,
         "emitDecoratorMetadata": true,
-        "esModuleInterop": true,
         "experimentalDecorators": true,
-        "module": "commonjs",
-        "outDir": "./out",
         "removeComments": true,
         "resolveJsonModule": true,
-        "rootDir": "./src",
         "sourceMap": true,
-        "strict": true,
-        "target": "es2017",
-        "noImplicitOverride": true
+        "noImplicitOverride": true,
+        "esModuleInterop": true,
+        // "allowSyntheticDefaultImports": true,
+        "skipLibCheck": true,
+        "outDir": "./out",
+        "rootDir": "./src",
     },
     "include": [
         "src",

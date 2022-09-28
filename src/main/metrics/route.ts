@@ -1,7 +1,7 @@
 import { injectable, multiInject } from 'inversify';
 
-import { Get, Router } from '../router';
-import { MetricsRegistry } from './registry';
+import { Get, Router } from '../router.js';
+import { MetricsRegistry } from './registry.js';
 
 @injectable()
 export class MetricsRouter extends Router {

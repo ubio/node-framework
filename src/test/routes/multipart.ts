@@ -1,4 +1,4 @@
-import { BodyParam, Post, Router } from '../../main';
+import { BodyParam, Post, Router } from '../../main/index.js';
 
 export class MultipartRouter extends Router {
 
@@ -15,7 +15,7 @@ export class MultipartRouter extends Router {
         const { myFile } = this.ctx.request.files!;
         return {
             foo,
-            fileSize: myFile.size,
+            fileSize: (myFile as any).size,
         };
     }
 }

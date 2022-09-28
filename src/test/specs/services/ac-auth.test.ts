@@ -1,4 +1,5 @@
 import * as request from '@automationcloud/request';
+import { Logger } from '@flexent/logger';
 import assert from 'assert';
 import { Container } from 'inversify';
 
@@ -9,9 +10,8 @@ import {
     DefaultAcAuthProvider,
     DefaultConfig,
     JwtService,
-    Logger,
     StandardLogger,
-} from '../../../main';
+} from '../../../main/index.js';
 
 describe('AcAuthProvider', () => {
 
@@ -77,7 +77,7 @@ describe('AcAuthProvider', () => {
             try {
                 await authProvider.provide();
                 throw new Error('UnexpectedSuccess');
-            } catch (err) {
+            } catch (err: any) {
                 assert.strictEqual(err.name, 'AuthenticationError');
             }
         });
@@ -128,7 +128,7 @@ describe('AcAuthProvider', () => {
             try {
                 await authProvider.provide();
                 throw new Error('UnexpectedSuccess');
-            } catch (err) {
+            } catch (err: any) {
                 assert.strictEqual(err.status, 401);
             }
         });

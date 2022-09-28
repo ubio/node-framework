@@ -1,11 +1,11 @@
 import { Request } from '@automationcloud/request';
+import { Logger } from '@flexent/logger';
 import { inject, injectable, multiInject } from 'inversify';
 
-import { Config, config } from '../config';
-import { Logger } from '../logger';
-import * as util from '../util';
-import { Metric } from './metric';
-import { MetricsRegistry } from './registry';
+import { Config, config } from '../config.js';
+import * as util from '../util.js';
+import { Metric } from './metric.js';
+import { MetricsRegistry } from './registry.js';
 
 @injectable()
 export class MetricsPushGateway {

@@ -1,10 +1,10 @@
 import { Request } from '@automationcloud/request';
 import Ajv from 'ajv';
 
-import { ClientError, Exception } from './exception';
-import { ajvErrorToMessage } from './util';
+import { ClientError, Exception } from './exception.js';
+import { ajvErrorToMessage } from './util.js';
 
-const ajv = new Ajv({
+const ajv = new Ajv.default({
     allErrors: true,
     useDefaults: true,
     validateFormats: false,
@@ -111,10 +111,10 @@ export interface JwksOptions {
     retryAttempts?: number;
 }
 
-export type JwksCache = SigningKeySets & { validUntil: number }
+export type JwksCache = SigningKeySets & { validUntil: number };
 
 export interface SigningKeySets {
-    keys: SigningKey[]
+    keys: SigningKey[];
 }
 
 export interface SigningKey {

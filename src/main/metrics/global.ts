@@ -1,4 +1,4 @@
-import { MetricsRegistry } from './registry';
+import { MetricsRegistry } from './registry.js';
 
 const METRICS_GLOBAL_KEY = Symbol.for('@ubio/framework:globalMetrics');
 
@@ -28,8 +28,7 @@ export function MeasureAsync() {
     return (target: any, propertyKey: string, descriptor: PropertyDescriptor) => {
         const globalMetrics = getGlobalMetrics();
         const originalMethod = descriptor.value;
-        // tslint:disable-next-line only-arrow-functions
-        descriptor.value = async function(this: any): Promise<any> {
+        descriptor.value = async function (this: any): Promise<any> {
             const end = globalMetrics.methodDuration.timer({
                 class: target.constructor.name,
                 method: propertyKey,

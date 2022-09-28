@@ -1,4 +1,4 @@
-import { Metric, MetricDatum } from './metric';
+import { Metric, MetricDatum } from './metric.js';
 
 export class GaugeMetric<L = any> extends Metric<L> {
     protected data: Map<string, MetricDatum<L>> = new Map();

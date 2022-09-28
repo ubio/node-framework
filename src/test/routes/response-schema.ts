@@ -1,4 +1,4 @@
-import { Get, Router } from '../../main';
+import { Get, Router } from '../../main/index.js';
 
 export class ResponseSchemaRouter extends Router {
 

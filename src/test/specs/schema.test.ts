@@ -1,7 +1,7 @@
 import assert from 'assert';
 import { v4 as uuid } from 'uuid';
 
-import { Schema } from '../../main';
+import { Schema } from '../../main/index.js';
 
 interface Person {
     name: string;
@@ -134,7 +134,7 @@ describe('Schema', () => {
                     author: { name: 'Joe', age: 'ok' }
                 });
                 throw new Error('UnexpectedSuccess');
-            } catch (err) {
+            } catch (err: any) {
                 assert.strictEqual(err.name, 'ValidationError');
             }
         });

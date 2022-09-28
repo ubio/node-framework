@@ -1,8 +1,8 @@
 import { BasicAuthAgent, Request } from '@automationcloud/request';
+import { Logger } from '@flexent/logger';
 import { inject, injectable } from 'inversify';
 
-import { Config, config } from '../config';
-import { Logger } from '../logger';
+import { Config, config } from '../config.js';
 
 export interface JobTimelineEvent {
     namespace: string;

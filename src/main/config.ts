@@ -1,10 +1,10 @@
 import 'reflect-metadata';
 
-import dotenv from 'dotenv';
+import * as dotenv from 'dotenv';
 import { Container, injectable } from 'inversify';
 
-import { Exception } from './exception';
-import { addClassMetadata, getBindingsMap, getClassMetadata } from './util';
+import { Exception } from './exception.js';
+import { addClassMetadata, getBindingsMap, getClassMetadata } from './util.js';
 
 const CONFIG_METADATA_KEY = Symbol('CONFIG_METADATA_KEY');
 
@@ -12,8 +12,8 @@ export type ConfigType = string | boolean | number;
 export type ConfigParser<T> = (str: string) => T | null;
 export type ConfigTypeCtor<T extends ConfigType> =
     T extends string ? typeof String :
-    T extends number ? typeof Number :
-    T extends boolean ? typeof Boolean : never;
+        T extends number ? typeof Number :
+            T extends boolean ? typeof Boolean : never;
 
 export interface ConfigDecl {
     key: string;
@@ -26,7 +26,7 @@ export interface ConfigOptions {
     default?: ConfigType;
 }
 
-export type Configurable = { config: Config; }
+export type Configurable = { config: Config };
 
 export function config(options: ConfigOptions = {}) {
     return (prototype: Configurable, key: string) => {

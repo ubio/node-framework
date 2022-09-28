@@ -1,12 +1,12 @@
 import assert from 'assert';
 import supertest from 'supertest';
 
-import { Application, Config, DefaultConfig, matchPath, Router, tokenizePath } from '../../main';
-import { BarRouter } from '../routes/bar';
-import { FooRouter } from '../routes/foo';
-import { MultipartRouter } from '../routes/multipart';
-import { ResponseSchemaRouter } from '../routes/response-schema';
-import { WildcardRouter } from '../routes/wildcard';
+import { Application, Config, DefaultConfig, matchPath, Router, tokenizePath } from '../../main/index.js';
+import { BarRouter } from '../routes/bar.js';
+import { FooRouter } from '../routes/foo.js';
+import { MultipartRouter } from '../routes/multipart.js';
+import { ResponseSchemaRouter } from '../routes/response-schema.js';
+import { WildcardRouter } from '../routes/wildcard.js';
 
 describe('Router', () => {
 

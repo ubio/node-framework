@@ -57,7 +57,7 @@ export function safeStringify(obj: any, options: Partial<StringifyConfig> = {}) 
             }
             return config.replacer(k, v);
         }, config.indent);
-    } catch (err) {
+    } catch (err: any) {
         return JSON.stringify({
             error: {
                 name: 'JsonSerializationError',

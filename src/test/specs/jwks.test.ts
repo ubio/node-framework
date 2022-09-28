@@ -1,7 +1,7 @@
 import { FetchMock, fetchMock } from '@automationcloud/request';
 import assert from 'assert';
 
-import { JwksClient } from '../../main/jwks';
+import { JwksClient } from '../../main/jwks.js';
 
 describe('JwksClient', () => {
     describe('getSigningKey', () => {
@@ -100,7 +100,7 @@ describe('JwksClient', () => {
                 try {
                     await jwksClient.getSigningKey();
                     assert(true, 'unexpected success');
-                } catch (error) {
+                } catch (error: any) {
                     assert.strictEqual(error.name, 'SigningKeyNotFoundError');
                 }
             });
@@ -113,8 +113,8 @@ describe('JwksClient', () => {
                 try {
                     await jwksClient.getSigningKey();
                     assert(true, 'unexpected success');
-                } catch (error) {
-                    assert.equal(error.name, 'SigningKeyNotFoundError');
+                } catch (error: any) {
+                    assert.strictEqual(error.name, 'SigningKeyNotFoundError');
                 }
             });
 
@@ -125,8 +125,8 @@ describe('JwksClient', () => {
                 try {
                     await jwksClient.getSigningKey();
                     assert(true, 'unexpected success');
-                } catch (error) {
-                    assert.equal(error.name, 'JwksValidationError');
+                } catch (error: any) {
+                    assert.strictEqual(error.name, 'JwksValidationError');
                     assert.ok(error.details.messages[0].includes('alg'));
                 }
             });
@@ -139,7 +139,7 @@ describe('JwksClient', () => {
                 try {
                     await jwksClient.getSigningKey();
                     assert(true, 'unexpected success');
-                } catch (error) {
+                } catch (error: any) {
                     assert.strictEqual(error.name, 'JwksValidationError');
                     assert.ok(error.details.messages[0].includes('k'));
                 }
@@ -153,7 +153,7 @@ describe('JwksClient', () => {
                 try {
                     await jwksClient.getSigningKey();
                     assert(true, 'unexpected success');
-                } catch (error) {
+                } catch (error: any) {
                     assert.strictEqual(error.name, 'JwksValidationError');
                     assert.ok(error.details.messages[0].includes('k'));
                 }
@@ -171,7 +171,7 @@ describe('JwksClient', () => {
                 try {
                     await jwksClient.getSigningKey();
                     assert(true, 'unexpected success');
-                } catch (error) {
+                } catch (error: any) {
                     assert.strictEqual(error.name, 'JwksValidationError');
                     assert.ok(error.details.messages[0].includes('k'));
                 }

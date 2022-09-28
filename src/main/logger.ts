@@ -1,13 +1,11 @@
+import { LOG_LEVELS, Logger, LogLevel } from '@flexent/logger';
 import chalk, { Chalk } from 'chalk';
 import { inject, injectable } from 'inversify';
 import * as koa from 'koa';
 
-import { getGlobalMetrics } from './metrics/global';
-import { safeStringify } from './stringify';
+import { getGlobalMetrics } from './metrics/global.js';
+import { safeStringify } from './stringify.js';
 
-export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'mute';
-
-export const LOG_LEVELS: LogLevel[] = ['debug', 'info', 'warn', 'error', 'mute'];
 const LEVELS_COLOR: { [key: string]: Chalk } = {
     mute: chalk.grey.bind(chalk),
     debug: chalk.grey.bind(chalk),
@@ -16,46 +14,15 @@ const LEVELS_COLOR: { [key: string]: Chalk } = {
     error: chalk.red.bind(chalk)
 };
 
-export interface ILogger {
-    info(message: string, details?: any): void;
-    warn(message: string, details?: any): void;
-    error(message: string, details?: any): void;
-    debug(message: string, details?: any): void;
-    child(context: any): ILogger;
-}
-
 @injectable()
-export abstract class Logger implements ILogger {
+export abstract class BaseLogger extends Logger {
     contextData: object = {};
-    level: LogLevel = 'info';
 
-    protected abstract write(level: LogLevel, message: string, data: object): void;
     abstract child(data: object): Logger;
 
-    log(level: LogLevel, message: string, data: object) {
-        if (level === 'mute' || LOG_LEVELS.indexOf(level) < LOG_LEVELS.indexOf(this.level)) {
-            return;
-        }
-
+    override log(level: LogLevel, message: string, data: object) {
+        super.log(level, message, data);
         getGlobalMetrics().appLogsTotal.incr(1, { severity: level });
-
-        return this.write(level, message, data);
-    }
-
-    info(message: string, data: object = {}) {
-        this.log('info', message, data);
-    }
-
-    warn(message: string, data: object = {}) {
-        this.log('warn', message, data);
-    }
-
-    error(message: string, data: object = {}) {
-        this.log('error', message, data);
-    }
-
-    debug(message: string, data: object = {}) {
-        this.log('debug', message, data);
     }
 
     addContextData(data: object): this {
@@ -66,35 +33,16 @@ export abstract class Logger implements ILogger {
 }
 
 @injectable()
-export class ConsoleLogger extends Logger {
-
-    protected write(level: LogLevel, message: string, data: object): void {
-        if (level === 'info' || level === 'debug' || level === 'warn' || level === 'error') {
-            // eslint-disable-next-line no-console
-            console[level](message, { ...this.contextData, ...data });
-        }
-    }
-
-    child(data: object): Logger {
-        const child = new ConsoleLogger();
-        child.level = this.level;
-        child.contextData = { ...this.contextData, ...data };
-        return child;
-    }
-
-}
-
-@injectable()
-export class StandardLogger extends Logger {
+export class StandardLogger extends BaseLogger {
     pretty: boolean = false;
 
     constructor() {
         super();
         this.level = (process.env.LOG_LEVEL || 'info') as LogLevel;
-        this.pretty = process.env.LOG_PRETTY === 'true';
-        if (!LOG_LEVELS.includes(this.level)) {
-            this.level = 'info';
+        if (!Object.values(LOG_LEVELS).includes(this.level)) {
+            this.level = LogLevel.INFO;
         }
+        this.pretty = process.env.LOG_PRETTY === 'true';
     }
 
     protected write(level: LogLevel, message: string, data: object) {

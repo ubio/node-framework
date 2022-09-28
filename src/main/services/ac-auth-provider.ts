@@ -1,11 +1,11 @@
 import { Request } from '@automationcloud/request';
+import { Logger } from '@flexent/logger';
 import { inject, injectable } from 'inversify';
 import Koa from 'koa';
 
-import { AcAuth, AuthenticationError } from '../ac-auth';
-import { Config, config } from '../config';
-import { Logger } from '../logger';
-import { JwtService } from './jwt';
+import { AcAuth, AuthenticationError } from '../ac-auth.js';
+import { Config, config } from '../config.js';
+import { JwtService } from './jwt.js';
 
 @injectable()
 export abstract class AcAuthProvider {
@@ -17,7 +17,7 @@ export class DefaultAcAuthProvider extends AcAuthProvider {
     clientRequest: Request;
 
     static middlewareCacheTtl: number = 60000;
-    static middlewareTokensCache: Map<string, { token: string, authorisedAt: number }> = new Map();
+    static middlewareTokensCache: Map<string, { token: string; authorisedAt: number }> = new Map();
 
     @config({ default: 'x-ubio-auth' }) AC_AUTH_HEADER_NAME!: string;
     @config({ default: 'http://auth-middleware.authz.svc.cluster.local:8080/verify' })
@@ -99,7 +99,7 @@ export class DefaultAcAuthProvider extends AcAuthProvider {
                 });
                 this.pruneCache();
                 return token;
-            } catch (error) {
+            } catch (error: any) {
                 this.logger.warn('AuthMiddleware authentication failed', { ...error });
                 throw new AuthenticationError();
             }

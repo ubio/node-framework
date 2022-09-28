@@ -1,4 +1,4 @@
-import { Get, Middleware, PathParam, Router } from '../../main';
+import { Get, Middleware, PathParam, Router } from '../../main/index.js';
 
 export class WildcardRouter extends Router {
 
