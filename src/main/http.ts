@@ -182,7 +182,8 @@ export class HttpServer extends Koa {
             const requestContainer = new Container({ skipBaseClassChecks: true });
             requestContainer.parent = this.rootContainer;
             requestContainer.bind('KoaContext').toConstantValue(ctx);
-            requestContainer.bind(Logger).to(RequestLogger).inSingletonScope();
+            const requestLogger = new RequestLogger(this.logger, ctx);
+            requestContainer.bind(Logger).toConstantValue(requestLogger);
             ctx.container = requestContainer;
             ctx.logger = requestContainer.get<Logger>(Logger);
             return next();

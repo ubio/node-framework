@@ -29,27 +29,27 @@ export class StandardLogger extends Logger {
     ) {
         super();
         this.delegate = this.LOG_PRETTY ? new ConsoleLogger() : new LogfmtLogger();
-        this.setLevel(this.LOG_LEVEL);
+        this.delegate.setLevel(this.LOG_LEVEL);
     }
 
     override write(level: LogLevel, message: string, data: object): void {
-        this.delegate.write(level, message, data);
+        this.delegate.log(level, message, data);
     }
 
 }
 
-
-@injectable()
 export class RequestLogger extends Logger {
-    @inject('KoaContext')
-    ctx!: koa.Context;
 
-    @inject('AppLogger')
-    protected delegate!: Logger;
+    constructor(
+        protected delegate: Logger,
+        protected ctx: koa.Context,
+    ) {
+        super();
+    }
 
     write(level: LogLevel, message: string, data: object): void {
         const { requestId } = this.ctx.state;
-        this.delegate.write(level, message, {
+        this.delegate.log(level, message, {
             ...data,
             requestId,
         });
