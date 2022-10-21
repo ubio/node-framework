@@ -45,7 +45,7 @@ export class StandardLogger extends BaseLogger {
         this.pretty = process.env.LOG_PRETTY === 'true';
     }
 
-    protected write(level: LogLevel, message: string, data: object) {
+    write(level: LogLevel, message: string, data: object) {
         if (this.pretty) {
             this.logPretty(level, message, data);
         } else {
