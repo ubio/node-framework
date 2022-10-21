@@ -6,7 +6,7 @@
     "main": "out/main/index.js",
     "exports": {
         ".": "./out/main/index.js",
-        "./modules/mongodb": "./out/main/modules/mongodb.js"
+        "./modules/mongodb": "./out/modules/mongodb.js"
     },
     "files": [
         "out/main/**/*",
