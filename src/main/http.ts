@@ -1,3 +1,4 @@
+import { Logger } from '@flexent/logger';
 import cors from '@koa/cors';
 import http from 'http';
 import https from 'https';
@@ -10,18 +11,18 @@ import etag from 'koa-etag';
 import stoppable, { StoppableServer } from 'stoppable';
 import { constants } from 'zlib';
 
-import { AcAuth } from './ac-auth';
-import { Config, config } from './config';
-import { ClientError } from './exception';
-import { Logger, RequestLogger } from './logger';
-import * as middleware from './middleware';
-import { Router } from './router';
-import { AcAuthProvider } from './services';
+import { AcAuth } from './ac-auth.js';
+import { Config, config } from './config.js';
+import { ClientError } from './exception.js';
+import { RequestLogger } from './logger.js';
+import * as middleware from './middleware/index.js';
+import { Router } from './router.js';
+import { AcAuthProvider } from './services/index.js';
 
 
 interface MiddlewareSpec {
-    name: string,
-    middleware: Middleware,
+    name: string;
+    middleware: Middleware;
 }
 
 

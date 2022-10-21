@@ -6,8 +6,8 @@ import {
     Application,
     BypassAcAuthProvider,
     Router,
-} from '../../../main';
-import { AccessRouter } from '../../routes/access';
+} from '../../../main/index.js';
+import { AccessRouter } from '../../routes/access.js';
 
 describe('BypassAuthProvider', () => {
     class App extends Application {

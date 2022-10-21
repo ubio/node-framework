@@ -1,28 +1,28 @@
+import { Logger } from '@flexent/logger';
 import Ajv, { ValidateFunction as AjvValidateFunction } from 'ajv';
 import addFormats from 'ajv-formats';
 import escapeRegexp from 'escape-string-regexp';
 import { inject, injectable } from 'inversify';
 import * as koa from 'koa';
 
-import { Config, config } from './config';
-import { ClientError, Exception } from './exception';
-import { Logger } from './logger';
-import { getGlobalMetrics } from './metrics/global';
-import { ajvErrorToMessage, AnyConstructor, Constructor, deepClone } from './util';
+import { Config, config } from './config.js';
+import { ClientError, Exception } from './exception.js';
+import { getGlobalMetrics } from './metrics/global.js';
+import { ajvErrorToMessage, AnyConstructor, Constructor, deepClone } from './util.js';
 
 const ROUTES_KEY = Symbol('Route');
 const PARAMS_KEY = Symbol('Param');
 
 // Lightweight routing based on IoC and decorators.
 
-const ajv = new Ajv({
+const ajv = new Ajv.default({
     allErrors: true,
     coerceTypes: 'array',
     useDefaults: true,
     removeAdditional: true,
     keywords: ['optional'],
 });
-addFormats(ajv);
+addFormats.default(ajv);
 
 export function Get(spec: RouteSpec = {}) {
     return routeDecorator('get', spec);

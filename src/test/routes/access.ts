@@ -1,6 +1,6 @@
 import { inject, injectable } from 'inversify';
 
-import { AcAuth, Get, Router } from '../../main';
+import { AcAuth, Get, Router } from '../../main/index.js';
 
 @injectable()
 export class AccessRouter extends Router {

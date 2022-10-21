@@ -9,8 +9,8 @@ import {
     getGlobalMetrics,
     HistogramMetric,
     Router
-} from '../../main';
-import { FooRouter } from '../routes/foo';
+} from '../../main/index.js';
+import { FooRouter } from '../routes/foo.js';
 
 describe('CounterMetric', () => {
 

@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
 
-import { ClientError } from './exception';
+import { ClientError } from './exception.js';
 
 export interface AcAuthSpec {
     jwtContext?: AcJwtContext;

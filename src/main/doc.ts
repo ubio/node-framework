@@ -1,5 +1,5 @@
-import { getGlobalRouteRegistry, RouteDefinition } from './router';
-import { groupBy } from './util';
+import { getGlobalRouteRegistry, RouteDefinition } from './router.js';
+import { groupBy } from './util.js';
 
 export function generateEndpointDocSpec() {
     const doc: string[] = [];

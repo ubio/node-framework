@@ -2,7 +2,7 @@ import assert from 'assert';
 import Koa from 'koa';
 import supertest from 'supertest';
 
-import { Application, Get, HttpServer, Router } from '../../main';
+import { Application, Get, HttpServer, Router } from '../../main/index.js';
 
 describe('Altering Middlewares', () => {
     class MyRouter extends Router {

@@ -1,4 +1,4 @@
-import { BodyParam, Get, Middleware, PathParam, Post, Put, Router } from '../../main';
+import { BodyParam, Get, Middleware, PathParam, Post, Put, Router } from '../../main/index.js';
 
 export class FooRouter extends Router {
 
@@ -46,7 +46,7 @@ export class FooRouter extends Router {
 
     @Get({ path: '/foo/{fooId}' })
     async get(
-        @PathParam('fooId', { schema: { type: 'string' } })
+    @PathParam('fooId', { schema: { type: 'string' } })
         fooId: string
     ) {
         return { fooId };
@@ -59,7 +59,7 @@ export class FooRouter extends Router {
         }
     })
     async update(
-        @PathParam('fooId', { schema: { type: 'string' } })
+    @PathParam('fooId', { schema: { type: 'string' } })
         fooId: string,
         @BodyParam('bar', { schema: { type: 'string' } })
         bar: string

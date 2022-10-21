@@ -2,7 +2,7 @@ import assert from 'assert';
 import { inject } from 'inversify';
 import supertest from 'supertest';
 
-import { AcAuth, AcAuthProvider, Application, Get, Router } from '../../main';
+import { AcAuth, AcAuthProvider, Application, Get, Router } from '../../main/index.js';
 
 describe('Mocking AcAuth', () => {
 

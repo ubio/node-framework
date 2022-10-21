@@ -1,6 +1,6 @@
 import assert from 'assert';
 
-import { ClientError, Exception } from '../../main';
+import { ClientError, Exception } from '../../main/index.js';
 
 describe('Exception', () => {
 

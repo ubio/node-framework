@@ -4,11 +4,11 @@ export type BaseSchema = {
     nullable?: true;
     optional?: true;
     default?: any;
-}
+};
 
 export type BooleanSchema = {
     type: 'boolean';
-}
+};
 
 export type StringSchema = {
     type: 'string';
@@ -16,7 +16,7 @@ export type StringSchema = {
     maxLength?: number;
     pattern?: string;
     format?: string;
-}
+};
 
 export type NumberSchema = {
     type: 'number' | 'integer';
@@ -25,7 +25,7 @@ export type NumberSchema = {
     exclusiveMinimum?: number;
     exclusiveMaximum?: number;
     multipleOf?: number;
-}
+};
 
 export type ObjectSchema<T> = {
     type: 'object';
@@ -34,7 +34,7 @@ export type ObjectSchema<T> = {
     patternProperties?: { [key: string]: JsonSchema<any> };
     additionalProperties?: boolean | JsonSchema<any>;
     propertyNames?: JsonSchema<any>;
-}
+};
 
 export type ArraySchema<T> = {
     type: 'array';
@@ -44,7 +44,7 @@ export type ArraySchema<T> = {
     uniqueItems?: number;
     additionalItems?: boolean | JsonSchema<T>;
     contains?: JsonSchema<T>;
-}
+};
 
 export type JsonSchema<T> = (
     T extends string ? StringSchema :
@@ -52,7 +52,7 @@ export type JsonSchema<T> = (
     T extends boolean ? BooleanSchema :
     T extends Array<infer P> ? ArraySchema<P> :
     T extends object ? ObjectSchema<T> :
-    never
+        never
 ) & BaseSchema;
 
 export type OptionalSchema<T> = JsonSchema<T> & { optional: true };
@@ -60,14 +60,14 @@ export type RequiredSchema<T> = Omit<JsonSchema<T>, 'optional'>;
 export type NullableSchema<T> = JsonSchema<T> & { nullable: true };
 export type NonNullableSchema<T> = Omit<JsonSchema<T>, 'nullable'>;
 
-export type OptionalNullableSchema<T> = JsonSchema<T> & { optional: true, nullable: true }
-export type OptionalNonNullableSchema<T> = Omit<JsonSchema<T> & { optional: true }, 'nullable'>
-export type RequiredNullableSchema<T> = Omit<JsonSchema<T> & { nullable: true }, 'optional'>
-export type RequiredNonNullableSchema<T> = Omit<JsonSchema<T>, 'optional' | 'nullable'>
+export type OptionalNullableSchema<T> = JsonSchema<T> & { optional: true; nullable: true };
+export type OptionalNonNullableSchema<T> = Omit<JsonSchema<T> & { optional: true }, 'nullable'>;
+export type RequiredNullableSchema<T> = Omit<JsonSchema<T> & { nullable: true }, 'optional'>;
+export type RequiredNonNullableSchema<T> = Omit<JsonSchema<T>, 'optional' | 'nullable'>;
 
 export type PropertiesSpec<T> = {
     [K in keyof T]-?: InferOptionalNullable<T, K>;
-}
+};
 
 type InferOptionalNullable<T, K extends keyof T> =
     undefined extends T[K] ? (

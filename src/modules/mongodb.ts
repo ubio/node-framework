@@ -1,7 +1,8 @@
+import { Logger } from '@flexent/logger';
 import { inject, injectable } from 'inversify';
 import { Db, MongoClient, MongoClientOptions } from 'mongodb';
 
-import { Config, config, getGlobalMetrics, Logger } from '../main';
+import { Config, config, getGlobalMetrics } from '../main/index.js';
 
 interface MongoClientOptionsExtended extends MongoClientOptions {
     useUnifiedTopology: boolean;

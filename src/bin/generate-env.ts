@@ -5,7 +5,7 @@ import { Command } from 'commander';
 import { promises as fs } from 'fs';
 import path from 'path';
 
-import { Application, ConfigDecl, getContainerConfigs } from '../main';
+import { Application, ConfigDecl, getContainerConfigs } from '../main/index.js';
 
 interface Opts {
     silent: boolean;

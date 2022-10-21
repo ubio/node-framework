@@ -1,9 +1,9 @@
+import { Logger } from '@flexent/logger';
 import { inject, injectable } from 'inversify';
 import jsonwebtoken from 'jsonwebtoken';
 
-import { Config, config } from '../config';
-import { JwksClient } from '../jwks';
-import { Logger } from '../logger';
+import { Config, config } from '../config.js';
+import { JwksClient } from '../jwks.js';
 
 @injectable()
 export abstract class JwtService {
@@ -48,4 +48,4 @@ export class AutomationCloudJwtService extends JwtService {
 
 export type DecodedJwt = {
     [key: string]: any;
-}
+};

@@ -1,9 +1,9 @@
 import Ajv, { ErrorObject, Options, ValidateFunction } from 'ajv';
 import addFormats from 'ajv-formats';
 
-import { ClientError } from './exception';
-import { JsonSchema } from './schema-types';
-import { ajvErrorToMessage } from './util';
+import { ClientError } from './exception.js';
+import { JsonSchema } from './schema-types.js';
+import { ajvErrorToMessage } from './util.js';
 
 /**
  * An utility class that allows validating and decoding objects using JSON Schema.
@@ -11,7 +11,7 @@ import { ajvErrorToMessage } from './util';
 export class Schema<T> {
     schema: JsonSchema<T>;
 
-    protected ajv: Ajv;
+    protected ajv: Ajv.default;
     protected validateFn: ValidateFunction;
     protected defaults: SchemaDefaults<T>;
     protected options: SchemaPreprocessingOptions;
@@ -28,7 +28,7 @@ export class Schema<T> {
             noAdditionalProperties: true,
             ...options,
         };
-        this.ajv = new Ajv({
+        this.ajv = new Ajv.default({
             strict: true,
             allErrors: true,
             messages: true,
@@ -37,7 +37,7 @@ export class Schema<T> {
             keywords: ['optional'],
             ...ajvOptions,
         });
-        addFormats(this.ajv);
+        addFormats.default(this.ajv);
         this.schema = this.preprocess(schema);
         this.defaults = defaults;
         this.validateFn = this.ajv.compile(this.schema);

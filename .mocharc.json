@@ -1,5 +1,5 @@
 {
-    "require": ["reflect-metadata", "./out/test/dotenv"],
+    "require": ["reflect-metadata", "./out/test/dotenv.js"],
     "reporter": "spec",
     "exit": true,
     "spec": "./out/**/*.test.js"

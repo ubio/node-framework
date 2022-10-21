@@ -1,4 +1,4 @@
-import { Get, Middleware, Post, QueryParam, Router } from '../../main';
+import { Get, Middleware, Post, QueryParam, Router } from '../../main/index.js';
 
 export class BarRouter extends Router {
 
