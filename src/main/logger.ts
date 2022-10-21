@@ -2,7 +2,8 @@ import { ConsoleLogger, LOG_LEVELS, LogfmtLogger, Logger, LogLevel } from '@flex
 import { inject, injectable } from 'inversify';
 import * as koa from 'koa';
 
-import { getGlobalMetrics } from './metrics/global.js';
+import { Config, config } from './config.js';
+
 
 export {
     LOG_LEVELS,
@@ -13,34 +14,42 @@ export {
 };
 
 @injectable()
-export abstract class BaseLogger extends Logger {
-    contextData: object = {};
+export class StandardLogger extends Logger {
 
-    abstract child(data: object): Logger;
+    @config({ default: 'info' })
+    LOG_LEVEL!: string;
+    @config({ default: false })
+    LOG_PRETTY!: boolean;
 
-    override log(level: LogLevel, message: string, data: object) {
-        super.log(level, message, data);
-        getGlobalMetrics().appLogsTotal.incr(1, { severity: level });
+    private delegate: Logger;
+
+    constructor(
+        @inject(Config)
+        readonly config: Config,
+    ) {
+        super();
+        this.delegate = this.LOG_PRETTY ? new ConsoleLogger() : new LogfmtLogger();
+        this.setLevel(this.LOG_LEVEL);
     }
 
-    addContextData(data: object): this {
-        this.contextData = { ...this.contextData, ...data };
-        return this;
+    override write(level: LogLevel, message: string, data: object): void {
+        this.delegate.write(level, message, data);
     }
 
 }
+
 
 @injectable()
 export class RequestLogger extends Logger {
     @inject('KoaContext')
     ctx!: koa.Context;
 
-    @inject(Logger)
-    protected logger!: Logger;
+    @inject('AppLogger')
+    protected delegate!: Logger;
 
     write(level: LogLevel, message: string, data: object): void {
         const { requestId } = this.ctx.state;
-        this.logger.write(level, message, {
+        this.delegate.write(level, message, {
             ...data,
             requestId,
         });
