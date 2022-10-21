@@ -6,6 +6,8 @@ import * as koa from 'koa';
 import { getGlobalMetrics } from './metrics/global.js';
 import { safeStringify } from './stringify.js';
 
+export { Logger, LOG_LEVELS, LogLevel };
+
 const LEVELS_COLOR: { [key: string]: Chalk } = {
     mute: chalk.grey.bind(chalk),
     debug: chalk.grey.bind(chalk),
