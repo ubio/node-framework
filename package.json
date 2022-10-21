@@ -20,9 +20,7 @@
         "test": "NODE_ENV=test mocha",
         "clean": "rm -rf out",
         "compile": "npm run clean && tsc",
-        "changelog": "node ./changelog",
         "preversion": "npm run compile && npm run lint && npm run test",
-        "version": "npm run changelog && git add CHANGELOG.md",
         "postversion": "npm publish --access public && git push origin main --tags"
     },
     "pre-commit": [
