@@ -1,4 +1,4 @@
-import { LOG_LEVELS, Logger, LogLevel } from '@flexent/logger';
+import { ConsoleLogger, LOG_LEVELS, LogfmtLogger, Logger, LogLevel } from '@flexent/logger';
 import chalk, { Chalk } from 'chalk';
 import { inject, injectable } from 'inversify';
 import * as koa from 'koa';
@@ -6,7 +6,13 @@ import * as koa from 'koa';
 import { getGlobalMetrics } from './metrics/global.js';
 import { safeStringify } from './stringify.js';
 
-export { Logger, LOG_LEVELS, LogLevel };
+export {
+    LOG_LEVELS,
+    LogLevel,
+    Logger,
+    ConsoleLogger,
+    LogfmtLogger,
+};
 
 const LEVELS_COLOR: { [key: string]: Chalk } = {
     mute: chalk.grey.bind(chalk),
