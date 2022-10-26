@@ -1,14 +1,16 @@
 #!/usr/bin/env node
 import 'reflect-metadata';
 
+import fs from 'fs';
 import path from 'path';
 
 import { generateOpenApiSpec } from '../main/index.js';
 
 const packageJsonPath = path.join(process.cwd(), 'package.json');
-const appModulePath = path.join(process.cwd(), 'out/main/app');
-require(appModulePath);
-const packageJson = require(packageJsonPath);
+const appModulePath = path.join(process.cwd(), 'out/main/app.js');
+await import(appModulePath);
+
+const packageJson = JSON.parse(await fs.promises.readFile(packageJsonPath, 'utf-8'));
 
 const docs = {
     openapi: '3.1.0',

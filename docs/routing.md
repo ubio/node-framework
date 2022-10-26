@@ -14,9 +14,6 @@ Each router should be registered with [application container](./application.md) 
 import { Router, Get } from '@ubio/framework';
 import { injectable } from 'inversify';
 
-// tslint:disable-next-line
-const pkg = require('../../../package.json');
-
 @injectable()
 export class StatusRouter extends Router {
 

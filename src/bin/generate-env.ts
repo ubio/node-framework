@@ -26,7 +26,7 @@ main()
     });
 
 async function main() {
-    const App = discoverAppClass();
+    const App = await discoverAppClass();
     if (!App) {
         if (opts.silent) {
             return;
@@ -38,10 +38,10 @@ async function main() {
     await writeEnv(configs);
 }
 
-function discoverAppClass(): typeof Application | null {
+async function discoverAppClass(): Promise<typeof Application | null> {
     try {
-        const appModulePath = path.join(process.cwd(), 'out/main/app');
-        const appModule = require(appModulePath);
+        const appModulePath = path.join(process.cwd(), 'out/main/app.js');
+        const appModule = await import(appModulePath);
         for (const obj of Object.values(appModule)) {
             if (Application.isPrototypeOf(obj as any)) {
                 return obj as (typeof Application);
