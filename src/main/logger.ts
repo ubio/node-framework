@@ -21,7 +21,7 @@ export class StandardLogger extends Logger {
     @config({ default: false })
     LOG_PRETTY!: boolean;
 
-    private delegate: Logger;
+    protected delegate: Logger;
 
     constructor(
         @inject(Config)
@@ -30,6 +30,7 @@ export class StandardLogger extends Logger {
         super();
         this.delegate = this.LOG_PRETTY ? new ConsoleLogger() : new LogfmtLogger();
         this.delegate.setLevel(this.LOG_LEVEL);
+        this.setLevel(this.LOG_LEVEL);
     }
 
     override write(level: LogLevel, message: string, data: object): void {
@@ -45,6 +46,7 @@ export class RequestLogger extends Logger {
         protected ctx: koa.Context,
     ) {
         super();
+        this.setLevel(delegate.level);
     }
 
     write(level: LogLevel, message: string, data: object): void {
