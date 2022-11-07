@@ -1,7 +1,7 @@
 import { Logger } from '@flexent/logger';
+import { matchTokens, parsePath, PathToken } from '@flexent/pathmatcher';
 import Ajv, { ValidateFunction as AjvValidateFunction } from 'ajv';
 import addFormats from 'ajv-formats';
-import escapeRegexp from 'escape-string-regexp';
 import { inject, injectable } from 'inversify';
 import * as koa from 'koa';
 
@@ -84,7 +84,7 @@ function routeDecorator(method: string, spec: RouteSpec, isMiddleware: boolean =
             summary,
             method,
             path,
-            pathTokens: tokenizePath(path),
+            pathTokens: parsePath(path),
             params,
             paramsSchema,
             requestBodySchema,
@@ -259,7 +259,7 @@ export function matchRoute(
     if (ep.method !== '*' && ep.method.toLowerCase() !== method.toLowerCase()) {
         return null;
     }
-    return matchPath(path, ep.pathTokens, ep.isMiddleware);
+    return matchTokens(ep.pathTokens, path, ep.isMiddleware);
 }
 
 function compileParamsSchema(params: ParamDefinition[] = []): AjvValidateFunction {
@@ -277,73 +277,6 @@ function compileParamsSchema(params: ParamDefinition[] = []): AjvValidateFunctio
         required,
         additionalProperties: false, // now required, because of removeAdditional: true
     });
-}
-
-/**
- * Parses /foo/{fooId}/bar/{barId} to extract static and parameter tokens.
- */
-export function tokenizePath(path: string): PathToken[] {
-    const tokens: PathToken[] = [];
-    const re = /\{(.*?)\}/ig;
-    let idx = 0;
-    let m = re.exec(path);
-    while (m != null) {
-        const prefix = path.substring(idx, m.index);
-        if (prefix) {
-            tokens.push({ type: 'string', value: prefix });
-        }
-        idx = m.index + m[0].length;
-        const [, asterisk, value] = /^(\*)?(.*)/.exec(m[1])!;
-        const wildcard = !!asterisk;
-        tokens.push({ type: 'param', value, wildcard });
-        m = re.exec(path);
-    }
-    const suffix = path.substring(idx);
-    if (suffix) {
-        tokens.push({ type: 'string', value: suffix });
-    }
-    return tokens;
-}
-
-/**
- * Matches `path` against a list of path tokens, obtained from `tokenizePath`.
- * If `matchStart` is true, allows path to have suffix which does not match the tokens.
- */
-export function matchPath(
-    path: string,
-    tokens: PathToken[],
-    matchStart: boolean = false
-): Params | null {
-    const params: Params = {};
-    const regex = tokens
-        .map(tok => pathTokenToRegexp(tok))
-        .join('');
-
-    let re = new RegExp('^' + regex + '/?$');
-
-    if (matchStart) {
-        // tokenized '/foo' matches paths '/foo', '/foo/' and 'foo/bar' but not '/foobar`
-        // tokenized '/foo/' matches paths '/foo/' and '/foo/bar' but not '/foo' or '/foobar'
-        const routeHasTrailingSlash = tokens[tokens.length - 1]?.value.slice(-1) === '/';
-        re = new RegExp('^' + regex + `(?=$|${routeHasTrailingSlash ? '.' : '[/]'})`);
-    }
-
-    const m = re.exec(path);
-    if (m == null) {
-        return null;
-    }
-    const paramNames = tokens.filter(_ => _.type === 'param').map(_ => _.value);
-    for (const [i, name] of paramNames.entries()) {
-        params[name] = m[i + 1];
-    }
-    return params;
-}
-
-function pathTokenToRegexp(token: PathToken) {
-    if (token.type === 'string') {
-        return escapeRegexp(token.value);
-    }
-    return token.wildcard ? '(.+?)' : '([^/]+?)';
 }
 
 // Helpers for accessing metadata and generating docs
@@ -373,12 +306,6 @@ export function getEndpointRoutes(routerClass: AnyConstructor) {
 
 export interface Params {
     [key: string]: any;
-}
-
-export interface PathToken {
-    type: 'string' | 'param';
-    value: string;
-    wildcard?: boolean;
 }
 
 export type ParamSource = 'path' | 'query' | 'body';
