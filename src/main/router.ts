@@ -1,11 +1,11 @@
+import { config } from '@flexent/config';
 import { Logger } from '@flexent/logger';
+import { dep } from '@flexent/mesh';
 import { matchTokens, parsePath, PathToken } from '@flexent/pathmatcher';
 import Ajv, { ValidateFunction as AjvValidateFunction } from 'ajv';
 import addFormats from 'ajv-formats';
-import { inject, injectable } from 'inversify';
 import * as koa from 'koa';
 
-import { Config, config } from './config.js';
 import { ClientError, Exception } from './exception.js';
 import { getGlobalMetrics } from './metrics/global.js';
 import { ajvErrorToMessage, AnyConstructor, Constructor, deepClone } from './util.js';
@@ -123,14 +123,10 @@ export function paramDecorator(source: ParamSource, name: string, spec: ParamSpe
 
 export type RouterConstructor = new (...args: any[]) => Router;
 
-@injectable()
 export class Router {
-    @inject(Logger)
-    logger!: Logger;
-    @inject('KoaContext')
-    ctx!: koa.Context;
-    @inject(Config)
-    config!: Config;
+
+    @dep() protected logger!: Logger;
+    @dep({ key: 'KoaContext' }) protected ctx!: koa.Context;
 
     @config({ default: false }) HTTP_VALIDATE_RESPONSES!: boolean;
 

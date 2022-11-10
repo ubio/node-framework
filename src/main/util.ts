@@ -1,8 +1,8 @@
 import 'reflect-metadata';
 
+import { Mesh, ServiceConstructor } from '@flexent/mesh';
 import { ErrorObject as AjvErrorObject } from 'ajv';
 import { promises as fs } from 'fs';
-import { Container, interfaces } from 'inversify';
 import path from 'path';
 import { v4 as uuid } from 'uuid';
 
@@ -70,11 +70,6 @@ export function getClassMetadata<T>(key: Symbol, target: any): T[] {
     return result;
 }
 
-export function getBindingsMap(container: Container):
-    Map<interfaces.ServiceIdentifier<any>, interfaces.Binding<any>[]> {
-    return (container as any)._bindingDictionary._map;
-}
-
 export async function getAppDetails() {
     const { name, version } = await getPackageJson();
     return {
@@ -95,4 +90,18 @@ async function getPackageJson() {
             error.code === 'ENOENT' ? 'package.json not found' : error.message;
         throw new Exception(`Cannot get App Details: ${reason}`);
     }
+}
+
+export function findMeshInstances<T>(mesh: Mesh, ctor: ServiceConstructor<T>): T[] {
+    const instances: T[] = [];
+    for (const [key] of mesh) {
+        const instance = mesh.tryResolve(key);
+        if (instance instanceof ctor) {
+            instances.push(instance);
+        }
+    }
+    if (mesh.parent) {
+        instances.push(...findMeshInstances(mesh.parent, ctor));
+    }
+    return instances;
 }

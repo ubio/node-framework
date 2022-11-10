@@ -1,5 +1,5 @@
+import { dep, Mesh } from '@flexent/mesh';
 import assert from 'assert';
-import { inject } from 'inversify';
 import supertest from 'supertest';
 
 import { AcAuth, AcAuthProvider, Application, Get, Router } from '../../main/index.js';
@@ -7,12 +7,8 @@ import { AcAuth, AcAuthProvider, Application, Get, Router } from '../../main/ind
 describe('Mocking AcAuth', () => {
 
     class MyRouter extends Router {
-        constructor(
-            @inject(AcAuth)
-            protected auth: AcAuth,
-        ) {
-            super();
-        }
+
+        @dep() protected auth!: AcAuth;
 
         @Get({
             path: '/foo'
@@ -23,20 +19,26 @@ describe('Mocking AcAuth', () => {
 
     }
 
-    const app = new Application();
-    app.container.rebind(AcAuthProvider).toConstantValue({
-        async provide() {
-            return new AcAuth({
-                jwtContext: {
-                    organisation_id: 'foo',
-                    service_account_id: 'service-account-worker',
-                    service_account_name: 'Bot',
+    class App extends Application {
+        override defineGlobalScope(mesh: Mesh) {
+            mesh.constant(AcAuthProvider, {
+                async provide() {
+                    return new AcAuth({
+                        jwtContext: {
+                            organisation_id: 'foo',
+                            service_account_id: 'service-account-worker',
+                            service_account_name: 'Bot',
+                        }
+                    });
                 }
             });
         }
-    });
-    app.bindRouter(MyRouter);
+        override defineHttpRequestScope(mesh: Mesh) {
+            mesh.service(MyRouter);
+        }
+    }
 
+    const app = new App();
     beforeEach(() => app.start());
     afterEach(() => app.stop());
 

@@ -1,17 +1,12 @@
-import { injectable, multiInject } from 'inversify';
+import { dep, Mesh } from '@flexent/mesh';
 
 import { Get, Router } from '../router.js';
+import { findMeshInstances } from '../util.js';
 import { MetricsRegistry } from './registry.js';
 
-@injectable()
 export class MetricsRouter extends Router {
 
-    constructor(
-        @multiInject(MetricsRegistry)
-        protected registries: MetricsRegistry[]
-    ) {
-        super();
-    }
+    @dep() protected mesh!: Mesh;
 
     @Get({
         path: '/metrics',
@@ -25,7 +20,11 @@ export class MetricsRouter extends Router {
     })
     async metrics() {
         this.ctx.type = 'text/plain; version=0.0.4';
-        return this.registries.map(_ => _.report()).join('\n\n');
+        return this.getRegistries().map(_ => _.report()).join('\n\n');
+    }
+
+    protected getRegistries(): MetricsRegistry[] {
+        return findMeshInstances(this.mesh, MetricsRegistry);
     }
 
 }

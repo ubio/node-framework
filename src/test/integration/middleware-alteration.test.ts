@@ -1,3 +1,4 @@
+import { Mesh } from '@flexent/mesh';
 import assert from 'assert';
 import Koa from 'koa';
 import supertest from 'supertest';
@@ -32,10 +33,11 @@ describe('Altering Middlewares', () => {
     }
 
     class App extends Application {
-        constructor() {
-            super();
-            this.bindRouter(MyRouter);
-            this.container.rebind(HttpServer).to(CustomServer).inSingletonScope();
+        override defineGlobalScope(mesh: Mesh) {
+            mesh.service(HttpServer, CustomServer);
+        }
+        override defineHttpRequestScope(mesh: Mesh) {
+            mesh.service(MyRouter);
         }
     }
 

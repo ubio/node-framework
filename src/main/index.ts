@@ -2,7 +2,6 @@ import * as util from './util.js';
 
 export * from './ac-auth.js';
 export * from './application.js';
-export * from './config.js';
 export * from './doc.js';
 export * from './exception.js';
 export * from './http.js';

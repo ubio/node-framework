@@ -13,9 +13,7 @@ Create a `Metrics` class in `src/main/metrics.ts` and define your counters, hist
 
 ```ts
 import { MetricsRegistry } from '@ubio/framework';
-import { injectable } from 'inversify';
 
-@injectable()
 export class Metrics extends MetricsRegistry {
 
     dataCacheKeysRequested = this.counter('api_dataset_cache_keys_requested_total',
@@ -55,10 +53,12 @@ Global metrics include `@MeasureAsync` decorator which can be used to annotate a
 
 ```ts
 class MyClass {
+
     @MeasureAsync()
     async doWork() {
 
     }
+
 }
 
 ```

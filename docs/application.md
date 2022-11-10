@@ -13,13 +13,9 @@ In Inversify components refer to each other via so-called "service identifiers":
 ```ts
 import { Logger } from '@ubio/framework';
 
-@injectable()
 export class MyService {
 
-    constructor(
-        @inject(Logger)
-        protected logger: Logger
-    ) {}
+    @dep() logger!: Logger;
 
     myMethod() {
         this.logger.info('Hello');
@@ -61,10 +57,6 @@ const myService = app.container.get<MyService>(MyService);
 myService.myMethod();
 // will call MyLogger#info with "hello" argument
 ```
-
-Important note: most of the times you do not need to call `app.container.get` directly.
-The reason for that is: entry point for http-server microservices code will be routers, which
-are already instantiated by application container. Accessing `app.container` directly from injectable modules is discouraged and widely considered an anti-pattern.
 
 ## Module Scopes
 

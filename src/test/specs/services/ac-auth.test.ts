@@ -1,45 +1,44 @@
 import * as request from '@automationcloud/request';
+import { Config, ProcessEnvConfig } from '@flexent/config';
 import { Logger } from '@flexent/logger';
+import { Mesh } from '@flexent/mesh';
 import assert from 'assert';
-import { Container } from 'inversify';
 
 import {
     AcAuthProvider,
     AuthenticationError,
-    Config,
     DefaultAcAuthProvider,
-    DefaultConfig,
     JwtService,
     StandardLogger,
 } from '../../../main/index.js';
 
 describe('AcAuthProvider', () => {
 
-    const container = new Container({ skipBaseClassChecks: true });
-    container.bind(Logger).to(StandardLogger);
-    container.bind(DefaultAcAuthProvider).toSelf();
-    container.bind(AcAuthProvider).toService(DefaultAcAuthProvider);
-    container.bind('KoaContext').toDynamicValue(() => ({
+    let fetchMock: request.FetchMock;
+    let authProvider: DefaultAcAuthProvider;
+    let headers: any = {};
+    let jwt: any = {};
+
+    const mesh = new Mesh();
+    mesh.service(Logger, StandardLogger);
+    mesh.service(DefaultAcAuthProvider);
+    mesh.alias(AcAuthProvider, DefaultAcAuthProvider);
+    mesh.service(Config, ProcessEnvConfig);
+    mesh.constant('KoaContext', {
         req: { headers }
-    }));
-    container.bind(JwtService).toDynamicValue(() => ({
+    });
+    mesh.constant(JwtService, {
         async decodeAndVerify(token: string) {
             if (token !== 'jwt-token-here') {
                 throw new AuthenticationError();
             }
             return jwt;
         }
-    }));
-    container.bind(Config).to(DefaultConfig);
-
-    let fetchMock: request.FetchMock;
-    let authProvider: DefaultAcAuthProvider;
-    let headers: any = {};
-    let jwt: any = {};
+    });
 
     beforeEach(() => {
         fetchMock = request.fetchMock({ status: 200 }, { token: 'jwt-token-here' });
-        authProvider = container.get(DefaultAcAuthProvider);
+        authProvider = mesh.resolve(DefaultAcAuthProvider);
         authProvider.clientRequest.config.fetch = fetchMock;
         jwt = {
             context: {
@@ -57,7 +56,7 @@ describe('AcAuthProvider', () => {
 
     describe('x-ubio-auth header exists', () => {
         beforeEach(() => {
-            const authHeader = container.get(DefaultAcAuthProvider).AC_AUTH_HEADER_NAME;
+            const authHeader = mesh.resolve(DefaultAcAuthProvider).AC_AUTH_HEADER_NAME;
             headers[authHeader] = 'Bearer jwt-token-here';
         });
 
@@ -72,7 +71,7 @@ describe('AcAuthProvider', () => {
         });
 
         it('throws when jwt is not valid', async () => {
-            const authHeader = container.get(DefaultAcAuthProvider).AC_AUTH_HEADER_NAME;
+            const authHeader = mesh.resolve(DefaultAcAuthProvider).AC_AUTH_HEADER_NAME;
             headers[authHeader] = 'Bearer unknown-jwt-token';
             try {
                 await authProvider.provide();
@@ -144,7 +143,7 @@ describe('AcAuthProvider', () => {
 
     describe('acAuth', () => {
         beforeEach(() => {
-            const authHeader = container.get(DefaultAcAuthProvider).AC_AUTH_HEADER_NAME;
+            const authHeader = mesh.resolve(DefaultAcAuthProvider).AC_AUTH_HEADER_NAME;
             headers[authHeader] = 'Bearer jwt-token-here';
         });
 

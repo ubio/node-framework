@@ -1,3 +1,4 @@
+import { Mesh } from '@flexent/mesh';
 import assert from 'assert';
 import supertest from 'supertest';
 import theredoc from 'theredoc';
@@ -7,8 +8,7 @@ import {
     CounterMetric,
     GaugeMetric,
     getGlobalMetrics,
-    HistogramMetric,
-    Router
+    HistogramMetric
 } from '../../main/index.js';
 import { FooRouter } from '../routes/foo.js';
 
@@ -158,9 +158,8 @@ describe('HistogramMetric', () => {
 
 describe('Routes execution histogram metric', () => {
     class App extends Application {
-        constructor() {
-            super();
-            this.container.bind(Router).to(FooRouter);
+        override defineHttpRequestScope(mesh: Mesh): void {
+            mesh.service(FooRouter);
         }
         override async beforeStart() {
             await this.httpServer.startServer();

@@ -7,14 +7,9 @@ Node Framework does its best to abstract away all the complexity, allowing apps 
 `AcAuth` object exposes identity information of current request, as well as convenience methods for request authorisation.
 
 ```ts
-@injectable()
 export class MyRouter extends Router {
-    constructor(
-        @inject(AcAuth)
-        auth: AcAuth
-    ) {
-        super();
-    }
+
+    @dep() auth!: AcAuth;
 
     @Middleware()
     async authorise() {

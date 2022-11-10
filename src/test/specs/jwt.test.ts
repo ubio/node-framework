@@ -1,15 +1,16 @@
-import { ConsoleLogger } from '@flexent/logger';
 import assert from 'assert';
 import crypto from 'crypto';
 import jsonwebtoken from 'jsonwebtoken';
 import { v4 as uuid } from 'uuid';
 
-import { AutomationCloudJwtService, DefaultConfig } from '../../main/index.js';
+import { Application, AutomationCloudJwtService } from '../../main/index.js';
 
 describe('AutomationCloudJwt', () => {
+
     describe('decodeAndVerify', () => {
         let jwtService: AutomationCloudJwtService;
         let secretKey: string;
+
         const payload = {
             context: {
                 user_id: 'some-user',
@@ -21,9 +22,10 @@ describe('AutomationCloudJwt', () => {
             }
         };
 
+        const app = new Application();
+
         beforeEach(async () => {
-            const config = new DefaultConfig();
-            jwtService = new AutomationCloudJwtService(config, new ConsoleLogger());
+            jwtService = app.mesh.resolve(AutomationCloudJwtService);
             secretKey = getSecretKey();
             (jwtService as any).jwksClient.getSigningKey = async () => secretKey;
         });

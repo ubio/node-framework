@@ -1,15 +1,10 @@
-import { inject, injectable } from 'inversify';
+import { dep } from '@flexent/mesh';
 
 import { AcAuth, Get, Router } from '../../main/index.js';
 
-@injectable()
 export class AccessRouter extends Router {
-    constructor(
-        @inject(AcAuth)
-        protected auth: AcAuth,
-    ) {
-        super();
-    }
+
+    @dep() protected auth!: AcAuth;
 
     @Get({
         path: '/public',

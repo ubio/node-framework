@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 import 'reflect-metadata';
 
+import { ConfigDecl, getMeshConfigs } from '@flexent/config';
 import { Command } from 'commander';
 import { promises as fs } from 'fs';
 import path from 'path';
 
-import { Application, ConfigDecl, getContainerConfigs } from '../main/index.js';
+import { Application } from '../main/index.js';
 
 interface Opts {
     silent: boolean;
@@ -34,7 +35,8 @@ async function main() {
         throw new Error('App class not found');
     }
     const app: Application = new App();
-    const configs = getContainerConfigs(app.container);
+    // TODO tihs is a workaround
+    const configs = getMeshConfigs(app.createHttpRequestScope());
     await writeEnv(configs);
 }
 

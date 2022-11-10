@@ -12,9 +12,7 @@ Each router should be registered with [application container](./application.md) 
 
 ```ts
 import { Router, Get } from '@ubio/framework';
-import { injectable } from 'inversify';
 
-@injectable()
 export class StatusRouter extends Router {
 
     @Get({

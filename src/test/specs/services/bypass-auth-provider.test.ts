@@ -1,3 +1,4 @@
+import { Mesh } from '@flexent/mesh';
 import assert from 'assert';
 import supertest from 'supertest';
 
@@ -5,20 +6,25 @@ import {
     AcAuthProvider,
     Application,
     BypassAcAuthProvider,
-    Router,
 } from '../../../main/index.js';
 import { AccessRouter } from '../../routes/access.js';
 
 describe('BypassAuthProvider', () => {
+
     class App extends Application {
-        constructor() {
-            super();
-            this.container.bind(Router).to(AccessRouter);
-            this.container.rebind(AcAuthProvider).to(BypassAcAuthProvider);
+
+        override defineGlobalScope(mesh: Mesh) {
+            mesh.service(AcAuthProvider, BypassAcAuthProvider);
         }
+
+        override defineHttpRequestScope(mesh: Mesh) {
+            mesh.service(AccessRouter);
+        }
+
         override async beforeStart() {
             await this.httpServer.startServer();
         }
+
         override async afterStop() {
             await this.httpServer.stopServer();
         }
