@@ -15,7 +15,7 @@ import {
 } from './services/index.js';
 
 /**
- * Application provides an IoC container where all modules should be registered
+ * Application is an IoC composition root where all modules should be registered
  * and provides minimal lifecycle framework (start, stop, beforeStart, afterStop).
  */
 export class Application {

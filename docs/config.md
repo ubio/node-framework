@@ -5,7 +5,7 @@
 Here's how you go about it in our framework:
 
 ```ts
-import { config, Config } from '@ubio/framework';
+import { config } from '@ubio/framework';
 
 export class MyStorageService {
 
@@ -16,11 +16,6 @@ export class MyStorageService {
     // You can use string, number and boolean types. Types are automatically coerced.
     @config({ default: 8080 }) PORT!: number;
 
-    constructor(
-        // This is not used directly, but is required by `@config` decorator.
-        @inject(Config) public config: Config
-    ) {
-    }
 }
 ```
 

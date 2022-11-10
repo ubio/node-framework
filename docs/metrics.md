@@ -43,7 +43,7 @@ This will do two things:
 1. bind `Metrics` to self in singleton scope
 2. bind that instance to `MetricsRegistry` which is used to aggregate mutliple registries (including the global registry)
 
-Finally, for observing the metrics in your classes, simply `@inject(Metric)` and start using the counters, gauges and histograms you have defined.
+Finally, for observing the metrics in your classes, simply `@dep() metrics: Metrics` and start using the counters, gauges and histograms you have defined.
 
 ### Global metrics
 

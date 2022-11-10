@@ -6,7 +6,7 @@ Application dispatches incoming HTTP requests using Routers. Routers are classes
 - provide meta-information about the response format, so that OpenAPI documentation could be generated,
 - define request parameters specs, which allows framework to automatically extract and validate them from path, query string and JSON body.
 
-Each router should be registered with [application container](./application.md) using `bindAll` method.
+Each router should be added to the request scope in the [application](./application.md).
 
 ## Example
 
@@ -42,9 +42,8 @@ import { Application, Router } from '@ubio/framework';
 import { StatusRouter } from './routes/status';
 
 export class App extends Application {
-    constructor() {
-        // ...
-        this.bindRouter(StatusRouter);
+    defineHttpRequestScope(mesh: Mesh) {
+        mesh.service(StatusRouter);
     }
 }
 
