@@ -42,28 +42,21 @@ export class Application {
         this.defineGlobalScope(this.mesh);
     }
 
-    createSessionScope(): Mesh {
-        const mesh = new Mesh('Session');
-        mesh.parent = this.mesh;
-        mesh.service(MetricsRouter);
-        mesh.service(AcAuthProvider, DefaultAcAuthProvider);
-        this.defineSessionScope(mesh);
-        return mesh;
-    }
-
     createHttpRequestScope(): Mesh {
         const mesh = new Mesh('HttpRequest');
-        mesh.parent = this.createSessionScope();
+        mesh.parent = this.mesh;
         mesh.service(Logger, HttpRequestLogger);
+        mesh.service(MetricsRouter);
+        mesh.service(AcAuthProvider, DefaultAcAuthProvider);
         this.defineHttpRequestScope(mesh);
         return mesh;
     }
 
     defineGlobalScope(_mesh: Mesh) {}
-    defineSessionScope(_mesh: Mesh) {}
     defineHttpRequestScope(_mesh: Mesh) {}
 
     async beforeStart(): Promise<void> {}
+
     async afterStop(): Promise<void> {}
 
     async start() {

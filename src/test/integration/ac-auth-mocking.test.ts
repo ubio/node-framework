@@ -20,7 +20,8 @@ describe('Mocking AcAuth', () => {
     }
 
     class App extends Application {
-        override defineGlobalScope(mesh: Mesh) {
+        override defineHttpRequestScope(mesh: Mesh) {
+            mesh.service(MyRouter);
             mesh.constant(AcAuthProvider, {
                 async provide() {
                     return new AcAuth({
@@ -32,9 +33,6 @@ describe('Mocking AcAuth', () => {
                     });
                 }
             });
-        }
-        override defineHttpRequestScope(mesh: Mesh) {
-            mesh.service(MyRouter);
         }
     }
 

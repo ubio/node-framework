@@ -176,8 +176,8 @@ export class HttpServer extends Koa {
     protected createRequestScopeMiddleware(): Middleware {
         return async (ctx: Koa.Context, next: Koa.Next) => {
             const mesh = this.createRequestScope();
-            ctx.mesh = mesh;
             mesh.constant('KoaContext', ctx);
+            ctx.mesh = mesh;
             ctx.logger = mesh.resolve(Logger);
             return next();
         };

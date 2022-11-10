@@ -72,7 +72,7 @@ export class DefaultAcAuthProvider extends AcAuthProvider {
         }
         const authorization = headers['authorization'];
         if (authorization) {
-            return this.getTokenFromAuthMiddleware(authorization);
+            return await this.getTokenFromAuthMiddleware(authorization);
         }
     }
 

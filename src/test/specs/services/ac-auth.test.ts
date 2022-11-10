@@ -14,29 +14,29 @@ import {
 
 describe('AcAuthProvider', () => {
 
+    let mesh: Mesh;
     let fetchMock: request.FetchMock;
     let authProvider: DefaultAcAuthProvider;
     let headers: any = {};
     let jwt: any = {};
 
-    const mesh = new Mesh();
-    mesh.service(Logger, StandardLogger);
-    mesh.service(DefaultAcAuthProvider);
-    mesh.alias(AcAuthProvider, DefaultAcAuthProvider);
-    mesh.service(Config, ProcessEnvConfig);
-    mesh.constant('KoaContext', {
-        req: { headers }
-    });
-    mesh.constant(JwtService, {
-        async decodeAndVerify(token: string) {
-            if (token !== 'jwt-token-here') {
-                throw new AuthenticationError();
-            }
-            return jwt;
-        }
-    });
-
     beforeEach(() => {
+        mesh = new Mesh();
+        mesh.service(Logger, StandardLogger);
+        mesh.service(DefaultAcAuthProvider);
+        mesh.alias(AcAuthProvider, DefaultAcAuthProvider);
+        mesh.service(Config, ProcessEnvConfig);
+        mesh.constant('KoaContext', {
+            req: { headers }
+        });
+        mesh.constant(JwtService, {
+            async decodeAndVerify(token: string) {
+                if (token !== 'jwt-token-here') {
+                    throw new AuthenticationError();
+                }
+                return jwt;
+            }
+        });
         fetchMock = request.fetchMock({ status: 200 }, { token: 'jwt-token-here' });
         authProvider = mesh.resolve(DefaultAcAuthProvider);
         authProvider.clientRequest.config.fetch = fetchMock;
