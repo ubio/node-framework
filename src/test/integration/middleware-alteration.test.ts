@@ -1,4 +1,3 @@
-import { Mesh } from '@flexent/mesh';
 import assert from 'assert';
 import Koa from 'koa';
 import supertest from 'supertest';
@@ -33,12 +32,19 @@ describe('Altering Middlewares', () => {
     }
 
     class App extends Application {
-        override defineGlobalScope(mesh: Mesh) {
+
+        override createGlobalScope() {
+            const mesh = super.createGlobalScope();
             mesh.service(HttpServer, CustomServer);
+            return mesh;
         }
-        override defineHttpRequestScope(mesh: Mesh) {
+
+        override createHttpRequestScope() {
+            const mesh = super.createHttpRequestScope();
             mesh.service(MyRouter);
+            return mesh;
         }
+
     }
 
     const app = new App();

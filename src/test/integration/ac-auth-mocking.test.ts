@@ -1,4 +1,4 @@
-import { dep, Mesh } from '@flexent/mesh';
+import { dep } from '@flexent/mesh';
 import assert from 'assert';
 import supertest from 'supertest';
 
@@ -20,7 +20,9 @@ describe('Mocking AcAuth', () => {
     }
 
     class App extends Application {
-        override defineHttpRequestScope(mesh: Mesh) {
+
+        override createHttpRequestScope() {
+            const mesh = super.createHttpRequestScope();
             mesh.service(MyRouter);
             mesh.constant(AcAuthProvider, {
                 async provide() {
@@ -33,7 +35,9 @@ describe('Mocking AcAuth', () => {
                     });
                 }
             });
+            return mesh;
         }
+
     }
 
     const app = new App();

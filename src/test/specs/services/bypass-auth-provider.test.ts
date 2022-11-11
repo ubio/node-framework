@@ -1,4 +1,3 @@
-import { Mesh } from '@flexent/mesh';
 import assert from 'assert';
 import supertest from 'supertest';
 
@@ -13,9 +12,11 @@ describe('BypassAuthProvider', () => {
 
     class App extends Application {
 
-        override defineHttpRequestScope(mesh: Mesh) {
+        override createHttpRequestScope() {
+            const mesh = super.createHttpRequestScope();
             mesh.service(AcAuthProvider, BypassAcAuthProvider);
             mesh.service(AccessRouter);
+            return mesh;
         }
 
         override async beforeStart() {

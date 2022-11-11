@@ -29,17 +29,22 @@ export class Application {
 
     constructor() {
         // Some default implementations are bound for convenience but can be replaced as fit
+        this.mesh = this.createGlobalScope();
         this.mesh.connect(this);
-        this.mesh.constant('httpRequestScope', () => this.createHttpRequestScope());
-        this.mesh.service(Logger, StandardLogger);
-        this.mesh.alias('AppLogger', Logger);
-        this.mesh.service(Config, ProcessEnvConfig);
-        this.mesh.service(HttpServer);
-        this.mesh.service(AutomationCloudJwtService);
-        this.mesh.alias(JwtService, AutomationCloudJwtService);
-        this.mesh.constant('GlobalMetrics', getGlobalMetrics());
-        this.mesh.service(MetricsPushGateway);
-        this.defineGlobalScope(this.mesh);
+    }
+
+    createGlobalScope(): Mesh {
+        const mesh = new Mesh('Global');
+        mesh.constant('httpRequestScope', () => this.createHttpRequestScope());
+        mesh.service(Logger, StandardLogger);
+        mesh.alias('AppLogger', Logger);
+        mesh.service(Config, ProcessEnvConfig);
+        mesh.service(HttpServer);
+        mesh.service(AutomationCloudJwtService);
+        mesh.alias(JwtService, AutomationCloudJwtService);
+        mesh.constant('GlobalMetrics', getGlobalMetrics());
+        mesh.service(MetricsPushGateway);
+        return mesh;
     }
 
     createHttpRequestScope(): Mesh {
@@ -48,12 +53,8 @@ export class Application {
         mesh.service(Logger, HttpRequestLogger);
         mesh.service(MetricsRouter);
         mesh.service(AcAuthProvider, DefaultAcAuthProvider);
-        this.defineHttpRequestScope(mesh);
         return mesh;
     }
-
-    defineGlobalScope(_mesh: Mesh) {}
-    defineHttpRequestScope(_mesh: Mesh) {}
 
     async beforeStart(): Promise<void> {}
 

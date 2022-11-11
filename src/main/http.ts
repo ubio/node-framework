@@ -19,12 +19,10 @@ import { Router } from './router.js';
 import { AcAuthProvider } from './services/index.js';
 import { findMeshInstances } from './util.js';
 
-
 interface MiddlewareSpec {
     name: string;
     middleware: Middleware;
 }
-
 
 export class HttpServer extends Koa {
     server: StoppableServer | null = null;

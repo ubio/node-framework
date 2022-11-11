@@ -1,5 +1,4 @@
 import { Config, ProcessEnvConfig } from '@flexent/config';
-import { Mesh } from '@flexent/mesh';
 import assert from 'assert';
 import supertest from 'supertest';
 
@@ -16,11 +15,13 @@ describe('Router', () => {
 
         class App extends Application {
 
-            override defineHttpRequestScope(mesh: Mesh) {
+            override createHttpRequestScope() {
+                const mesh = super.createHttpRequestScope();
                 mesh.service(FooRouter);
                 mesh.service(BarRouter);
                 mesh.service(WildcardRouter);
                 mesh.service(MultipartRouter);
+                return mesh;
             }
 
             override async beforeStart() {
@@ -190,7 +191,9 @@ describe('Router', () => {
     describe('response validation', () => {
 
         class App extends Application {
-            override defineHttpRequestScope(mesh: Mesh) {
+
+            override createHttpRequestScope() {
+                const mesh = super.createHttpRequestScope();
                 mesh.service(ResponseSchemaRouter);
                 mesh.service(Config, class extends ProcessEnvConfig {
                     constructor() {
@@ -198,10 +201,13 @@ describe('Router', () => {
                         this.map.set('HTTP_VALIDATE_RESPONSES', 'true');
                     }
                 });
+                return mesh;
             }
+
             override async beforeStart() {
                 await this.httpServer.startServer();
             }
+
             override async afterStop() {
                 await this.httpServer.stopServer();
             }
