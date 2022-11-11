@@ -7,8 +7,7 @@ import {
     CounterMetric,
     GaugeMetric,
     getGlobalMetrics,
-    HistogramMetric,
-    Router
+    HistogramMetric
 } from '../../main/index.js';
 import { FooRouter } from '../routes/foo.js';
 
@@ -157,17 +156,23 @@ describe('HistogramMetric', () => {
 });
 
 describe('Routes execution histogram metric', () => {
+
     class App extends Application {
-        constructor() {
-            super();
-            this.container.bind(Router).to(FooRouter);
+
+        override createHttpRequestScope() {
+            const mesh = super.createHttpRequestScope();
+            mesh.service(FooRouter);
+            return mesh;
         }
+
         override async beforeStart() {
             await this.httpServer.startServer();
         }
+
         override async afterStop() {
             await this.httpServer.stopServer();
         }
+
     }
 
     const app = new App();

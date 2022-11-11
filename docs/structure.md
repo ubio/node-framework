@@ -37,22 +37,25 @@ export * from './app';
 
 ```ts
 import { Application } from '@ubio/framework';
-import { AppHttpServer } from './http';
-import { MongoDb } from './mongodb';
-import { MyService } from './services/my';
-import { MyRouter } from './routers/my';
-import { MyRepository } from './repositories/my';
 
 export class App extends Application {
-    constructor() {
-        this.container.bind(MongoDb).toSelf().inSingletonScope();
-        this.container.bind(MyService).toSelf();
-        this.bindRouter(MyRouter);
+
+    // Note: application can inject global-scoped components
+    @dep() mongodb!: MongoDb;
+
+    override defineGlobalScope(mesh: Mesh) {
+        mesh.service(MongoDb);
+        mesh.service(MyService);
+        mesh.service(MyRepository);
+    }
+
+    override defineHttpRequestScope(mesh: Mesh) {
+        mesh.service(MyRouter);
     }
 
     async beforeStart() {
         await this.mongoDb.client.connect();
-        await (this.container.get<MyRepository>(MyRepository)).createIndexes();
+        await (this.mesh.resolve(MyRepository)).createIndexes();
         await this.httpServer.startServer();
         // Add other code to execute on application startup
     });
@@ -63,11 +66,6 @@ export class App extends Application {
         // Add other finalization code
     }
 
-    // Methods to resolve singletons
-
-    get mongoDb() {
-        return this.container.get<MongoDb>(MongoDb);
-    }
 }
 ```
 

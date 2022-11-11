@@ -15,26 +15,26 @@ MongoDB is a popular database choice within UBIO infrastructure, so Framework pr
 
     ```ts
     import { Application } from '@ubio/framework';
-    import { MongoDb } from '@ubio/framework/out/modules/mongodb';
+    import { MongoDb } from '@ubio/framework/modules/mongodb';
 
     export class App extends Application {
+
+        @dep() private mongodb!: MongoDb;
 
         constructor() {
             super();
             // ...
-            this.container.bind(MongoDb).toSelf().inSingletonScope();
+            this.mesh.service(MongoDb);
         }
 
         async beforeStart() {
-            const mongo = this.container.get(MongoDb);
-            await mongo.start();
+            await this.mongodb.start();
             // ...
         }
 
         async afterStop() {
             // ...
-            const mongo = this.container.get(MongoDb);
-            await mongo.stop();
+            await this.mongodb..stop();
         }
 
     }
@@ -43,16 +43,12 @@ MongoDB is a popular database choice within UBIO infrastructure, so Framework pr
 - Create a repository class to access a specific MongoDb collection:
 
     ```ts
-    @injectable()
     export class UserRepo {
-        constructor(
-            @inject(MongoDb)
-            protected mongo: MongoDb,
-        ) {
-        }
+
+        @dep() private mongodb!: MongoDb;
 
         protected get collection() {
-            return this.mongo.db.collection('users');
+            return this.mongodb.db.collection('users');
         }
 
         // ...

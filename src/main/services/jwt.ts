@@ -1,18 +1,15 @@
+import { config } from '@flexent/config';
 import { Logger } from '@flexent/logger';
-import { inject, injectable } from 'inversify';
+import { dep } from '@flexent/mesh';
 import jsonwebtoken from 'jsonwebtoken';
 
-import { Config, config } from '../config.js';
 import { JwksClient } from '../jwks.js';
 
-@injectable()
 export abstract class JwtService {
     abstract decodeAndVerify(token: string): Promise<DecodedJwt>;
 }
 
-@injectable()
 export class AutomationCloudJwtService extends JwtService {
-    protected jwksClient: JwksClient;
 
     @config({ default: 'http://hydra.authz.svc.cluster.local:4445/keys/internal' })
     AC_JWKS_URL!: string;
@@ -21,12 +18,11 @@ export class AutomationCloudJwtService extends JwtService {
     @config({ default: 60 * 60 * 1000 })
     AC_JWKS_CACHE_MAX_AGE!: number;
 
-    constructor(
-        @inject(Config)
-        public config: Config,
-        @inject(Logger)
-        protected logger: Logger,
-    ) {
+    @dep() protected logger!: Logger;
+
+    protected jwksClient: JwksClient;
+
+    constructor() {
         super();
         const url = this.AC_JWKS_URL;
         const algorithm = this.AC_SIGNING_KEY_ALGORITHM;

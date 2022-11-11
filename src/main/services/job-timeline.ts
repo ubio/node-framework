@@ -1,8 +1,7 @@
 import { BasicAuthAgent, Request } from '@automationcloud/request';
+import { config } from '@flexent/config';
 import { Logger } from '@flexent/logger';
-import { inject, injectable } from 'inversify';
-
-import { Config, config } from '../config.js';
+import { dep } from '@flexent/mesh';
 
 export interface JobTimelineEvent {
     namespace: string;
@@ -26,7 +25,6 @@ export abstract class JobTimelineService {
     abstract stop(): Promise<void>;
 }
 
-@injectable()
 export class JobTimelineServiceMock extends JobTimelineService {
     started: boolean = false;
     events: JobTimelineEvent[] = [];
@@ -44,7 +42,6 @@ export class JobTimelineServiceMock extends JobTimelineService {
     }
 }
 
-@injectable()
 export class ApiJobTimelineService extends JobTimelineService {
     private request: Request;
 
@@ -59,12 +56,9 @@ export class ApiJobTimelineService extends JobTimelineService {
     @config({ default: 'http://api-job-timeline' }) API_JOB_TIMELINE_URL!: string;
     @config() API_JOB_TIMELINE_KEY!: string;
 
-    constructor(
-        @inject(Logger)
-        protected logger: Logger,
-        @inject(Config)
-        public config: Config,
-    ) {
+    @dep() protected logger!: Logger;
+
+    constructor() {
         super();
         const baseUrl = this.API_JOB_TIMELINE_URL;
         const authKey = this.API_JOB_TIMELINE_KEY;

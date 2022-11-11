@@ -5,20 +5,24 @@ import {
     AcAuthProvider,
     Application,
     BypassAcAuthProvider,
-    Router,
 } from '../../../main/index.js';
 import { AccessRouter } from '../../routes/access.js';
 
 describe('BypassAuthProvider', () => {
+
     class App extends Application {
-        constructor() {
-            super();
-            this.container.bind(Router).to(AccessRouter);
-            this.container.rebind(AcAuthProvider).to(BypassAcAuthProvider);
+
+        override createHttpRequestScope() {
+            const mesh = super.createHttpRequestScope();
+            mesh.service(AcAuthProvider, BypassAcAuthProvider);
+            mesh.service(AccessRouter);
+            return mesh;
         }
+
         override async beforeStart() {
             await this.httpServer.startServer();
         }
+
         override async afterStop() {
             await this.httpServer.stopServer();
         }

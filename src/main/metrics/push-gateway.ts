@@ -1,26 +1,23 @@
 import { Request } from '@automationcloud/request';
+import { config } from '@flexent/config';
 import { Logger } from '@flexent/logger';
-import { inject, injectable, multiInject } from 'inversify';
+import { dep, Mesh } from '@flexent/mesh';
 
-import { Config, config } from '../config.js';
-import * as util from '../util.js';
+import { findMeshInstances, getAppDetails } from '../util.js';
 import { Metric } from './metric.js';
 import { MetricsRegistry } from './registry.js';
 
-@injectable()
 export class MetricsPushGateway {
-    constructor(
-        @multiInject(MetricsRegistry)
-        protected registries: MetricsRegistry[],
-        @inject(Config)
-        public config: Config,
-        @inject(Logger)
-        public logger: Logger,
-    ) {
-    }
 
     @config({ default: 'http://push-gateway.monitoring.svc.cluster.local:9091/metrics' })
     PUSH_GATEWAY_URL!: string;
+
+    @dep() protected mesh!: Mesh;
+    @dep() protected logger!: Logger;
+
+    getRegistries(): MetricsRegistry[] {
+        return findMeshInstances(this.mesh, MetricsRegistry);
+    }
 
     async push(metric: Metric) {
         const payload = metric.report();
@@ -28,12 +25,12 @@ export class MetricsPushGateway {
     }
 
     async pushAll() {
-        const payload = this.registries.map(_ => _.report()).join('\n\n');
+        const payload = this.getRegistries().map(_ => _.report()).join('\n\n');
         await this.pushMetrics(payload);
     }
 
     protected async pushMetrics(payload: string) {
-        const { name: job } = await util.getAppDetails();
+        const { name: job } = await getAppDetails();
         const request = new Request({
             baseUrl: this.PUSH_GATEWAY_URL,
         });

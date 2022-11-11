@@ -32,11 +32,19 @@ describe('Altering Middlewares', () => {
     }
 
     class App extends Application {
-        constructor() {
-            super();
-            this.bindRouter(MyRouter);
-            this.container.rebind(HttpServer).to(CustomServer).inSingletonScope();
+
+        override createGlobalScope() {
+            const mesh = super.createGlobalScope();
+            mesh.service(HttpServer, CustomServer);
+            return mesh;
         }
+
+        override createHttpRequestScope() {
+            const mesh = super.createHttpRequestScope();
+            mesh.service(MyRouter);
+            return mesh;
+        }
+
     }
 
     const app = new App();

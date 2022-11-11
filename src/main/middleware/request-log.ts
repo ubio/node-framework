@@ -1,6 +1,5 @@
 import { Context } from 'koa';
 
-
 export async function requestLog(ctx: Context, next: () => Promise<any>) {
     const startedAt = Date.now();
     const level = process.env.REQUEST_LOG ?? 'debug';

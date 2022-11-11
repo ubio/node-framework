@@ -1,14 +1,12 @@
+import { Config, config, ConfigError, getMeshConfigs, ProcessEnvConfig } from '@flexent/config';
 import { Logger } from '@flexent/logger';
-import { Container } from 'inversify';
+import { dep, Mesh } from '@flexent/mesh';
 
-import { Config, config, ConfigError, DefaultConfig, getContainerConfigs } from './config.js';
-import { HttpServer } from './http.js';
+import { HttpRequestLogger, HttpServer } from './http.js';
 import { StandardLogger } from './logger.js';
 import { getGlobalMetrics } from './metrics/global.js';
-import { MetricsRegistry } from './metrics/index.js';
 import { MetricsPushGateway } from './metrics/push-gateway.js';
 import { MetricsRouter } from './metrics/route.js';
-import { Router } from './router.js';
 import {
     AcAuthProvider,
     AutomationCloudJwtService,
@@ -17,58 +15,50 @@ import {
 } from './services/index.js';
 
 /**
- * Application provides an IoC container where all modules should be registered
+ * Application is an IoC composition root where all modules should be registered
  * and provides minimal lifecycle framework (start, stop, beforeStart, afterStop).
  */
 export class Application {
-    container: Container;
+
+    mesh = new Mesh('Global');
 
     @config({ default: true }) ASSERT_CONFIGS_ON_START!: boolean;
 
+    @dep() httpServer!: HttpServer;
+    @dep() logger!: Logger;
+
     constructor() {
-        const container = new Container({ skipBaseClassChecks: true });
-        this.container = container;
         // Some default implementations are bound for convenience but can be replaced as fit
-        this.container.bind('RootContainer').toConstantValue(container);
-        this.container.bind(Logger).to(StandardLogger).inSingletonScope();
-        this.container.bind('AppLogger').toService(Logger);
-        this.container.bind(Config).to(DefaultConfig).inSingletonScope();
-        this.container.bind(HttpServer).toSelf().inSingletonScope();
-        this.container.bind(Router).to(MetricsRouter);
-        this.container.bind(MetricsPushGateway).toSelf();
-        this.container.bind(MetricsRegistry).toConstantValue(getGlobalMetrics());
-        this.container.bind(JwtService).to(AutomationCloudJwtService).inSingletonScope();
-        this.container.bind(AcAuthProvider).to(DefaultAcAuthProvider);
+        this.mesh = this.createGlobalScope();
+        this.mesh.connect(this);
     }
 
-    get logger(): Logger {
-        return this.container.get(Logger);
+    createGlobalScope(): Mesh {
+        const mesh = new Mesh('Global');
+        mesh.constant('httpRequestScope', () => this.createHttpRequestScope());
+        mesh.service(Logger, StandardLogger);
+        mesh.alias('AppLogger', Logger);
+        mesh.service(Config, ProcessEnvConfig);
+        mesh.service(HttpServer);
+        mesh.service(AutomationCloudJwtService);
+        mesh.alias(JwtService, AutomationCloudJwtService);
+        mesh.constant('GlobalMetrics', getGlobalMetrics());
+        mesh.service(MetricsPushGateway);
+        return mesh;
     }
 
-    get config(): Config {
-        return this.container.get(Config);
-    }
-
-    get httpServer(): HttpServer {
-        return this.container.get(HttpServer);
+    createHttpRequestScope(): Mesh {
+        const mesh = new Mesh('HttpRequest');
+        mesh.parent = this.mesh;
+        mesh.service(Logger, HttpRequestLogger);
+        mesh.service(MetricsRouter);
+        mesh.service(AcAuthProvider, DefaultAcAuthProvider);
+        return mesh;
     }
 
     async beforeStart(): Promise<void> {}
 
     async afterStop(): Promise<void> {}
-
-    bindMetrics(constructor: (new(...args: any[]) => MetricsRegistry)): this {
-        // Metrics registries should be bound in singleton scope,
-        // and same instances must be appended to MetricsRegistry bindings
-        this.container.bind(constructor).toSelf().inSingletonScope();
-        this.container.bind(MetricsRegistry).toService(constructor);
-        return this;
-    }
-
-    bindRouter(constructor: (new(...args: any[]) => Router)): this {
-        this.container.bind(Router).to(constructor);
-        return this;
-    }
 
     async start() {
         process.on('uncaughtException', error => {
@@ -95,9 +85,10 @@ export class Application {
 
     getMissingConfigKeys() {
         const missingConfigs = new Set<string>();
-        const configs = getContainerConfigs(this.container);
+        const configs = getMeshConfigs(this.mesh);
+        const config = this.mesh.resolve(Config);
         for (const { key, type, defaultValue } of configs) {
-            const value = this.config.getOrNull<any>(key, type, defaultValue);
+            const value = config.getOrNull<any>(key, type, defaultValue);
             if (value == null) {
                 missingConfigs.add(key);
             }

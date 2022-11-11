@@ -1,14 +1,14 @@
+import { config } from '@flexent/config';
 import { Logger } from '@flexent/logger';
-import { inject, injectable } from 'inversify';
+import { dep } from '@flexent/mesh';
 import { Db, MongoClient, MongoClientOptions } from 'mongodb';
 
-import { Config, config, getGlobalMetrics } from '../main/index.js';
+import { getGlobalMetrics } from '../main/index.js';
 
 interface MongoClientOptionsExtended extends MongoClientOptions {
     useUnifiedTopology: boolean;
 }
 
-@injectable()
 export class MongoDb {
     client: MongoClient;
 
@@ -18,12 +18,9 @@ export class MongoDb {
     @config({ default: process.env.NODE_ENV !== 'test' }) MONGO_METRICS_ENABLED!: boolean;
     @config({ default: 10000 }) MONGO_METRICS_REFRESH_INTERVAL!: number;
 
-    constructor(
-        @inject(Config)
-        public config: Config,
-        @inject(Logger)
-        protected logger: Logger,
-    ) {
+    @dep() protected logger!: Logger;
+
+    constructor() {
         this.client = new MongoClient(this.MONGO_URL, {
             useNewUrlParser: true,
             useUnifiedTopology: true,

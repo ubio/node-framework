@@ -1,7 +1,8 @@
+import { Config, ProcessEnvConfig } from '@flexent/config';
 import assert from 'assert';
 import supertest from 'supertest';
 
-import { Application, Config, DefaultConfig, Router } from '../../main/index.js';
+import { Application } from '../../main/index.js';
 import { BarRouter } from '../routes/bar.js';
 import { FooRouter } from '../routes/foo.js';
 import { MultipartRouter } from '../routes/multipart.js';
@@ -13,16 +14,20 @@ describe('Router', () => {
     describe('request dispatching', () => {
 
         class App extends Application {
-            constructor() {
-                super();
-                this.container.bind(Router).to(FooRouter);
-                this.container.bind(Router).to(BarRouter);
-                this.container.bind(Router).to(WildcardRouter);
-                this.container.bind(Router).to(MultipartRouter);
+
+            override createHttpRequestScope() {
+                const mesh = super.createHttpRequestScope();
+                mesh.service(FooRouter);
+                mesh.service(BarRouter);
+                mesh.service(WildcardRouter);
+                mesh.service(MultipartRouter);
+                return mesh;
             }
+
             override async beforeStart() {
                 await this.httpServer.startServer();
             }
+
             override async afterStop() {
                 await this.httpServer.stopServer();
             }
@@ -186,19 +191,23 @@ describe('Router', () => {
     describe('response validation', () => {
 
         class App extends Application {
-            constructor() {
-                super();
-                this.container.bind(Router).to(ResponseSchemaRouter);
-                this.container.rebind(Config).to(class extends DefaultConfig {
+
+            override createHttpRequestScope() {
+                const mesh = super.createHttpRequestScope();
+                mesh.service(ResponseSchemaRouter);
+                mesh.service(Config, class extends ProcessEnvConfig {
                     constructor() {
                         super();
                         this.map.set('HTTP_VALIDATE_RESPONSES', 'true');
                     }
                 });
+                return mesh;
             }
+
             override async beforeStart() {
                 await this.httpServer.startServer();
             }
+
             override async afterStop() {
                 await this.httpServer.stopServer();
             }

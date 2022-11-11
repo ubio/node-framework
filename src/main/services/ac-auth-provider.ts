@@ -1,18 +1,16 @@
 import { Request } from '@automationcloud/request';
+import { config } from '@flexent/config';
 import { Logger } from '@flexent/logger';
-import { inject, injectable } from 'inversify';
+import { dep } from '@flexent/mesh';
 import Koa from 'koa';
 
 import { AcAuth, AuthenticationError } from '../ac-auth.js';
-import { Config, config } from '../config.js';
 import { JwtService } from './jwt.js';
 
-@injectable()
 export abstract class AcAuthProvider {
     abstract provide(): Promise<AcAuth>;
 }
 
-@injectable()
 export class DefaultAcAuthProvider extends AcAuthProvider {
     clientRequest: Request;
 
@@ -23,16 +21,11 @@ export class DefaultAcAuthProvider extends AcAuthProvider {
     @config({ default: 'http://auth-middleware.authz.svc.cluster.local:8080/verify' })
     AC_AUTH_VERIFY_URL!: string;
 
-    constructor(
-        @inject(Logger)
-        protected logger: Logger,
-        @inject(JwtService)
-        protected jwt: JwtService,
-        @inject(Config)
-        public config: Config,
-        @inject('KoaContext')
-        protected ctx: Koa.Context,
-    ) {
+    @dep() protected logger!: Logger;
+    @dep() protected jwt!: JwtService;
+    @dep({ key: 'KoaContext' }) protected ctx!: Koa.Context;
+
+    constructor() {
         super();
         this.clientRequest = new Request({
             retryAttempts: 3,
@@ -79,7 +72,7 @@ export class DefaultAcAuthProvider extends AcAuthProvider {
         }
         const authorization = headers['authorization'];
         if (authorization) {
-            return this.getTokenFromAuthMiddleware(authorization);
+            return await this.getTokenFromAuthMiddleware(authorization);
         }
     }
 
@@ -118,9 +111,10 @@ export class DefaultAcAuthProvider extends AcAuthProvider {
     }
 }
 
-@injectable()
 export class BypassAcAuthProvider extends AcAuthProvider {
+
     async provide() {
         return new AcAuth();
     }
+
 }

@@ -7,14 +7,9 @@ Node Framework does its best to abstract away all the complexity, allowing apps 
 `AcAuth` object exposes identity information of current request, as well as convenience methods for request authorisation.
 
 ```ts
-@injectable()
 export class MyRouter extends Router {
-    constructor(
-        @inject(AcAuth)
-        auth: AcAuth
-    ) {
-        super();
-    }
+
+    @dep() auth!: AcAuth;
 
     @Middleware()
     async authorise() {
@@ -49,15 +44,21 @@ export class MyRouter extends Router {
 In integration tests it is useful to mock `AcAuth` by providing a custom implementation of `AcAuthProvider`:
 
 ```ts
-container.rebind(AcAuthProvider).toConstantValue({
-    async provide() {
-        return new AcAuth({
-            authenticated: true,
-            organisationId: 'my-fake-org-id',
-            serviceAccountId: 'my-face-service-account-id',
+class App extends Application {
+
+    override defineHttpRequestScope(mesh: Mesh) {
+        mesh.constant(AcAuthProvider, {
+            async provide() {
+                return new AcAuth({
+                    authenticated: true,
+                    organisationId: 'my-fake-org-id',
+                    serviceAccountId: 'my-face-service-account-id',
+                });
+            }
         });
     }
-});
+
+}
 ```
 
 Please refer to [integration tests](../src/test/integration/ac-auth-mocking.test.ts) for an example.

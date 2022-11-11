@@ -1,8 +1,9 @@
-import { Logger } from '@flexent/logger';
+import { config } from '@flexent/config';
+import { Logger, LogLevel } from '@flexent/logger';
+import { dep, Mesh } from '@flexent/mesh';
 import cors from '@koa/cors';
 import http from 'http';
 import https from 'https';
-import { Container, inject, injectable } from 'inversify';
 import Koa, { Middleware } from 'koa';
 import bodyParser from 'koa-body';
 import compress from 'koa-compress';
@@ -12,21 +13,17 @@ import stoppable, { StoppableServer } from 'stoppable';
 import { constants } from 'zlib';
 
 import { AcAuth } from './ac-auth.js';
-import { Config, config } from './config.js';
 import { ClientError } from './exception.js';
-import { RequestLogger } from './logger.js';
 import * as middleware from './middleware/index.js';
 import { Router } from './router.js';
 import { AcAuthProvider } from './services/index.js';
-
+import { findMeshInstances } from './util.js';
 
 interface MiddlewareSpec {
     name: string;
     middleware: Middleware;
 }
 
-
-@injectable()
 export class HttpServer extends Koa {
     server: StoppableServer | null = null;
 
@@ -38,6 +35,10 @@ export class HttpServer extends Koa {
     @config({ default: false }) HTTP_INCLUDE_UNPARSED_BODY!: boolean;
     @config({ default: 10000 }) HTTP_SHUTDOWN_DELAY!: number;
     @config({ default: 300000 }) HTTP_TIMEOUT!: number;
+
+    @dep() protected logger!: Logger;
+    @dep({ key: 'httpRequestScope' })
+    protected createRequestScope!: () => Mesh;
 
     protected middlewares: MiddlewareSpec[] = [
         {
@@ -61,7 +62,7 @@ export class HttpServer extends Koa {
         },
         {
             name: 'requestContainer',
-            middleware: this.createRequestContainerMiddleware(),
+            middleware: this.createRequestScopeMiddleware(),
         },
         {
             name: 'bodyParser',
@@ -119,14 +120,7 @@ export class HttpServer extends Koa {
         }
     ];
 
-    constructor(
-        @inject('RootContainer')
-        protected rootContainer: Container,
-        @inject(Logger)
-        protected logger: Logger,
-        @inject(Config)
-        public config: Config, // env is used by Koa
-    ) {
+    constructor() {
         super();
         this.proxy = true;
         this.addStandardMiddleware();
@@ -177,33 +171,29 @@ export class HttpServer extends Koa {
         await new Promise(r => server.stop(r));
     }
 
-    protected createRequestContainerMiddleware(): Middleware {
+    protected createRequestScopeMiddleware(): Middleware {
         return async (ctx: Koa.Context, next: Koa.Next) => {
-            const requestContainer = new Container({ skipBaseClassChecks: true });
-            requestContainer.parent = this.rootContainer;
-            requestContainer.bind('KoaContext').toConstantValue(ctx);
-            const requestLogger = new RequestLogger(this.logger, ctx);
-            requestContainer.bind(Logger).toConstantValue(requestLogger);
-            ctx.container = requestContainer;
-            ctx.logger = requestContainer.get<Logger>(Logger);
+            const mesh = this.createRequestScope();
+            mesh.constant('KoaContext', ctx);
+            ctx.mesh = mesh;
+            ctx.logger = mesh.resolve(Logger);
             return next();
         };
     }
 
     protected createAcAuthMiddleware(): Middleware {
         return async (ctx: Koa.Context, next: Koa.Next) => {
-            const container: Container = ctx.container;
-            const provider = container.get(AcAuthProvider);
+            const mesh: Mesh = ctx.mesh;
+            const provider = mesh.resolve(AcAuthProvider);
             const acAuth = await provider.provide();
-            container.bind(AcAuth).toConstantValue(acAuth);
+            mesh.constant(AcAuth, acAuth);
             return next();
         };
     }
 
     protected createRoutingMiddleware(): Middleware {
         return async (ctx: Koa.Context) => {
-            const container: Container = ctx.container;
-            const routers = container.getAll<Router>(Router);
+            const routers = this.findAllRoutes(ctx.mesh);
             for (const router of routers) {
                 const handled = await router.handle();
                 if (handled) {
@@ -214,9 +204,33 @@ export class HttpServer extends Koa {
         };
     }
 
+    protected findAllRoutes(mesh: Mesh) {
+        return findMeshInstances(mesh, Router);
+    }
+
 }
 
 export class RouteNotFoundError extends ClientError {
     override status = 404;
     override message = 'Route not found';
+}
+
+export class HttpRequestLogger extends Logger {
+
+    @dep({ key: 'KoaContext' }) protected ctx!: Koa.Context;
+    @dep({ key: 'AppLogger' }) protected delegateLogger!: Logger;
+
+    constructor() {
+        super();
+        this.setLevel(this.delegateLogger.level);
+    }
+
+    write(level: LogLevel, message: string, data: object): void {
+        const { requestId } = this.ctx.state;
+        this.delegateLogger.log(level, message, {
+            ...data,
+            requestId,
+        });
+    }
+
 }
