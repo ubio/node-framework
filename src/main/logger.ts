@@ -1,6 +1,8 @@
 import { config } from '@flexent/config';
 import { ConsoleLogger, LOG_LEVELS, LogfmtLogger, Logger, LogLevel } from '@flexent/logger';
 
+import { getGlobalMetrics } from './index.js';
+
 export {
     LOG_LEVELS,
     LogLevel,
@@ -26,6 +28,7 @@ export class StandardLogger extends Logger {
     }
 
     override write(level: LogLevel, message: string, data: object): void {
+        getGlobalMetrics().appLogsTotal.incr(1, { severity: level });
         this.delegate.log(level, message, data);
     }
 
