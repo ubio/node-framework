@@ -25,7 +25,7 @@
         "clean": "rm -rf out",
         "compile": "npm run clean && tsc",
         "preversion": "npm run compile && npm run lint && npm run test",
-        "postversion": "npm publish --access public && git push origin main --tags"
+        "postversion": "npm publish --access public && git push origin v14 --tags"
     },
     "pre-commit": [
         "lint"
