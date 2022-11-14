@@ -3,7 +3,7 @@ import { inject, injectable } from 'inversify';
 import * as koa from 'koa';
 
 import { Config, config } from './config.js';
-
+import { getGlobalMetrics } from './index.js';
 
 export {
     LOG_LEVELS,
@@ -34,6 +34,7 @@ export class StandardLogger extends Logger {
     }
 
     override write(level: LogLevel, message: string, data: object): void {
+        getGlobalMetrics().appLogsTotal.incr(1, { severity: level });
         this.delegate.log(level, message, data);
     }
 
