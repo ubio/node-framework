@@ -14,7 +14,7 @@ import { constants } from 'zlib';
 
 import { AcAuth } from './ac-auth.js';
 import { ClientError } from './exception.js';
-import * as middleware from './middleware/index.js';
+import { standardMiddleware } from './middleware.js';
 import { Router } from './router.js';
 import { AcAuthProvider } from './services/index.js';
 import { findMeshInstances } from './util.js';
@@ -65,6 +65,10 @@ export class HttpServer extends Koa {
             middleware: this.createRequestScopeMiddleware(),
         },
         {
+            name: 'standard',
+            middleware: standardMiddleware,
+        },
+        {
             name: 'bodyParser',
             middleware: bodyParser({
                 json: true,
@@ -93,22 +97,6 @@ export class HttpServer extends Koa {
                 exposeHeaders: ['Date', 'Content-Length'],
                 maxAge: 15 * 60
             })
-        },
-        {
-            name: 'requestLog',
-            middleware: middleware.requestLog,
-        },
-        {
-            name: 'requestId',
-            middleware: middleware.requestId,
-        },
-        {
-            name: 'responseTime',
-            middleware: middleware.responseTime,
-        },
-        {
-            name: 'errorHandler',
-            middleware: middleware.errorHandler,
         },
         {
             name: 'acAuth',
@@ -227,7 +215,7 @@ export class HttpRequestLogger extends Logger {
 
     write(level: LogLevel, message: string, data: object): void {
         const { requestId } = this.ctx.state;
-        this.delegateLogger.log(level, message, {
+        this.delegateLogger.write(level, message, {
             ...data,
             requestId,
         });
