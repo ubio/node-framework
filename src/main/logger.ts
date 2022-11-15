@@ -35,7 +35,7 @@ export class StandardLogger extends Logger {
 
     override write(level: LogLevel, message: string, data: object): void {
         getGlobalMetrics().appLogsTotal.incr(1, { severity: level });
-        this.delegate.log(level, message, data);
+        this.delegate.write(level, message, data);
     }
 
 }
@@ -52,7 +52,7 @@ export class RequestLogger extends Logger {
 
     write(level: LogLevel, message: string, data: object): void {
         const { requestId } = this.ctx.state;
-        this.delegate.log(level, message, {
+        this.delegate.write(level, message, {
             ...data,
             requestId,
         });

@@ -15,10 +15,9 @@ import { AcAuth } from './ac-auth.js';
 import { Config, config } from './config.js';
 import { ClientError } from './exception.js';
 import { RequestLogger } from './logger.js';
-import * as middleware from './middleware/index.js';
+import { standardMiddleware } from './middleware.js';
 import { Router } from './router.js';
 import { AcAuthProvider } from './services/index.js';
-
 
 interface MiddlewareSpec {
     name: string;
@@ -64,6 +63,10 @@ export class HttpServer extends Koa {
             middleware: this.createRequestContainerMiddleware(),
         },
         {
+            name: 'standard',
+            middleware: standardMiddleware,
+        },
+        {
             name: 'bodyParser',
             middleware: bodyParser({
                 json: true,
@@ -92,22 +95,6 @@ export class HttpServer extends Koa {
                 exposeHeaders: ['Date', 'Content-Length'],
                 maxAge: 15 * 60
             })
-        },
-        {
-            name: 'requestLog',
-            middleware: middleware.requestLog,
-        },
-        {
-            name: 'requestId',
-            middleware: middleware.requestId,
-        },
-        {
-            name: 'responseTime',
-            middleware: middleware.responseTime,
-        },
-        {
-            name: 'errorHandler',
-            middleware: middleware.errorHandler,
         },
         {
             name: 'acAuth',
@@ -185,7 +172,7 @@ export class HttpServer extends Koa {
             const requestLogger = new RequestLogger(this.logger, ctx);
             requestContainer.bind(Logger).toConstantValue(requestLogger);
             ctx.container = requestContainer;
-            ctx.logger = requestContainer.get<Logger>(Logger);
+            ctx.logger = requestLogger;
             return next();
         };
     }
