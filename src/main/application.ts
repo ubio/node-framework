@@ -1,6 +1,6 @@
-import { Config, config, ConfigError, getMeshConfigs, ProcessEnvConfig } from '@flexent/config';
-import { Logger } from '@flexent/logger';
-import { dep, Mesh } from '@flexent/mesh';
+import { Config, config, ConfigError, getMeshConfigs, ProcessEnvConfig } from '@nodescript/config';
+import { Logger } from '@nodescript/logger';
+import { dep, Mesh } from 'mesh-ioc';
 
 import { HttpRequestLogger, HttpServer } from './http.js';
 import { StandardLogger } from './logger.js';

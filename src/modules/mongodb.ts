@@ -1,6 +1,6 @@
-import { config } from '@flexent/config';
-import { Logger } from '@flexent/logger';
-import { dep } from '@flexent/mesh';
+import { config } from '@nodescript/config';
+import { Logger } from '@nodescript/logger';
+import { dep } from 'mesh-ioc';
 import { Db, MongoClient, MongoClientOptions } from 'mongodb';
 
 import { getGlobalMetrics } from '../main/index.js';

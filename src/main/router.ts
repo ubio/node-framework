@@ -1,10 +1,10 @@
-import { config } from '@flexent/config';
-import { Logger } from '@flexent/logger';
-import { dep } from '@flexent/mesh';
-import { matchTokens, parsePath, PathToken } from '@flexent/pathmatcher';
+import { config } from '@nodescript/config';
+import { Logger } from '@nodescript/logger';
+import { matchTokens, parsePath, PathToken } from '@nodescript/pathmatcher';
 import Ajv, { ValidateFunction as AjvValidateFunction } from 'ajv';
 import addFormats from 'ajv-formats';
 import * as koa from 'koa';
+import { dep } from 'mesh-ioc';
 
 import { ClientError, Exception } from './exception.js';
 import { getGlobalMetrics } from './metrics/global.js';

@@ -1,5 +1,5 @@
-import { config } from '@flexent/config';
-import { ConsoleLogger, LOG_LEVELS, LogfmtLogger, Logger, LogLevel } from '@flexent/logger';
+import { config } from '@nodescript/config';
+import { ConsoleLogger, LOG_LEVELS, LogfmtLogger, Logger, LogLevel } from '@nodescript/logger';
 
 import { getGlobalMetrics } from './index.js';
 

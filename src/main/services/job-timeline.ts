@@ -1,7 +1,7 @@
-import { BasicAuthAgent, Request } from '@automationcloud/request';
-import { config } from '@flexent/config';
-import { Logger } from '@flexent/logger';
-import { dep } from '@flexent/mesh';
+import { config } from '@nodescript/config';
+import { Logger } from '@nodescript/logger';
+import { BasicAuthAgent, Request } from '@ubio/request';
+import { dep } from 'mesh-ioc';
 
 export interface JobTimelineEvent {
     namespace: string;

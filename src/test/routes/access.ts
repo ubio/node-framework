@@ -1,4 +1,4 @@
-import { dep } from '@flexent/mesh';
+import { dep } from 'mesh-ioc';
 
 import { AcAuth, Get, Router } from '../../main/index.js';
 

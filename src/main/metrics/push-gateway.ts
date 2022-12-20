@@ -1,7 +1,7 @@
-import { Request } from '@automationcloud/request';
-import { config } from '@flexent/config';
-import { Logger } from '@flexent/logger';
-import { dep, Mesh } from '@flexent/mesh';
+import { config } from '@nodescript/config';
+import { Logger } from '@nodescript/logger';
+import { Request } from '@ubio/request';
+import { dep, Mesh } from 'mesh-ioc';
 
 import { findMeshInstances, getAppDetails } from '../util.js';
 import { Metric } from './metric.js';

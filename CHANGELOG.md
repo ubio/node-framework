@@ -18,11 +18,11 @@
 
 - feat: multipart requests supported
 - BREAKING CHANGE: new platform-wide auth conventions, and some more sneaked in
-- BREAKING CHANGE: `@automationcloud/request` replaced `RequestFactory`
+- BREAKING CHANGE: `@ubio/request` replaced `RequestFactory`
 
 ## 5.0.0
 
-- BREAKING CHANGE: drop `RequestFactory`, `Request`, use @automationcloud/request instead
+- BREAKING CHANGE: drop `RequestFactory`, `Request`, use @ubio/request instead
 - BREAKING CHANGE: drop `Configuration`, see `env.md` for replacement
 - BREAKING CHANGE: drop `ForwardRequestHeaderAuthService`, use `AutomationCloudAuthService` instead
 - feat: add `AutomationCloudAuthService` to support both old and new auth

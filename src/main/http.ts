@@ -1,7 +1,6 @@
-import { config } from '@flexent/config';
-import { Logger, LogLevel } from '@flexent/logger';
-import { dep, Mesh } from '@flexent/mesh';
 import cors from '@koa/cors';
+import { config } from '@nodescript/config';
+import { Logger, LogLevel } from '@nodescript/logger';
 import http from 'http';
 import https from 'https';
 import Koa, { Middleware } from 'koa';
@@ -9,6 +8,7 @@ import bodyParser from 'koa-body';
 import compress from 'koa-compress';
 import conditional from 'koa-conditional-get';
 import etag from 'koa-etag';
+import { dep, Mesh } from 'mesh-ioc';
 import stoppable, { StoppableServer } from 'stoppable';
 import { constants } from 'zlib';
 

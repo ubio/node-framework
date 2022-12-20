@@ -1,8 +1,8 @@
 import 'reflect-metadata';
 
-import { Mesh, ServiceConstructor } from '@flexent/mesh';
 import { ErrorObject as AjvErrorObject } from 'ajv';
 import { promises as fs } from 'fs';
+import { Mesh, ServiceConstructor } from 'mesh-ioc';
 import path from 'path';
 import { v4 as uuid } from 'uuid';
 

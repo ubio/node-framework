@@ -1,5 +1,5 @@
-import { dep } from '@flexent/mesh';
 import assert from 'assert';
+import { dep } from 'mesh-ioc';
 import supertest from 'supertest';
 
 import { AcAuth, AcAuthProvider, Application, Get, Router } from '../../main/index.js';

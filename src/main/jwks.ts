@@ -1,4 +1,4 @@
-import { Request } from '@automationcloud/request';
+import { Request } from '@ubio/request';
 import Ajv from 'ajv';
 
 import { ClientError, Exception } from './exception.js';

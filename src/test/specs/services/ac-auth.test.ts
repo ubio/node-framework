@@ -1,8 +1,8 @@
-import * as request from '@automationcloud/request';
-import { Config, ProcessEnvConfig } from '@flexent/config';
-import { Logger } from '@flexent/logger';
-import { Mesh } from '@flexent/mesh';
+import { Config, ProcessEnvConfig } from '@nodescript/config';
+import { Logger } from '@nodescript/logger';
+import * as request from '@ubio/request';
 import assert from 'assert';
+import { Mesh } from 'mesh-ioc';
 
 import {
     AcAuthProvider,

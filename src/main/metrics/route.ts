@@ -1,4 +1,4 @@
-import { dep, Mesh } from '@flexent/mesh';
+import { dep, Mesh } from 'mesh-ioc';
 
 import { Get, Router } from '../router.js';
 import { findMeshInstances } from '../util.js';

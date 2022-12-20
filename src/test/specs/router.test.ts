@@ -1,4 +1,4 @@
-import { Config, ProcessEnvConfig } from '@flexent/config';
+import { Config, ProcessEnvConfig } from '@nodescript/config';
 import assert from 'assert';
 import supertest from 'supertest';
 
