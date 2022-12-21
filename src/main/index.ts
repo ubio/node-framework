@@ -13,6 +13,9 @@ export * from './schema.js';
 export * from './services/index.js';
 export * from './util.js';
 
+export * from '@nodescript/logger';
+export * from '@nodescript/config';
+
 export {
     util,
 };
