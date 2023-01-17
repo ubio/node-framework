@@ -82,7 +82,7 @@
         "koa-compress": "^5.0.1",
         "koa-conditional-get": "^3.0.0",
         "koa-etag": "^4.0.0",
-        "mesh-ioc": "^3.1.4",
+        "mesh-ioc": "^3.2.0",
         "node-fetch": "^2.6.0",
         "reflect-metadata": "^0.1.13",
         "stoppable": "^1.1.0",
