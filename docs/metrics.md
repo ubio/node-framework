@@ -26,14 +26,16 @@ export class Metrics extends MetricsRegistry {
 }
 ```
 
-In composition root, use `bindMetrics` method to register it.
+In composition root, use bind the metrics to global scope.
 
 ```ts
 export class App extends Application {
-    constructor() {
-        super();
+
+    override createGlobalScope() {
+        const mesh = super.createGlobalScope();
         // ...
-        this.bindMetrics(Metrics);
+        mesh.service(Metrics);
+        return mesh;
     }
 }
 ```

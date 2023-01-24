@@ -16,9 +16,7 @@
         npm-run-all \
         mocha \
         eslint \
-        @typescript-eslint/eslint-plugin \
-        @typescript-eslint/parser \
-        eslint-config-recommended
+        @nodescript/eslint-config
     ```
 
 - Configure TypeScript and ESLint (you may copy [tsconfig.json](../tsconfig.json) and [.eslintrc.json](../.eslintrc.json) from this repo).

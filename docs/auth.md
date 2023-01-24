@@ -1,6 +1,8 @@
 # Automation Cloud Authentication & Authorisation
 
-Automation Cloud infrastructure features highly sophisticated request authentication system.
+**Note: there are known problems with the auth, it needs to be re-designed. Use this guide at your own risk.**
+
+Automation Cloud infrastructure features "highly sophisticated" request authentication system.
 
 Node Framework does its best to abstract away all the complexity, allowing apps to focus on what they are supposed to be doing.
 
@@ -46,7 +48,8 @@ In integration tests it is useful to mock `AcAuth` by providing a custom impleme
 ```ts
 class App extends Application {
 
-    override defineHttpRequestScope(mesh: Mesh) {
+    override createHttpRequestScope() {
+        const mesh = super.createHttpRequestScope();
         mesh.constant(AcAuthProvider, {
             async provide() {
                 return new AcAuth({
@@ -56,6 +59,7 @@ class App extends Application {
                 });
             }
         });
+        return mesh;
     }
 
 }

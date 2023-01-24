@@ -35,16 +35,20 @@ export class StatusRouter extends Router {
 }
 ```
 
-Don't forget to register the `StatusRouter` in `app.ts`:
+Don't forget to register the `StatusRouter` in `app.ts`, it has to be in Http Request scope:
 
 ```ts
 import { Application, Router } from '@ubio/framework';
 import { StatusRouter } from './routes/status';
 
 export class App extends Application {
-    defineHttpRequestScope(mesh: Mesh) {
+
+    createHttpRequestScope() {
+        const mesh = super.createHttpRequestScope();
         mesh.service(StatusRouter);
+        return mesh;
     }
+
 }
 
 ```
@@ -103,7 +107,6 @@ async list(
     @QueryParam('sort', { schema: { type: 'string', default: '+timestamp' } })
     sort: string,
 ) {
-    this.logger.addContextData({ jobId, executionId });
     const { totalCount, entities } = await this.screenshotsRepo({
         executionId,
         jobId,
