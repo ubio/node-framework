@@ -34,6 +34,7 @@ export class MongoDb {
 
     async start() {
         await this.client.connect();
+        this.logger.info('MongoDB connected');
         if (this.MONGO_METRICS_ENABLED) {
             this.startRefreshMetrics();
         }
@@ -42,6 +43,7 @@ export class MongoDb {
     async stop() {
         this.stopRefreshMetrics();
         await this.client.close();
+        this.logger.info('MongoDB connection closed');
     }
 
     startRefreshMetrics() {
