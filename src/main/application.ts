@@ -22,7 +22,7 @@ export class Application {
 
     mesh = new Mesh('Global');
 
-    @config({ default: true }) ASSERT_CONFIGS_ON_START!: boolean;
+    @config({ default: false }) ASSERT_CONFIGS_ON_START!: boolean;
 
     @dep() httpServer!: HttpServer;
     @dep() logger!: Logger;
