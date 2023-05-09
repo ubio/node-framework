@@ -1,3 +1,25 @@
+## 15.0.0
+
+- feat: Inversify ⇒ Mesh (#87)
+
+## 14.0.0
+
+- update to ESM + Logfmt Logging
+- drop changelog generator
+
+## 13.9.1
+
+- remove timestamp from a gauge metric to prevent it's staleness in grafana
+
+## 13.9.0
+
+- migrate to mongodb@4
+
+## 13.8.0
+
+- Add HTTP_TEXT_LIMIT env variable
+- Add Schema.create function
+
 ## 13.7.0
 
 - Use a route path template instead of an actual path with params for the routes' execution histogram metric
