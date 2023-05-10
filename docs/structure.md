@@ -80,8 +80,8 @@ const app = new App();
 
 try {
     await app.start()
-} catch (error) {
-    app.logger.error('Failed to start', <Error>error);
+} catch (error: any) {
+    app.logger.error('Failed to start', { error });
     process.exit(1);
 }
 ```
