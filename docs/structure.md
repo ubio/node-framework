@@ -49,13 +49,13 @@ export class App extends Application {
         return mesh;
     }
 
-    async beforeStart() {
+    override async beforeStart() {
         await this.mongoDb.client.connect();
         // Add other code to execute on application startup
         await this.httpServer.startServer();
     });
 
-    async afterStop() {
+    override async afterStop() {
         await this.httpServer.stopServer();
         // Add other finalization code
         this.mongoDb.client.close();
@@ -80,8 +80,8 @@ const app = new App();
 
 try {
     await app.start()
-} catch (error) {
-    app.logger.error('Failed to start', err);
+} catch (error: any) {
+    app.logger.error('Failed to start', { error });
     process.exit(1);
 }
 ```
