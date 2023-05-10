@@ -1,7 +1,7 @@
 import { config } from '@nodescript/config';
 import { ConsoleLogger, LOG_LEVELS, LogfmtLogger, Logger, LogLevel } from '@nodescript/logger';
 
-import { getGlobalMetrics } from './index.js';
+import { getGlobalMetrics } from './metrics/global.js';
 
 export {
     LOG_LEVELS,
