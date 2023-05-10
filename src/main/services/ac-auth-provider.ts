@@ -1,14 +1,15 @@
 import { config } from '@nodescript/config';
 import { Logger } from '@nodescript/logger';
 import { Request } from '@ubio/request';
-import Koa from 'koa';
 import { dep } from 'mesh-ioc';
 
 import { AcAuth, AuthenticationError } from '../ac-auth.js';
 import { JwtService } from './jwt.js';
 
+export type AuthHeaders = Record<string, string | string[] | undefined>;
+
 export abstract class AcAuthProvider {
-    abstract provide(): Promise<AcAuth>;
+    abstract provide(headers: AuthHeaders): Promise<AcAuth>;
 }
 
 export class DefaultAcAuthProvider extends AcAuthProvider {
@@ -23,7 +24,6 @@ export class DefaultAcAuthProvider extends AcAuthProvider {
 
     @dep() protected logger!: Logger;
     @dep() protected jwt!: JwtService;
-    @dep({ key: 'KoaContext' }) protected ctx!: Koa.Context;
 
     constructor() {
         super();
@@ -32,16 +32,16 @@ export class DefaultAcAuthProvider extends AcAuthProvider {
         });
     }
 
-    async provide(): Promise<AcAuth> {
-        const token = await this.getToken(this.ctx.req.headers as any);
+    async provide(headers: AuthHeaders): Promise<AcAuth> {
+        const token = await this.getToken(headers as any);
         if (token) {
-            return await this.createAuthFromToken(token);
+            return await this.createAuthFromToken(headers, token);
         }
         return new AcAuth();
     }
 
-    protected async createAuthFromToken(token: string): Promise<AcAuth> {
-        const organisationIdHeader = this.ctx.req.headers['x-ubio-organisation-id'] as string | undefined;
+    protected async createAuthFromToken(headers: AuthHeaders, token: string): Promise<AcAuth> {
+        const organisationIdHeader = headers['x-ubio-organisation-id'] as string | undefined;
         try {
             const payload = await this.jwt.decodeAndVerify(token);
             const data = {

@@ -173,7 +173,7 @@ export class HttpServer extends Koa {
         return async (ctx: Koa.Context, next: Koa.Next) => {
             const mesh: Mesh = ctx.mesh;
             const provider = mesh.resolve(AcAuthProvider);
-            const acAuth = await provider.provide();
+            const acAuth = await provider.provide(ctx.headers);
             mesh.constant(AcAuth, acAuth);
             return next();
         };

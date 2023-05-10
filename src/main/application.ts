@@ -41,6 +41,7 @@ export class Application {
         mesh.service(Config, ProcessEnvConfig);
         mesh.service(HttpServer);
         mesh.service(AutomationCloudJwtService);
+        mesh.service(AcAuthProvider, DefaultAcAuthProvider);
         mesh.alias(JwtService, AutomationCloudJwtService);
         mesh.constant('GlobalMetrics', getGlobalMetrics());
         mesh.service(MetricsPushGateway);
@@ -52,7 +53,6 @@ export class Application {
         mesh.parent = this.mesh;
         mesh.service(Logger, HttpRequestLogger);
         mesh.service(MetricsRouter);
-        mesh.service(AcAuthProvider, DefaultAcAuthProvider);
         return mesh;
     }
 
