@@ -25,8 +25,7 @@ Our plan is to bring the following:
 
 - [x] ESM — a breaking change to existing applications, but a necessary step in future-proofing
 - [x] Standardized logging in [logfmt](https://brandur.org/logfmt) format
-- [ ] Changing IoC libary from [Inversify](https://inversify.io/) to [Mesh](https://github.com/flexent/mesh) (in progress)
-- [ ] Add Redis module (Q1 2023)
+- [x] Changing IoC libary from [Inversify](https://inversify.io/) to [Mesh](https://github.com/flexent/mesh)
 - [ ] Changing schema validation library from [AJV](https://ajv.js.org/) to [Airtight](https://github.com/flexent/schema) (Q2 2023)
 
 ## License
