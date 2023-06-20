@@ -6,7 +6,7 @@
     npm init
     npm install --save \
         @ubio/framework \
-        inversify \
+        mesh-ioc \
         koa \
         @types/koa \
         dotenv
