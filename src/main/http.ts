@@ -35,6 +35,7 @@ export class HttpServer extends Koa {
     @config({ default: false }) HTTP_INCLUDE_UNPARSED_BODY!: boolean;
     @config({ default: 10000 }) HTTP_SHUTDOWN_DELAY!: number;
     @config({ default: 300000 }) HTTP_TIMEOUT!: number;
+    @config({ default: true }) HTTP_USE_BROTLI_COMPRESSION!: boolean;
 
     @dep() protected logger!: Logger;
     @dep({ key: 'httpRequestScope' })
@@ -58,6 +59,7 @@ export class HttpServer extends Koa {
                 deflate: {
                     flush: constants.Z_SYNC_FLUSH,
                 },
+                br: this.HTTP_USE_BROTLI_COMPRESSION ? undefined : false
             }),
         },
         {
