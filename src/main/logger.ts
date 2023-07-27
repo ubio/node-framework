@@ -1,5 +1,5 @@
-import { config } from '@nodescript/config';
 import { ConsoleLogger, LOG_LEVELS, LogfmtLogger, Logger, LogLevel } from '@nodescript/logger';
+import { config } from 'mesh-config';
 
 import { getGlobalMetrics } from './metrics/global.js';
 

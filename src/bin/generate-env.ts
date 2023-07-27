@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 import 'reflect-metadata';
 
-import { ConfigDecl, getMeshConfigs } from '@nodescript/config';
 import { Command } from 'commander';
 import { promises as fs } from 'fs';
+import { ConfigDecl, getMeshConfigs } from 'mesh-config';
 import path from 'path';
 
 import { Application } from '../main/index.js';

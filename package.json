@@ -60,7 +60,6 @@
     },
     "dependencies": {
         "@koa/cors": "^3.1.0",
-        "@nodescript/config": "^1.1.0",
         "@nodescript/logger": "^1.5.1",
         "@nodescript/pathmatcher": "^1.0.2",
         "@types/koa": "^2.11.8",
@@ -82,6 +81,7 @@
         "koa-compress": "^5.1.1",
         "koa-conditional-get": "^3.0.0",
         "koa-etag": "^4.0.0",
+        "mesh-config": "^1.1.0",
         "mesh-ioc": "^3.2.0",
         "node-fetch": "^2.6.0",
         "reflect-metadata": "^0.1.13",

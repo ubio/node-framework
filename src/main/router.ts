@@ -1,9 +1,9 @@
-import { config } from '@nodescript/config';
 import { Logger } from '@nodescript/logger';
 import { matchTokens, parsePath, PathToken } from '@nodescript/pathmatcher';
 import Ajv, { ValidateFunction as AjvValidateFunction } from 'ajv';
 import addFormats from 'ajv-formats';
 import * as koa from 'koa';
+import { config } from 'mesh-config';
 import { dep } from 'mesh-ioc';
 
 import { ClientError, Exception } from './exception.js';

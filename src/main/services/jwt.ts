@@ -1,6 +1,6 @@
-import { config } from '@nodescript/config';
 import { Logger } from '@nodescript/logger';
 import jsonwebtoken from 'jsonwebtoken';
+import { config } from 'mesh-config';
 import { dep } from 'mesh-ioc';
 
 import { JwksClient } from '../jwks.js';

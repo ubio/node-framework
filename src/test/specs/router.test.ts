@@ -1,5 +1,5 @@
-import { Config, ProcessEnvConfig } from '@nodescript/config';
 import assert from 'assert';
+import { Config, ProcessEnvConfig } from 'mesh-config';
 import supertest from 'supertest';
 
 import { Application } from '../../main/index.js';

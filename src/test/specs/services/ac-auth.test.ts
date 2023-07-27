@@ -1,7 +1,7 @@
-import { Config, ProcessEnvConfig } from '@nodescript/config';
 import { Logger } from '@nodescript/logger';
 import * as request from '@ubio/request';
 import assert from 'assert';
+import { Config, ProcessEnvConfig } from 'mesh-config';
 import { Mesh } from 'mesh-ioc';
 
 import {

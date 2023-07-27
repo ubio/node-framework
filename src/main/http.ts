@@ -1,5 +1,4 @@
 import cors from '@koa/cors';
-import { config } from '@nodescript/config';
 import { Logger, LogLevel } from '@nodescript/logger';
 import http from 'http';
 import https from 'https';
@@ -8,6 +7,7 @@ import bodyParser from 'koa-body';
 import compress from 'koa-compress';
 import conditional from 'koa-conditional-get';
 import etag from 'koa-etag';
+import { config } from 'mesh-config';
 import { dep, Mesh } from 'mesh-ioc';
 import stoppable, { StoppableServer } from 'stoppable';
 import { constants } from 'zlib';

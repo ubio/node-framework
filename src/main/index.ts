@@ -14,7 +14,7 @@ export * from './services/index.js';
 export * from './util.js';
 
 export * from '@nodescript/logger';
-export * from '@nodescript/config';
+export * from 'mesh-config';
 
 export {
     util,

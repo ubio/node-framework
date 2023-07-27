@@ -1,6 +1,6 @@
-import { config } from '@nodescript/config';
 import { Logger } from '@nodescript/logger';
 import { Request } from '@ubio/request';
+import { config } from 'mesh-config';
 import { dep } from 'mesh-ioc';
 
 import { AcAuth, AuthenticationError } from '../ac-auth.js';

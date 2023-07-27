@@ -1,6 +1,6 @@
-import { config } from '@nodescript/config';
 import { Logger } from '@nodescript/logger';
 import { Request } from '@ubio/request';
+import { config } from 'mesh-config';
 import { dep, Mesh } from 'mesh-ioc';
 
 import { findMeshInstances, getAppDetails } from '../util.js';

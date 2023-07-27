@@ -1,5 +1,5 @@
-import { Config, config, ConfigError, getMeshConfigs, ProcessEnvConfig } from '@nodescript/config';
 import { Logger } from '@nodescript/logger';
+import { Config, config, ConfigError, getMeshConfigs, ProcessEnvConfig } from 'mesh-config';
 import { dep, Mesh } from 'mesh-ioc';
 
 import { HttpRequestLogger, HttpServer } from './http.js';
