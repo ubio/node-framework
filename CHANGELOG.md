@@ -1,3 +1,17 @@
+## 15.8.0
+
+- It is no longer necessary to inherit from ClientError to have error in response; any error with numeric `status` field will be presented as is.
+
+## 15.7.0
+
+- When using `NODE_ENV=test`, the `.env.test` is loaded on `app.start()`
+- When using `NODE_ENV=development`, the `.env.dev` is loaded on `app.start()`
+
+## 15.6.0
+
+- Update transitive deps
+- Env Generator works
+
 ## 15.0.0
 
 - feat: Inversify ⇒ Mesh (#87)
