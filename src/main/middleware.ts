@@ -1,7 +1,7 @@
 import { Context } from 'koa';
 import { v4 as uuid } from 'uuid';
 
-import { ClientError } from './exception.js';
+import { ServerError } from './exception.js';
 
 export async function standardMiddleware(ctx: Context, next: () => Promise<any>) {
     const startedAt = Date.now();
@@ -19,10 +19,9 @@ export async function standardMiddleware(ctx: Context, next: () => Promise<any>)
             requestId,
         });
     } catch (error: any) {
-        const status = Number(error.status) || 500;
-        const isClientError = status >= 400 && status < 500;
-        const logLevel = isClientError ? 'info' : 'error';
-        ctx.status = isClientError ? error.status : 500;
+        const hasStatus = typeof error.status === 'number' && error.status >= 100 && error.status < 599;
+        ctx.status = hasStatus ? error.status : 500;
+        const logLevel = ctx.status >= 500 ? 'error' : 'info';
         ctx.logger[logLevel](`HTTP error`, {
             method: ctx.method,
             url: ctx.url,
@@ -32,22 +31,13 @@ export async function standardMiddleware(ctx: Context, next: () => Promise<any>)
             requestId,
             error,
         });
-        if (error instanceof ClientError) {
-            ctx.status = error.status;
-            ctx.body = {
-                object: 'error',
-                name: error.name,
-                message: error.message,
-                details: error.details,
-            };
-        } else {
-            ctx.status = 500;
-            ctx.body = {
-                object: 'error',
-                name: 'ServerError',
-                message: 'The request cannot be processed.',
-            };
-        }
+        const presentedErr = hasStatus ? error : new ServerError();
+        ctx.body = {
+            object: 'error',
+            name: presentedErr.name,
+            message: presentedErr.message,
+            details: presentedErr.details,
+        };
     } finally {
         ctx.header['x-request-id'] = requestId;
         ctx.header['server-timing'] = `total;dur=${Date.now() - startedAt}`;
