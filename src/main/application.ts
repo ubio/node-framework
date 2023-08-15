@@ -1,4 +1,5 @@
 import { Logger } from '@nodescript/logger';
+import dotenv from 'dotenv';
 import { Config, config, ConfigError, getMeshConfigs, ProcessEnvConfig } from 'mesh-config';
 import { dep, Mesh } from 'mesh-ioc';
 
@@ -61,6 +62,13 @@ export class Application {
     async afterStop(): Promise<void> {}
 
     async start() {
+        dotenv.config({ path: '.env' });
+        if (process.env.NODE_ENV === 'development') {
+            dotenv.config({ path: '.env.dev' });
+        }
+        if (process.env.NODE_ENV === 'test') {
+            dotenv.config({ path: '.env.test' });
+        }
         process.on('uncaughtException', error => {
             this.logger.error('uncaughtException', { error });
         });
