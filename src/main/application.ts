@@ -39,7 +39,8 @@ export class Application {
         mesh.constant('httpRequestScope', () => this.createHttpRequestScope());
         mesh.service(Logger, StandardLogger);
         mesh.alias('AppLogger', Logger);
-        mesh.service(Config, ProcessEnvConfig);
+        mesh.service(ProcessEnvConfig);
+        mesh.alias(Config, ProcessEnvConfig);
         mesh.service(HttpServer);
         mesh.service(AutomationCloudJwtService);
         mesh.service(AcAuthProvider, DefaultAcAuthProvider);
