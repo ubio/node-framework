@@ -6,7 +6,6 @@ import { dep, Mesh } from 'mesh-ioc';
 import { HttpRequestLogger, HttpServer } from './http.js';
 import { StandardLogger } from './logger.js';
 import { getGlobalMetrics } from './metrics/global.js';
-import { MetricsPushGateway } from './metrics/push-gateway.js';
 import { MetricsRouter } from './metrics/route.js';
 import {
     AcAuthProvider,
@@ -46,7 +45,6 @@ export class Application {
         mesh.service(AcAuthProvider, DefaultAcAuthProvider);
         mesh.alias(JwtService, AutomationCloudJwtService);
         mesh.constant('GlobalMetrics', getGlobalMetrics());
-        mesh.service(MetricsPushGateway);
         return mesh;
     }
 
