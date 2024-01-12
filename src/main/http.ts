@@ -1,5 +1,5 @@
 import cors from '@koa/cors';
-import { Logger, LogLevel } from '@nodescript/logger';
+import { Logger, LogPayload } from '@nodescript/logger';
 import http from 'http';
 import https from 'https';
 import Koa, { Middleware } from 'koa';
@@ -215,11 +215,16 @@ export class HttpRequestLogger extends Logger {
         this.setLevel(this.delegateLogger.level);
     }
 
-    write(level: LogLevel, message: string, data: object): void {
+    override write(payload: LogPayload) {
+        const { level, message, data } = payload;
         const { requestId } = this.ctx.state;
-        this.delegateLogger.write(level, message, {
-            ...data,
-            requestId,
+        this.delegateLogger.write({
+            level,
+            message,
+            data: {
+                ...data,
+                requestId,
+            }
         });
     }
 
