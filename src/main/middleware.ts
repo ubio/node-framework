@@ -11,7 +11,7 @@ export async function standardMiddleware(ctx: Context, next: () => Promise<any>)
     ctx.state.requestId = requestId;
     try {
         await next();
-    } catch (err: any) {
+    } catch (err: unknown) {
         error = err;
         const hasStatus = typeof error.status === 'number' && error.status >= 100 && error.status < 599;
         ctx.status = hasStatus ? error.status : 500;
@@ -37,7 +37,7 @@ export async function standardMiddleware(ctx: Context, next: () => Promise<any>)
         ctx.logger[logLevel](error ? `Http Error` : `Http Request`, {
             httpRequest,
             actor: ctx.state.actor,
-            requestId: ctx.requestHeaders['x-request-id'],
+            requestId: ctx.header['x-request-id'],
             error,
         });
     }
