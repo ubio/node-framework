@@ -17,6 +17,10 @@ A library shared across ubio microservices which encapsulates common conventions
 
 See [documentation](docs) for detailed usage information.
 
+## Known Issues
+
+- ESNext breaks decorators. `mesh-ioc` does not work with TypeSCript target ES2022 and onwards. Please use `"target": "es2020" in `tsconfig.json` for now.
+
 ## Roadmap
 
 We have a high-level plan to introduce changes to better align the applications we build across the stack, along with simultaneously bringing in some DX.
