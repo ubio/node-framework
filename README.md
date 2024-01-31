@@ -19,7 +19,7 @@ See [documentation](docs) for detailed usage information.
 
 ## Known Issues
 
-- ESNext breaks decorators. `mesh-ioc` does not work with TypeSCript target ES2022 and onwards. Please use `"target": "es2020" in `tsconfig.json` for now.
+- ESNext breaks decorators. `mesh-ioc` does not work with TypeSCript target ES2022 and onwards. Please use `"target": "es2020"` in `tsconfig.json` for now.
 
 ## Roadmap
 
