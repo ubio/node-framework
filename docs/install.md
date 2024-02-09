@@ -35,7 +35,8 @@
         "docs": "npm run docs:openapi && npm run docs:api",
         "docs:openapi": "generate-openapi > openapi.json",
         "docs:api": "generate-docs > API.md",
-        "preversion": "npm run lint && npm run compile && npm run docs && git add openapi.json API.md",
+        "preversion": "npm run lint && npm run compile",
+        "version": "npm run docs && git add openapi.json API.md",
         "postversion": "git push origin $(git rev-parse --abbrev-ref HEAD) --tags"
     }
     ```
