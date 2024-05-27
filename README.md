@@ -13,13 +13,19 @@ A library shared across ubio microservices which encapsulates common conventions
 - http routing and validation
 - entity validation, presentation, (de)serialization
 
+## Prerequisites
+
+Make sure `tsconfig.json` contains the following:
+
+```
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "useDefineForClassFields": false,
+```
+
 ## Usage
 
-See [documentation](docs) for detailed usage information.
-
-## Known Issues
-
-- ESNext breaks decorators. `mesh-ioc` does not work with TypeSCript target ES2022 and onwards. Please use `"target": "es2020"` in `tsconfig.json` for now.
+Please refer to [documentation](docs) for detailed usage information.
 
 ## Roadmap
 
