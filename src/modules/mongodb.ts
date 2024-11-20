@@ -1,13 +1,9 @@
 import { Logger } from '@nodescript/logger';
 import { config } from 'mesh-config';
 import { dep } from 'mesh-ioc';
-import { Db, MongoClient, MongoClientOptions } from 'mongodb';
+import { Db, MongoClient } from 'mongodb';
 
 import { getGlobalMetrics } from '../main/index.js';
-
-interface MongoClientOptionsExtended extends MongoClientOptions {
-    useUnifiedTopology: boolean;
-}
 
 export class MongoDb {
     client: MongoClient;
@@ -22,10 +18,8 @@ export class MongoDb {
 
     constructor() {
         this.client = new MongoClient(this.MONGO_URL, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
             ignoreUndefined: true,
-        } as MongoClientOptionsExtended);
+        });
     }
 
     get db(): Db {
