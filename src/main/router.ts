@@ -41,7 +41,7 @@ export function Delete(spec: RouteSpec = {}) {
 }
 
 export function Middleware(spec: RouteSpec = {}) {
-    return routeDecorator('*', spec, true);
+    return routeDecorator('*', spec, RouteRole.MIDDLEWARE);
 }
 
 export function PathParam(name: string, spec: ParamSpec) {
@@ -56,7 +56,7 @@ export function BodyParam(name: string, spec: ParamSpec) {
     return paramDecorator('body', name, spec);
 }
 
-function routeDecorator(method: string, spec: RouteSpec, isMiddleware: boolean = false) {
+function routeDecorator(method: string, spec: RouteSpec, role = RouteRole.ENDPOINT) {
     return (target: any, methodKey: string) => {
         const {
             summary = '',
@@ -80,7 +80,8 @@ function routeDecorator(method: string, spec: RouteSpec, isMiddleware: boolean =
             target,
             deprecated,
             methodKey,
-            isMiddleware,
+            isMiddleware: role === RouteRole.MIDDLEWARE,
+            role,
             summary,
             method,
             path,
@@ -306,6 +307,12 @@ export interface Params {
 
 export type ParamSource = 'path' | 'query' | 'body';
 
+export enum RouteRole {
+    ENDPOINT = 'endpoint',
+    MIDDLEWARE = 'middleware',
+    AFTER_HOOK = 'after-hook',
+}
+
 export interface RouteDefinition {
     target: any;
     methodKey: string;
@@ -313,6 +320,7 @@ export interface RouteDefinition {
     summary: string;
     deprecated: boolean;
     isMiddleware: boolean;
+    role: RouteRole;
     method: string;
     path: string;
     pathTokens: PathToken[];
