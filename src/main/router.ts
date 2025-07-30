@@ -44,6 +44,10 @@ export function Middleware(spec: RouteSpec = {}) {
     return routeDecorator('*', spec, RouteRole.MIDDLEWARE);
 }
 
+export function AfterHook(spec: RouteSpec = {}) {
+    return routeDecorator('*', spec, RouteRole.AFTER_HOOK);
+}
+
 export function PathParam(name: string, spec: ParamSpec) {
     return paramDecorator('path', name, spec);
 }
@@ -149,7 +153,15 @@ export class Router {
                     }
                     await this.executeRoute(middleware, pathParams);
                 }
-                const response = await this.executeRoute(route, pathParams);
+                let response = await this.executeRoute(route, pathParams);
+                for (const afterHook of getAfterHookRoutes(this.constructor as Constructor<Router>)) {
+                    const pathParams = matchRoute(afterHook, this.ctx.method, this.ctx.path);
+                    if (pathParams == null) {
+                        continue;
+                    }
+                    const hookResponse = await this.executeRoute(afterHook, pathParams);
+                    response = hookResponse ?? response;
+                }
                 this.ctx.body = response ?? this.ctx.body ?? {};
                 if (this.HTTP_VALIDATE_RESPONSES) {
                     this.validateResponseBody(route, this.ctx.status, this.ctx.body);
@@ -256,7 +268,8 @@ export function matchRoute(
     if (ep.method !== '*' && ep.method.toLowerCase() !== method.toLowerCase()) {
         return null;
     }
-    return matchTokens(ep.pathTokens, path, ep.isMiddleware);
+    const isNotEndpoint = ep.role !== RouteRole.ENDPOINT;
+    return matchTokens(ep.pathTokens, path, isNotEndpoint);
 }
 
 function compileParamsSchema(params: ParamDefinition[] = []): AjvValidateFunction {
@@ -292,11 +305,15 @@ export function getAllRoutes(routerClass: AnyConstructor): RouteDefinition[] {
 }
 
 export function getMiddlewareRoutes(routerClass: AnyConstructor) {
-    return getAllRoutes(routerClass).filter(ep => ep.isMiddleware);
+    return getAllRoutes(routerClass).filter(ep => ep.role === RouteRole.MIDDLEWARE);
+}
+
+export function getAfterHookRoutes(routerClass: AnyConstructor) {
+    return getAllRoutes(routerClass).filter(ep => ep.role === RouteRole.AFTER_HOOK);
 }
 
 export function getEndpointRoutes(routerClass: AnyConstructor) {
-    return getAllRoutes(routerClass).filter(ep => !ep.isMiddleware);
+    return getAllRoutes(routerClass).filter(ep => ep.role === RouteRole.ENDPOINT);
 }
 
 // Type definitions
