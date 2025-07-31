@@ -178,7 +178,7 @@ export class Router {
         this.validateRequestParams(ep, paramsObject);
         this.validateRequestBody(ep, this.ctx.request.body);
         // Bind params to router instance, so that the route can use them
-        this.params = paramsObject;
+        this.params = { ...this.params, ...paramsObject };
         // Retrieve the parameters by name, because validator will apply coercion and defaults
         const paramsArray: any[] = new Array(ep.params.length);
         for (const p of ep.params) {
@@ -345,6 +345,7 @@ export interface RouteDefinition {
     paramsSchema: AjvValidateFunction;
     requestBodySchema?: AjvValidateFunction;
     responses: ResponsesSpec;
+    targetRoutes?: RouteDefinition[];
 }
 
 export interface ParamDefinition {
