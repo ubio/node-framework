@@ -136,6 +136,7 @@ export class Router {
     @config({ default: false }) HTTP_VALIDATE_RESPONSES!: boolean;
 
     params: Params = {};
+    error: any;
 
     async handle(): Promise<boolean> {
         // Route matched; now validate parameters
@@ -145,6 +146,7 @@ export class Router {
                 continue;
             }
             await getGlobalMetrics().handlerDuration.measure(async () => {
+                let response: any;
                 // Route matched, now execute all middleware first, then execute the route itself
                 for (const middleware of getMiddlewareRoutes(this.constructor as Constructor<Router>)) {
                     const pathParams = matchRoute(middleware, this.ctx.method, this.ctx.path);
@@ -153,7 +155,11 @@ export class Router {
                     }
                     await this.executeRoute(middleware, pathParams);
                 }
-                let response = await this.executeRoute(route, pathParams);
+                try {
+                    response = await this.executeRoute(route, pathParams);
+                } catch (error) {
+                    this.error = error;
+                }
                 for (const afterHook of getAfterHookRoutes(this.constructor as Constructor<Router>)) {
                     const pathParams = matchRoute(afterHook, this.ctx.method, this.ctx.path);
                     if (pathParams == null) {
@@ -161,6 +167,10 @@ export class Router {
                     }
                     const hookResponse = await this.executeRoute(afterHook, pathParams);
                     response = hookResponse ?? response;
+                }
+                // ensure hooks are executed even if the route threw an exception
+                if (this.error) {
+                    throw this.error;
                 }
                 this.ctx.body = response ?? this.ctx.body ?? {};
                 if (this.HTTP_VALIDATE_RESPONSES) {
@@ -345,7 +355,6 @@ export interface RouteDefinition {
     paramsSchema: AjvValidateFunction;
     requestBodySchema?: AjvValidateFunction;
     responses: ResponsesSpec;
-    targetRoutes?: RouteDefinition[];
 }
 
 export interface ParamDefinition {
