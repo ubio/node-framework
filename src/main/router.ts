@@ -41,7 +41,11 @@ export function Delete(spec: RouteSpec = {}) {
 }
 
 export function Middleware(spec: RouteSpec = {}) {
-    return routeDecorator('*', spec, true);
+    return routeDecorator('*', spec, RouteRole.MIDDLEWARE);
+}
+
+export function AfterHook(spec: RouteSpec = {}) {
+    return routeDecorator('*', spec, RouteRole.AFTER_HOOK);
 }
 
 export function PathParam(name: string, spec: ParamSpec) {
@@ -56,7 +60,7 @@ export function BodyParam(name: string, spec: ParamSpec) {
     return paramDecorator('body', name, spec);
 }
 
-function routeDecorator(method: string, spec: RouteSpec, isMiddleware: boolean = false) {
+function routeDecorator(method: string, spec: RouteSpec, role = RouteRole.ENDPOINT) {
     return (target: any, methodKey: string) => {
         const {
             summary = '',
@@ -80,7 +84,8 @@ function routeDecorator(method: string, spec: RouteSpec, isMiddleware: boolean =
             target,
             deprecated,
             methodKey,
-            isMiddleware,
+            isMiddleware: role === RouteRole.MIDDLEWARE,
+            role,
             summary,
             method,
             path,
@@ -131,6 +136,7 @@ export class Router {
     @config({ default: false }) HTTP_VALIDATE_RESPONSES!: boolean;
 
     params: Params = {};
+    error: any;
 
     async handle(): Promise<boolean> {
         // Route matched; now validate parameters
@@ -140,6 +146,7 @@ export class Router {
                 continue;
             }
             await getGlobalMetrics().handlerDuration.measure(async () => {
+                let response: any;
                 // Route matched, now execute all middleware first, then execute the route itself
                 for (const middleware of getMiddlewareRoutes(this.constructor as Constructor<Router>)) {
                     const pathParams = matchRoute(middleware, this.ctx.method, this.ctx.path);
@@ -148,7 +155,23 @@ export class Router {
                     }
                     await this.executeRoute(middleware, pathParams);
                 }
-                const response = await this.executeRoute(route, pathParams);
+                try {
+                    response = await this.executeRoute(route, pathParams);
+                } catch (error) {
+                    this.error = error;
+                }
+                for (const afterHook of getAfterHookRoutes(this.constructor as Constructor<Router>)) {
+                    const pathParams = matchRoute(afterHook, this.ctx.method, this.ctx.path);
+                    if (pathParams == null) {
+                        continue;
+                    }
+                    const hookResponse = await this.executeRoute(afterHook, pathParams);
+                    response = hookResponse ?? response;
+                }
+                // ensure hooks are executed even if the route threw an exception
+                if (this.error) {
+                    throw this.error;
+                }
                 this.ctx.body = response ?? this.ctx.body ?? {};
                 if (this.HTTP_VALIDATE_RESPONSES) {
                     this.validateResponseBody(route, this.ctx.status, this.ctx.body);
@@ -165,7 +188,7 @@ export class Router {
         this.validateRequestParams(ep, paramsObject);
         this.validateRequestBody(ep, this.ctx.request.body);
         // Bind params to router instance, so that the route can use them
-        this.params = paramsObject;
+        this.params = { ...this.params, ...paramsObject };
         // Retrieve the parameters by name, because validator will apply coercion and defaults
         const paramsArray: any[] = new Array(ep.params.length);
         for (const p of ep.params) {
@@ -255,7 +278,8 @@ export function matchRoute(
     if (ep.method !== '*' && ep.method.toLowerCase() !== method.toLowerCase()) {
         return null;
     }
-    return matchTokens(ep.pathTokens, path, ep.isMiddleware);
+    const isNotEndpoint = ep.role !== RouteRole.ENDPOINT;
+    return matchTokens(ep.pathTokens, path, isNotEndpoint);
 }
 
 function compileParamsSchema(params: ParamDefinition[] = []): AjvValidateFunction {
@@ -291,11 +315,15 @@ export function getAllRoutes(routerClass: AnyConstructor): RouteDefinition[] {
 }
 
 export function getMiddlewareRoutes(routerClass: AnyConstructor) {
-    return getAllRoutes(routerClass).filter(ep => ep.isMiddleware);
+    return getAllRoutes(routerClass).filter(ep => ep.role === RouteRole.MIDDLEWARE);
+}
+
+export function getAfterHookRoutes(routerClass: AnyConstructor) {
+    return getAllRoutes(routerClass).filter(ep => ep.role === RouteRole.AFTER_HOOK);
 }
 
 export function getEndpointRoutes(routerClass: AnyConstructor) {
-    return getAllRoutes(routerClass).filter(ep => !ep.isMiddleware);
+    return getAllRoutes(routerClass).filter(ep => ep.role === RouteRole.ENDPOINT);
 }
 
 // Type definitions
@@ -306,6 +334,12 @@ export interface Params {
 
 export type ParamSource = 'path' | 'query' | 'body';
 
+export enum RouteRole {
+    ENDPOINT = 'endpoint',
+    MIDDLEWARE = 'middleware',
+    AFTER_HOOK = 'after-hook',
+}
+
 export interface RouteDefinition {
     target: any;
     methodKey: string;
@@ -313,6 +347,7 @@ export interface RouteDefinition {
     summary: string;
     deprecated: boolean;
     isMiddleware: boolean;
+    role: RouteRole;
     method: string;
     path: string;
     pathTokens: PathToken[];

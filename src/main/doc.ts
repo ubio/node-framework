@@ -1,9 +1,9 @@
-import { getGlobalRouteRegistry, RouteDefinition } from './router.js';
+import { getGlobalRouteRegistry, RouteDefinition, RouteRole } from './router.js';
 import { groupBy } from './util.js';
 
 export function generateEndpointDocSpec() {
     const doc: string[] = [];
-    const routes = getGlobalRouteRegistry().filter(_ => !_.isMiddleware);
+    const routes = getGlobalRouteRegistry().filter(_ => _.role === RouteRole.ENDPOINT);
     const groupByPath = groupBy(routes, r => r.path);
     for (const [_path, routes] of groupByPath) {
         for (const route of routes) {
