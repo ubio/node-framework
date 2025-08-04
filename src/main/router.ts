@@ -295,7 +295,7 @@ export function ignoreRoute(
     if (ep.ignorePathsTokens.length === 0) {
         return false;
     }
-    return ep.ignorePathsTokens.some(tokens => matchTokens(tokens, path, true));
+    return ep.ignorePathsTokens.some(tokens => matchTokens(tokens, path, true) != null);
 }
 
 function compileParamsSchema(params: ParamDefinition[] = []): AjvValidateFunction {
