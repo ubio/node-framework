@@ -90,6 +90,7 @@ function routeDecorator(method: string, spec: RouteSpec, role = RouteRole.ENDPOI
             method,
             path,
             pathTokens: parsePath(path),
+            ignorePathsTokens: spec.ignorePaths ? spec.ignorePaths.map(parsePath) : [],
             params,
             paramsSchema,
             requestBodySchema,
@@ -146,27 +147,16 @@ export class Router {
                 continue;
             }
             await getGlobalMetrics().handlerDuration.measure(async () => {
-                let response: any;
                 // Route matched, now execute all middleware first, then execute the route itself
-                for (const middleware of getMiddlewareRoutes(this.constructor as Constructor<Router>)) {
-                    const pathParams = matchRoute(middleware, this.ctx.method, this.ctx.path);
-                    if (pathParams == null) {
-                        continue;
-                    }
-                    await this.executeRoute(middleware, pathParams);
-                }
+                let response = await this.handleAdjacentRoutes(RouteRole.MIDDLEWARE);
                 try {
                     response = await this.executeRoute(route, pathParams);
                 } catch (error) {
                     this.error = error;
                 }
-                for (const afterHook of getAfterHookRoutes(this.constructor as Constructor<Router>)) {
-                    const pathParams = matchRoute(afterHook, this.ctx.method, this.ctx.path);
-                    if (pathParams == null) {
-                        continue;
-                    }
-                    const hookResponse = await this.executeRoute(afterHook, pathParams);
-                    response = hookResponse ?? response;
+                response = await this.handleAdjacentRoutes(RouteRole.AFTER_HOOK) ?? response;
+                if (this.error) {
+                    throw this.error;
                 }
                 // ensure hooks are executed even if the route threw an exception
                 if (this.error) {
@@ -181,6 +171,22 @@ export class Router {
         }
         // No routes match
         return false;
+    }
+
+    protected async handleAdjacentRoutes(role: AdjacentRouteRole) {
+        let response: any;
+        const adjacentRoutes = role === RouteRole.MIDDLEWARE ?
+            getMiddlewareRoutes(this.constructor as Constructor<Router>) :
+            getAfterHookRoutes(this.constructor as Constructor<Router>);
+        for (const route of adjacentRoutes) {
+            const pathParams = matchRoute(route, this.ctx.method, this.ctx.path);
+            if (pathParams == null || ignoreRoute(route, this.ctx.path)) {
+                continue;
+            }
+            const newResponse = await this.executeRoute(route, pathParams);
+            response = newResponse ?? response;
+        }
+        return response;
     }
 
     protected async executeRoute(ep: RouteDefinition, pathParams: Params): Promise<any> {
@@ -282,6 +288,16 @@ export function matchRoute(
     return matchTokens(ep.pathTokens, path, isNotEndpoint);
 }
 
+export function ignoreRoute(
+    ep: RouteDefinition,
+    path: string
+): boolean {
+    if (ep.ignorePathsTokens.length === 0) {
+        return false;
+    }
+    return ep.ignorePathsTokens.some(tokens => matchTokens(tokens, path, true));
+}
+
 function compileParamsSchema(params: ParamDefinition[] = []): AjvValidateFunction {
     const properties: any = {};
     const required: string[] = [];
@@ -340,6 +356,8 @@ export enum RouteRole {
     AFTER_HOOK = 'after-hook',
 }
 
+export type AdjacentRouteRole = RouteRole.MIDDLEWARE | RouteRole.AFTER_HOOK;
+
 export interface RouteDefinition {
     target: any;
     methodKey: string;
@@ -351,6 +369,7 @@ export interface RouteDefinition {
     method: string;
     path: string;
     pathTokens: PathToken[];
+    ignorePathsTokens: PathToken[][];
     params: ParamDefinition[];
     paramsSchema: AjvValidateFunction;
     requestBodySchema?: AjvValidateFunction;
@@ -371,6 +390,7 @@ export interface RouteSpec {
     summary?: string;
     deprecated?: boolean;
     path?: string;
+    ignorePaths?: string[];
     requestBodySchema?: object;
     responses?: ResponsesSpec;
 }
