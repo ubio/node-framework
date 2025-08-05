@@ -176,12 +176,17 @@ describe('Router', () => {
             assert.deepStrictEqual(res.body, { path: '1/2/3' });
         });
 
-        it('GET /foo-error error is hidden by after hook', async () => {
+        it('GET /foo-error is not hidden by after hook not handling errors', async () => {
             const request = supertest(app.httpServer.callback());
             const res = await request.get('/foo-error');
+            assert.strictEqual(res.status, 500);
+            assert(res.header['foo-after-try-hide-unhandled-error'] == null);
+        });
+
+        it('GET /foo-error-handled is hidden by after hook handling errors', async () => {
+            const request = supertest(app.httpServer.callback());
+            const res = await request.get('/foo-error-handled');
             assert.strictEqual(res.status, 200);
-            assert.strictEqual(res.header['foo-after-all'], 'true');
-            assert.strictEqual(res.header['foo-after-not-create-or-update'], 'true');
             assert.strictEqual(res.header['foo-after-hide-error'], 'true');
         });
 

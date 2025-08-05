@@ -33,6 +33,15 @@ export class FooRouter extends Router {
     @AfterHook({
         path: '/foo-error'
     })
+    async afterTryHideUnhandledError() {
+        this.ctx.set('foo-after-try-hide-unhandled-error', 'true');
+        this.error = null;
+    }
+
+    @AfterHook({
+        path: '/foo-error-handled',
+        handleError: true
+    })
     async afterHideError() {
         this.ctx.set('foo-after-hide-error', 'true');
         this.error = null;
@@ -69,6 +78,11 @@ export class FooRouter extends Router {
 
     @Get({ path: '/foo-error' })
     async throwError() {
+        throw new Exception();
+    }
+
+    @Get({ path: '/foo-error-handled' })
+    async throwErrorHandled() {
         throw new Exception();
     }
 

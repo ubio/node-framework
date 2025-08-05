@@ -95,6 +95,7 @@ function routeDecorator(method: string, spec: RouteSpec, role = RouteRole.ENDPOI
             paramsSchema,
             requestBodySchema,
             responses,
+            handleError: spec.handleError ?? false,
         };
         validateRouteDefinition(route);
         getGlobalRouteRegistry().push(route);
@@ -146,22 +147,14 @@ export class Router {
             if (pathParams == null) {
                 continue;
             }
+            const routes = [
+                ...getMiddlewareRoutes(this.constructor as Constructor<Router>),
+                route,
+                ...getAfterHookRoutes(this.constructor as Constructor<Router>),
+            ];
             await getGlobalMetrics().handlerDuration.measure(async () => {
                 // Route matched, now execute all middleware first, then execute the route itself
-                let response = await this.handleAdjacentRoutes(RouteRole.MIDDLEWARE);
-                try {
-                    response = await this.executeRoute(route, pathParams);
-                } catch (error) {
-                    this.error = error;
-                }
-                response = await this.handleAdjacentRoutes(RouteRole.AFTER_HOOK) ?? response;
-                if (this.error) {
-                    throw this.error;
-                }
-                // ensure hooks are executed even if the route threw an exception
-                if (this.error) {
-                    throw this.error;
-                }
+                const response = await this.handleRoutes(routes);
                 this.ctx.body = response ?? this.ctx.body ?? {};
                 if (this.HTTP_VALIDATE_RESPONSES) {
                     this.validateResponseBody(route, this.ctx.status, this.ctx.body);
@@ -173,18 +166,25 @@ export class Router {
         return false;
     }
 
-    protected async handleAdjacentRoutes(role: AdjacentRouteRole) {
+    protected async handleRoutes(routes: RouteDefinition[]) {
         let response: any;
-        const adjacentRoutes = role === RouteRole.MIDDLEWARE ?
-            getMiddlewareRoutes(this.constructor as Constructor<Router>) :
-            getAfterHookRoutes(this.constructor as Constructor<Router>);
-        for (const route of adjacentRoutes) {
+        for (const route of routes) {
+            if (this.error && !route.handleError) {
+                continue;
+            }
             const pathParams = matchRoute(route, this.ctx.method, this.ctx.path);
             if (pathParams == null || ignoreRoute(route, this.ctx.path)) {
                 continue;
             }
-            const newResponse = await this.executeRoute(route, pathParams);
-            response = newResponse ?? response;
+            try {
+                const newResponse = await this.executeRoute(route, pathParams);
+                response = newResponse ?? response;
+            } catch (error) {
+                this.error = error;
+            }
+        }
+        if (this.error) {
+            throw this.error;
         }
         return response;
     }
@@ -374,6 +374,7 @@ export interface RouteDefinition {
     paramsSchema: AjvValidateFunction;
     requestBodySchema?: AjvValidateFunction;
     responses: ResponsesSpec;
+    handleError: boolean;
 }
 
 export interface ParamDefinition {
@@ -393,6 +394,7 @@ export interface RouteSpec {
     ignorePaths?: string[];
     requestBodySchema?: object;
     responses?: ResponsesSpec;
+    handleError?: boolean;
 }
 
 export interface ParamSpec {
