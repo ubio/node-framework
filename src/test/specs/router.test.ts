@@ -42,6 +42,7 @@ describe('Router', () => {
             const res = await request.get('/foo');
             assert.strictEqual(res.status, 200);
             assert.strictEqual(res.header['foo-before-all'], 'true');
+            assert.strictEqual(res.header['foo-before-not-create-or-update'], 'true');
             assert(res.header['bar-before-all'] == null);
             assert(res.header['foo-before-get-one'] == null);
             assert.deepStrictEqual(res.body, ['foo1', 'foo2', 'foo3']);
@@ -54,6 +55,7 @@ describe('Router', () => {
 
             assert.strictEqual(res.status, 201);
             assert.strictEqual(res.header['foo-before-all'], 'true');
+            assert.strictEqual(res.header['foo-before-not-create-or-update'], 'true');
             assert(res.header['bar-before-all'] == null);
             assert(res.header['foo-before-get-one'] == null);
             assert.deepStrictEqual(res.body, { fooId });
@@ -97,6 +99,8 @@ describe('Router', () => {
             assert.strictEqual(res.status, 200);
             assert.strictEqual(res.header['foo-before-all'], 'true');
             assert.strictEqual(res.header['foo-before-get-one'], '123');
+            assert(res.header['foo-before-not-create-or-update'] == null);
+            assert(res.header['foo-after-not-create-or-update'] == null);
             assert(res.header['bar-before-all'] == null);
             assert.deepStrictEqual(res.body, { fooId: '123' });
         });
@@ -108,6 +112,8 @@ describe('Router', () => {
             assert.strictEqual(res.status, 200);
             assert.strictEqual(res.header['foo-before-all'], 'true');
             assert.strictEqual(res.header['foo-before-get-one'], '123');
+            assert(res.header['foo-before-not-create-or-update'] == null);
+            assert(res.header['foo-after-not-create-or-update'] == null);
             assert(res.header['bar-before-all'] == null);
             assert.deepStrictEqual(res.body, { fooId: '123', bar: 'hello' });
         });
@@ -168,6 +174,20 @@ describe('Router', () => {
             assert(res.header['bar-before-all'] == null);
             assert(res.header['foo-before-get-one'] == null);
             assert.deepStrictEqual(res.body, { path: '1/2/3' });
+        });
+
+        it('GET /foo-error is not hidden by after hook not handling errors', async () => {
+            const request = supertest(app.httpServer.callback());
+            const res = await request.get('/foo-error');
+            assert.strictEqual(res.status, 500);
+            assert(res.header['foo-after-try-hide-unhandled-error'] == null);
+        });
+
+        it('GET /foo-error-handled is hidden by after hook handling errors', async () => {
+            const request = supertest(app.httpServer.callback());
+            const res = await request.get('/foo-error-handled');
+            assert.strictEqual(res.status, 200);
+            assert.strictEqual(res.header['foo-after-hide-error'], 'true');
         });
 
         describe('multipart body', () => {

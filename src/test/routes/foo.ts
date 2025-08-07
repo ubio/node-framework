@@ -1,4 +1,4 @@
-import { BodyParam, Get, Middleware, PathParam, Post, Put, Router } from '../../main/index.js';
+import { AfterHook, BodyParam, Exception, Get, Middleware, PathParam, Post, Put, Router } from '../../main/index.js';
 
 export class FooRouter extends Router {
 
@@ -13,6 +13,38 @@ export class FooRouter extends Router {
         fooId: string
     ) {
         this.ctx.set('foo-before-get-one', fooId);
+    }
+
+    @Middleware({ ignorePaths: ['/foo/{fooId}'] })
+    async beforeNotCreateOrUpdate() {
+        this.ctx.set('foo-before-not-create-or-update', 'true');
+    }
+
+    @AfterHook({ ignorePaths: ['/foo/{fooId}'] })
+    async afterNotCreateOrUpdate() {
+        this.ctx.set('foo-after-not-create-or-update', 'true');
+    }
+
+    @AfterHook()
+    async afterAll() {
+        this.ctx.set('foo-after-all', 'true');
+    }
+
+    @AfterHook({
+        path: '/foo-error'
+    })
+    async afterTryHideUnhandledError() {
+        this.ctx.set('foo-after-try-hide-unhandled-error', 'true');
+        this.error = null;
+    }
+
+    @AfterHook({
+        path: '/foo-error-handled',
+        handleError: true
+    })
+    async afterHideError() {
+        this.ctx.set('foo-after-hide-error', 'true');
+        this.error = null;
     }
 
     @Get({
@@ -42,6 +74,16 @@ export class FooRouter extends Router {
         this.ctx.status = 201;
         const { fooId } = this.ctx.request.body;
         return { fooId };
+    }
+
+    @Get({ path: '/foo-error' })
+    async throwError() {
+        throw new Exception();
+    }
+
+    @Get({ path: '/foo-error-handled' })
+    async throwErrorHandled() {
+        throw new Exception();
     }
 
     @Get({ path: '/foo/{fooId}' })
