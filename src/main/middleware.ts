@@ -9,6 +9,7 @@ export async function standardMiddleware(ctx: Context, next: () => Promise<any>)
     const startedAt = Date.now();
     const requestId = ctx.headers['x-request-id'] || uuid();
     ctx.state.requestId = requestId;
+    ctx.state.requestStartTime = startedAt;
     try {
         await next();
     } catch (err: unknown) {
