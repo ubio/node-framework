@@ -1,58 +1,44 @@
 import { Logger } from '@nodescript/logger';
-import dotenv from 'dotenv';
-import { Config, config, ConfigError, getMeshConfigs, ProcessEnvConfig } from 'mesh-config';
+import { AuxHttpServer, BaseApp } from '@nodescript/microframework';
+import { Config, config, ConfigError, getMeshConfigs } from 'mesh-config';
 import { dep, Mesh } from 'mesh-ioc';
 
 import { HttpRequestLogger, HttpServer } from './http.js';
-import { StandardLogger } from './logger.js';
 import { getGlobalMetrics } from './metrics/global.js';
-import { MetricsRouter } from './metrics/route.js';
-import {
-    AcAuthProvider,
-    AutomationCloudJwtService,
-    DefaultAcAuthProvider,
-    JwtService,
-} from './services/index.js';
+import { AcAuthProvider, DefaultAcAuthProvider } from './services/ac-auth-provider.js';
+import { AutomationCloudJwtService, JwtService } from './services/jwt.js';
+
 
 /**
  * Application is an IoC composition root where all modules should be registered
  * and provides minimal lifecycle framework (start, stop, beforeStart, afterStop).
  */
-export class Application {
-
-    mesh = new Mesh('Global');
+export class Application extends BaseApp {
 
     @config({ default: false }) ASSERT_CONFIGS_ON_START!: boolean;
 
     @dep() httpServer!: HttpServer;
-    @dep() logger!: Logger;
+    @dep() auxHttpServer!: AuxHttpServer;
 
     constructor() {
-        // Some default implementations are bound for convenience but can be replaced as fit
-        this.mesh = this.createGlobalScope();
-        this.mesh.connect(this);
+        super(new Mesh('App'));
+        this.createGlobalScope();
     }
 
     createGlobalScope(): Mesh {
-        const mesh = new Mesh('Global');
-        mesh.constant('httpRequestScope', () => this.createHttpRequestScope());
-        mesh.service(Logger, StandardLogger);
-        mesh.alias('AppLogger', Logger);
-        mesh.service(ProcessEnvConfig);
-        mesh.alias(Config, ProcessEnvConfig);
-        mesh.service(HttpServer);
-        mesh.service(AutomationCloudJwtService);
-        mesh.service(AcAuthProvider, DefaultAcAuthProvider);
-        mesh.alias(JwtService, AutomationCloudJwtService);
-        mesh.constant('GlobalMetrics', getGlobalMetrics());
-        return mesh;
+        this.mesh.constant('httpRequestScope', () => this.createHttpRequestScope());
+        this.mesh.alias('AppLogger', Logger);
+        this.mesh.service(HttpServer);
+        this.mesh.service(AutomationCloudJwtService);
+        this.mesh.service(AcAuthProvider, DefaultAcAuthProvider);
+        this.mesh.alias(JwtService, AutomationCloudJwtService);
+        this.mesh.constant('GlobalMetrics', getGlobalMetrics());
+        return this.mesh;
     }
 
     createHttpRequestScope(): Mesh {
-        const mesh = new Mesh('HttpRequest');
-        mesh.parent = this.mesh;
+        const mesh = new Mesh('HttpRequestScope', this.mesh);
         mesh.service(Logger, HttpRequestLogger);
-        mesh.service(MetricsRouter);
         return mesh;
     }
 
@@ -60,33 +46,17 @@ export class Application {
 
     async afterStop(): Promise<void> {}
 
-    async start() {
-        dotenv.config({ path: '.env' });
-        if (process.env.NODE_ENV === 'development') {
-            dotenv.config({ path: '.env.dev' });
-        }
-        if (process.env.NODE_ENV === 'test') {
-            dotenv.config({ path: '.env.test' });
-        }
-        process.on('uncaughtException', error => {
-            this.logger.error('uncaughtException', { error });
-        });
-        process.on('unhandledRejection', error => {
-            this.logger.error('unhandledRejection', { error });
-        });
-        process.on('SIGTERM', () => this.logger.info('Received SIGTERM'));
-        process.on('SIGINT', () => this.logger.info('Received SIGINT'));
-        process.on('SIGTERM', () => this.stop());
-        process.on('SIGINT', () => this.stop());
+    override async start() {
+        await super.start();
         if (this.ASSERT_CONFIGS_ON_START) {
             this.assertConfigs();
         }
+        await this.auxHttpServer.start();
         await this.beforeStart();
     }
 
-    async stop() {
-        // TODO uninstall process signals handlers better
-        process.removeAllListeners();
+    override async stop() {
+        await super.stop();
         await this.afterStop();
     }
 
