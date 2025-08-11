@@ -5,8 +5,6 @@ import { dep, Mesh } from 'mesh-ioc';
 
 import { HttpRequestLogger, HttpServer } from './http.js';
 import { getGlobalMetrics } from './metrics/global.js';
-import { AcAuthProvider, DefaultAcAuthProvider } from './services/ac-auth-provider.js';
-import { AutomationCloudJwtService, JwtService } from './services/jwt.js';
 
 
 /**
@@ -30,9 +28,6 @@ export class Application extends BaseApp {
         this.mesh.constant('httpRequestScope', () => this.createHttpRequestScope());
         this.mesh.alias('AppLogger', Logger);
         this.mesh.service(HttpServer);
-        this.mesh.service(AutomationCloudJwtService);
-        this.mesh.service(AcAuthProvider, DefaultAcAuthProvider);
-        this.mesh.alias(JwtService, AutomationCloudJwtService);
         this.mesh.constant('GlobalMetrics', getGlobalMetrics());
         return this.mesh;
     }

@@ -3,7 +3,7 @@ import crypto from 'crypto';
 import jsonwebtoken from 'jsonwebtoken';
 import { v4 as uuid } from 'uuid';
 
-import { Application, AutomationCloudJwtService } from '../../main/index.js';
+import { Application, AutomationCloudJwtService, JwtService } from '../../main/index.js';
 
 describe('AutomationCloudJwt', () => {
 
@@ -23,6 +23,8 @@ describe('AutomationCloudJwt', () => {
         };
 
         const app = new Application();
+        app.mesh.service(AutomationCloudJwtService);
+        app.mesh.alias(JwtService, AutomationCloudJwtService);
 
         beforeEach(async () => {
             jwtService = app.mesh.resolve(AutomationCloudJwtService);

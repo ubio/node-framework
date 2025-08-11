@@ -101,8 +101,8 @@ export class HttpServer extends Koa {
             })
         },
         {
-            name: 'acAuth',
-            middleware: this.createAcAuthMiddleware(),
+            name: 'auth',
+            middleware: this.createAuthMiddleware(),
         },
         {
             name: 'routing',
@@ -171,12 +171,14 @@ export class HttpServer extends Koa {
         };
     }
 
-    protected createAcAuthMiddleware(): Middleware {
+    protected createAuthMiddleware(): Middleware {
         return async (ctx: Koa.Context, next: Koa.Next) => {
             const mesh: Mesh = ctx.mesh;
-            const provider = mesh.resolve(AcAuthProvider);
-            const acAuth = await provider.provide(ctx.headers);
-            mesh.constant(AcAuth, acAuth);
+            const provider = mesh.tryResolve(AcAuthProvider);
+            if (provider) {
+                const acAuth = await provider.provide(ctx.headers);
+                mesh.constant(AcAuth, acAuth);
+            }
             return next();
         };
     }
