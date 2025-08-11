@@ -16,6 +16,7 @@ import { AutomationCloudJwtService, JwtService } from './services/jwt.js';
 export class Application extends BaseApp {
 
     @config({ default: false }) ASSERT_CONFIGS_ON_START!: boolean;
+    @config({ default: true }) START_AUX_HTTP_SERVER_ON_START!: boolean;
 
     @dep() httpServer!: HttpServer;
     @dep() auxHttpServer!: AuxHttpServer;
@@ -51,7 +52,9 @@ export class Application extends BaseApp {
         if (this.ASSERT_CONFIGS_ON_START) {
             this.assertConfigs();
         }
-        await this.auxHttpServer.start();
+        if (this.START_AUX_HTTP_SERVER_ON_START) {
+            await this.auxHttpServer.start();
+        }
         await this.beforeStart();
     }
 
