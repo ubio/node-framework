@@ -16,7 +16,7 @@ import { AcAuth } from './ac-auth.js';
 import { ClientError } from './exception.js';
 import { standardMiddleware } from './middleware.js';
 import { Router } from './router.js';
-import { AcAuthProvider } from './services/index.js';
+import { AuthContext, AuthProvider } from './services/index.js';
 import { findMeshInstances } from './util.js';
 
 interface MiddlewareSpec {
@@ -174,10 +174,10 @@ export class HttpServer extends Koa {
     protected createAuthMiddleware(): Middleware {
         return async (ctx: Koa.Context, next: Koa.Next) => {
             const mesh: Mesh = ctx.mesh;
-            const provider = mesh.tryResolve(AcAuthProvider);
+            const provider = mesh.tryResolve(AuthProvider);
             if (provider) {
-                const acAuth = await provider.provide(ctx.headers);
-                mesh.constant(AcAuth, acAuth);
+                const authContext = await provider.provide(ctx.headers);
+                mesh.constant(AuthContext<AcAuth>, authContext);
             }
             return next();
         };
