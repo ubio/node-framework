@@ -12,7 +12,6 @@ import { dep, Mesh } from 'mesh-ioc';
 import stoppable, { StoppableServer } from 'stoppable';
 import { constants } from 'zlib';
 
-import { AcAuth } from './ac-auth.js';
 import { ClientError } from './exception.js';
 import { standardMiddleware } from './middleware.js';
 import { Router } from './router.js';
@@ -185,7 +184,7 @@ export class HttpServer extends Koa {
             const mesh: Mesh = ctx.mesh;
             const provider = mesh.resolve(AuthProvider);
             const authContext = await provider.provide(ctx.headers);
-            mesh.constant(AuthContext<AcAuth>, authContext);
+            mesh.constant(AuthContext, authContext);
             return next();
         };
     }
