@@ -7,7 +7,6 @@ import { Mesh } from 'mesh-ioc';
 import {
     AcAuthProvider,
     AuthenticationError,
-    DefaultAcAuthProvider,
     JwtService,
     StandardLogger,
 } from '../../../main/index.js';
@@ -16,15 +15,14 @@ describe('AcAuthProvider', () => {
 
     let mesh: Mesh;
     let fetchMock: request.FetchMock;
-    let authProvider: DefaultAcAuthProvider;
+    let authProvider: AcAuthProvider;
     let headers: any = {};
     let jwt: any = {};
 
     beforeEach(() => {
         mesh = new Mesh();
         mesh.service(Logger, StandardLogger);
-        mesh.service(DefaultAcAuthProvider);
-        mesh.alias(AcAuthProvider, DefaultAcAuthProvider);
+        mesh.service(AcAuthProvider);
         mesh.service(Config, ProcessEnvConfig);
         mesh.constant(JwtService, {
             async decodeAndVerify(token: string) {
@@ -35,7 +33,7 @@ describe('AcAuthProvider', () => {
             }
         });
         fetchMock = request.fetchMock({ status: 200 }, { token: 'jwt-token-here' });
-        authProvider = mesh.resolve(DefaultAcAuthProvider);
+        authProvider = mesh.resolve(AcAuthProvider);
         authProvider.clientRequest.config.fetch = fetchMock;
         jwt = {
             context: {
@@ -48,12 +46,12 @@ describe('AcAuthProvider', () => {
     afterEach(() => {
         jwt = {};
         headers = {};
-        DefaultAcAuthProvider.middlewareTokensCache = new Map();
+        AcAuthProvider.middlewareTokensCache = new Map();
     });
 
     describe('x-ubio-auth header exists', () => {
         beforeEach(() => {
-            const authHeader = mesh.resolve(DefaultAcAuthProvider).AC_AUTH_HEADER_NAME;
+            const authHeader = mesh.resolve(AcAuthProvider).AC_AUTH_HEADER_NAME;
             headers[authHeader] = 'Bearer jwt-token-here';
         });
 
@@ -68,7 +66,7 @@ describe('AcAuthProvider', () => {
         });
 
         it('throws when jwt is not valid', async () => {
-            const authHeader = mesh.resolve(DefaultAcAuthProvider).AC_AUTH_HEADER_NAME;
+            const authHeader = mesh.resolve(AcAuthProvider).AC_AUTH_HEADER_NAME;
             headers[authHeader] = 'Bearer unknown-jwt-token';
             try {
                 await authProvider.provide(headers);
@@ -94,8 +92,8 @@ describe('AcAuthProvider', () => {
         it('does not send request if Authorization is cached', async () => {
             const ttl = 60000;
             const margin = 1000;
-            DefaultAcAuthProvider.middlewareCacheTtl = ttl;
-            DefaultAcAuthProvider.middlewareTokensCache.set('AUTH', {
+            AcAuthProvider.middlewareCacheTtl = ttl;
+            AcAuthProvider.middlewareTokensCache.set('AUTH', {
                 token: 'jwt-token-here',
                 authorisedAt: Date.now() - ttl + margin
             });
@@ -109,8 +107,8 @@ describe('AcAuthProvider', () => {
         it('sends request if cache has expired', async () => {
             const ttl = 60000;
             const margin = 1000;
-            DefaultAcAuthProvider.middlewareCacheTtl = ttl;
-            DefaultAcAuthProvider.middlewareTokensCache.set('AUTH', { token: 'jwt-token-here', authorisedAt: Date.now() - ttl - margin });
+            AcAuthProvider.middlewareCacheTtl = ttl;
+            AcAuthProvider.middlewareTokensCache.set('AUTH', { token: 'jwt-token-here', authorisedAt: Date.now() - ttl - margin });
             headers['authorization'] = 'AUTH';
             assert.strictEqual(fetchMock.spy.called, false);
             const auth = await authProvider.provide(headers);
@@ -140,7 +138,7 @@ describe('AcAuthProvider', () => {
 
     describe('acAuth', () => {
         beforeEach(() => {
-            const authHeader = mesh.resolve(DefaultAcAuthProvider).AC_AUTH_HEADER_NAME;
+            const authHeader = mesh.resolve(AcAuthProvider).AC_AUTH_HEADER_NAME;
             headers[authHeader] = 'Bearer jwt-token-here';
         });
 
@@ -149,7 +147,7 @@ describe('AcAuthProvider', () => {
                 it('sets auth.organisationId', async () => {
                     jwt.context.organisation_id = 'some-user-org-id';
                     const auth = await authProvider.provide(headers);
-                    const organisationId = auth.getOrganisationId();
+                    const organisationId = auth.getAuthToken()?.getOrganisationId();
                     assert.strictEqual(organisationId, 'some-user-org-id');
                 });
             });
@@ -158,7 +156,7 @@ describe('AcAuthProvider', () => {
                 it('sets auth.organisationId', async () => {
                     headers['x-ubio-organisation-id'] = 'org-id-from-header';
                     const auth = await authProvider.provide(headers);
-                    const organisationId = auth.getOrganisationId();
+                    const organisationId = auth.getAuthToken()?.getOrganisationId();
                     assert.strictEqual(organisationId, 'org-id-from-header');
                 });
             });
@@ -168,7 +166,7 @@ describe('AcAuthProvider', () => {
                     jwt.context['organisation_id'] = 'org-id-from-jwt';
                     headers['x-ubio-organisation-id'] = 'org-id-from-header';
                     const auth = await authProvider.provide(headers);
-                    const organisationId = auth.getOrganisationId();
+                    const organisationId = auth.getAuthToken()?.getOrganisationId();
                     assert.strictEqual(organisationId, 'org-id-from-jwt');
                 });
             });
@@ -182,7 +180,7 @@ describe('AcAuthProvider', () => {
                         service_account_name: 'Bot'
                     };
                     const auth = await authProvider.provide(headers);
-                    const serviceAccount = auth.actor;
+                    const serviceAccount = auth.getAuthToken()?.actor;
                     assert.ok(serviceAccount?.type === 'ServiceAccount');
                     assert.strictEqual(serviceAccount.id, 'some-service-account-id');
                     assert.strictEqual(serviceAccount.name, 'Bot');
@@ -195,7 +193,7 @@ describe('AcAuthProvider', () => {
                         organisation_id: 'ubio-organisation-id',
                     };
                     const auth = await authProvider.provide(headers);
-                    const serviceAccount = auth.actor;
+                    const serviceAccount = auth.getAuthToken()?.actor;
                     assert.ok(serviceAccount?.type === 'ServiceAccount');
                     assert.strictEqual(serviceAccount.id, 'some-service-account-id');
                     assert.strictEqual(serviceAccount.name, 'Bot');
@@ -209,7 +207,7 @@ describe('AcAuthProvider', () => {
                         client_name: 'Ron Swanson',
                     };
                     const auth = await authProvider.provide(headers);
-                    const serviceAccount = auth.actor;
+                    const serviceAccount = auth.getAuthToken()?.actor;
                     assert.ok(serviceAccount?.type === 'ServiceAccount');
                     assert.strictEqual(serviceAccount.clientId, 'ClientA');
                     assert.strictEqual(serviceAccount.clientName, 'Ron Swanson');
@@ -226,7 +224,7 @@ describe('AcAuthProvider', () => {
                         organisation_id: 'ubio-organisation-id',
                     };
                     const auth = await authProvider.provide(headers);
-                    const client = auth.actor;
+                    const client = auth.getAuthToken()?.actor;
                     assert.ok(client?.type === 'Client');
                     assert.strictEqual(client.id, 'some-client-id');
                     assert.strictEqual(client.name, 'UbioAir');
@@ -241,7 +239,7 @@ describe('AcAuthProvider', () => {
                         client_name: 'UbioAir',
                     };
                     const auth = await authProvider.provide(headers);
-                    const actor = auth.actor;
+                    const actor = auth.getAuthToken()?.actor;
                     assert.ok(actor?.type === 'JobAccessToken');
                 });
             });
@@ -256,7 +254,7 @@ describe('AcAuthProvider', () => {
                         organisation_id: 'ubio-organisation-id',
                     };
                     const auth = await authProvider.provide(headers);
-                    const user = auth.actor;
+                    const user = auth.getAuthToken()?.actor;
                     assert.ok(user?.type === 'User');
                     assert.strictEqual(user.id, 'some-user-id');
                     assert.strictEqual(user.name, 'Travel Aggregator');
@@ -269,7 +267,7 @@ describe('AcAuthProvider', () => {
                         organisation_id: 'ubio-organisation-id',
                     };
                     const auth = await authProvider.provide(headers);
-                    const user = auth.actor;
+                    const user = auth.getAuthToken()?.actor;
                     assert.ok(user?.type === 'User');
                     assert.strictEqual(user.id, 'some-user-id');
                     assert.strictEqual(user.name, '');
@@ -284,7 +282,7 @@ describe('AcAuthProvider', () => {
                         user_name: 'some-user-name'
                     };
                     const auth = await authProvider.provide(headers);
-                    const user = auth.actor;
+                    const user = auth.getAuthToken()?.actor;
                     assert.ok(user == null);
                 });
             });
@@ -300,7 +298,7 @@ describe('AcAuthProvider', () => {
                         organisation_id: 'ubio-organisation-id',
                     };
                     const auth = await authProvider.provide(headers);
-                    const jobAccessToken = auth.actor;
+                    const jobAccessToken = auth.getAuthToken()?.actor;
                     assert.ok(jobAccessToken?.type === 'JobAccessToken');
                     assert.strictEqual(jobAccessToken.jobId, 'some-job-id');
                     assert.strictEqual(jobAccessToken.clientId, 'some-client-id');
@@ -315,7 +313,7 @@ describe('AcAuthProvider', () => {
                         organisation_id: 'ubio-organisation-id',
                     };
                     const auth = await authProvider.provide(headers);
-                    const jobAccessToken = auth.actor;
+                    const jobAccessToken = auth.getAuthToken()?.actor;
                     assert.ok(jobAccessToken == null);
                 });
 
@@ -326,7 +324,7 @@ describe('AcAuthProvider', () => {
                         client_name: 'Travel Aggregator',
                     };
                     const auth = await authProvider.provide(headers);
-                    const jobAccessToken = auth.actor;
+                    const jobAccessToken = auth.getAuthToken()?.actor;
                     assert.ok(jobAccessToken == null);
                 });
             });

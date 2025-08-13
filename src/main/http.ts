@@ -12,11 +12,10 @@ import { dep, Mesh } from 'mesh-ioc';
 import stoppable, { StoppableServer } from 'stoppable';
 import { constants } from 'zlib';
 
-import { AcAuth } from './ac-auth.js';
 import { ClientError } from './exception.js';
 import { standardMiddleware } from './middleware.js';
 import { Router } from './router.js';
-import { AcAuthProvider } from './services/index.js';
+import { AuthContext, AuthProvider } from './services/index.js';
 import { findMeshInstances } from './util.js';
 
 interface MiddlewareSpec {
@@ -40,6 +39,7 @@ export class HttpServer extends Koa {
     @dep() protected logger!: Logger;
     @dep({ key: 'httpRequestScope' })
     protected createRequestScope!: () => Mesh;
+    @dep() protected mesh!: Mesh;
 
     protected middlewares: MiddlewareSpec[] = [
         {
@@ -101,8 +101,8 @@ export class HttpServer extends Koa {
             })
         },
         {
-            name: 'acAuth',
-            middleware: this.createAcAuthMiddleware(),
+            name: 'auth',
+            middleware: this.createAuthMiddleware(),
         },
         {
             name: 'routing',
@@ -117,7 +117,15 @@ export class HttpServer extends Koa {
     }
 
     addStandardMiddleware(): this {
-        this.middlewares.forEach(m => this.use(m.middleware));
+        this.middlewares.forEach(m => {
+            if (m.name === 'auth') {
+                if (this.mesh.tryResolve(AuthProvider) !== undefined) {
+                    this.use(m.middleware);
+                }
+            } else {
+                this.use(m.middleware);
+            }
+        });
 
         return this;
     }
@@ -171,12 +179,12 @@ export class HttpServer extends Koa {
         };
     }
 
-    protected createAcAuthMiddleware(): Middleware {
+    protected createAuthMiddleware(): Middleware {
         return async (ctx: Koa.Context, next: Koa.Next) => {
             const mesh: Mesh = ctx.mesh;
-            const provider = mesh.resolve(AcAuthProvider);
-            const acAuth = await provider.provide(ctx.headers);
-            mesh.constant(AcAuth, acAuth);
+            const provider = mesh.resolve(AuthProvider);
+            const authContext = await provider.provide(ctx.headers);
+            mesh.constant(AuthContext, authContext);
             return next();
         };
     }

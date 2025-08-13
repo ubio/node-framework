@@ -11,7 +11,7 @@ import { Exception } from './exception.js';
 export type Constructor<T> = new (...args: any[]) => T;
 export type AnyConstructor = new (...args: any[]) => {};
 
-export function deepClone<T>(data: T): T {
+export function deepClone<T>(data: T): T | null {
     return data == null ? null : JSON.parse(JSON.stringify(data));
 }
 
@@ -104,4 +104,11 @@ export function findMeshInstances<T>(mesh: Mesh, ctor: ServiceConstructor<T>): T
         instances.push(...findMeshInstances(mesh.parent, ctor));
     }
     return instances;
+}
+
+export function getSingleValue<T>(value: T | T[] | undefined): T | undefined {
+    if (Array.isArray(value)) {
+        return value[0];
+    }
+    return value;
 }
