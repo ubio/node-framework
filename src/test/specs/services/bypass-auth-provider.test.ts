@@ -12,9 +12,14 @@ describe('BypassAuthProvider', () => {
 
     class App extends Application {
 
+        override createGlobalScope() {
+            const mesh = super.createGlobalScope();
+            mesh.service(AuthProvider, BypassAcAuthProvider);
+            return mesh;
+        }
+
         override createHttpRequestScope() {
             const mesh = super.createHttpRequestScope();
-            mesh.service(AuthProvider, BypassAcAuthProvider);
             mesh.service(AccessRouter);
             return mesh;
         }
