@@ -107,10 +107,8 @@ export function findMeshInstances<T>(mesh: Mesh, ctor: ServiceConstructor<T>): T
 }
 
 export function getSingleValue<T>(value: T | T[] | undefined): T | undefined {
-    if (typeof value === 'string') {
-        return value;
-    }
     if (Array.isArray(value)) {
         return value[0];
     }
+    return value;
 }
