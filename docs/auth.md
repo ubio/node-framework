@@ -6,12 +6,28 @@ Automation Cloud infrastructure features "highly sophisticated" request authenti
 
 Node Framework does its best to abstract away all the complexity, allowing apps to focus on what they are supposed to be doing.
 
-`AcAuth` object exposes identity information of current request, as well as convenience methods for request authorisation.
+The framework exports a default implementation of auth provider for Automation Cloud. Although, (starting from version 16.x) this service is optional and needs explicity installation (including its dependencies, i.e. a JWT service).
+
+```ts
+class App extends Application {
+
+    override createGlobalScope() {
+        // starting from version 16.x, the following lines are required to use AC auth (default) service implementation
+        const mesh = super.createGlobalScope();
+        mesh.service(AuthProvider, AcAuthProvider);
+        mesh.service(JwtService, AutomationCloudJwtService);
+    }
+}
+```
+
+`AuthContext<AuthToken>` object exposes identity information of current request, as well as convenience methods for request authorisation.
+
+`AuthToken` object type is based on the implementation of the `AuthProvider` registered. You may specify any auth token object type, i.e `AuthContext<AcAuth>`. In order to retrieve specific data from a auth token type, you need to retrieve it from the auth context object with `authContenxt.getToken()`.
 
 ```ts
 export class MyRouter extends Router {
 
-    @dep() auth!: AcAuth;
+    @dep() auth!: AuthContext<AcAuth>;
 
     @Middleware()
     async authorise() {
@@ -25,7 +41,7 @@ export class MyRouter extends Router {
     })
     async helloOrg() {
         // throws 403 when organisationId cannot be extracted from request details
-        const organisationId = this.auth.requireOrganisationId();
+        const organisationId = this.auth.getAuthToken().requireOrganisationId();
         return { message: '👋 Hello ' + organisationId };
     }
 
@@ -35,7 +51,7 @@ export class MyRouter extends Router {
     })
     async helloServiceAccount() {
         // throws 403 when serviceAccount info cannot be extracted from request details
-        const serviceAccountId = this.auth.requireServiceAccountId();
+        const serviceAccountId = this.auth.getAuthToken().requireServiceAccountId();
         return { message: '👋 Hello ' + serviceAccountId };
     }
 }
@@ -43,20 +59,22 @@ export class MyRouter extends Router {
 
 ## Mocking auth in tests
 
-In integration tests it is useful to mock `AcAuth` by providing a custom implementation of `AcAuthProvider`:
+In integration tests it is useful to mock `AuthContext` by providing a custom implementation of `AcAuthProvider`:
 
 ```ts
 class App extends Application {
 
-    override createHttpRequestScope() {
-        const mesh = super.createHttpRequestScope();
+    override createGlobalScope() {
+        const mesh = super.createGlobalScope();
         mesh.constant(AcAuthProvider, {
             async provide() {
-                return new AcAuth({
-                    authenticated: true,
-                    organisationId: 'my-fake-org-id',
-                    serviceAccountId: 'my-face-service-account-id',
-                });
+                return new AuthContext(
+                    new AcAuth({
+                        authenticated: true,
+                        organisationId: 'my-fake-org-id',
+                        serviceAccountId: 'my-face-service-account-id',
+                    })
+                );
             }
         });
         return mesh;
