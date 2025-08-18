@@ -75,6 +75,6 @@ Note: scope simply refers to and individual `Mesh` instance. For example, when r
 
 When application is processing HTTP requests, a number of request-scoped components can be bound to Router classes:
 
-- `AcAuth` (Automation Cloud identity and authorisation data)
+- `AuthContext<AcAuth>` (Automation Cloud identity and authorisation data)
 - `KoaContext` (bound by string `"KoaContext"` service identifier) — [Koa](https://koajs.org) context object
 - `Logger` (rebound to `RequestLogger`) which includes request-specific data

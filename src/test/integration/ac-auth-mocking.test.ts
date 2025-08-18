@@ -2,39 +2,44 @@ import assert from 'assert';
 import { dep } from 'mesh-ioc';
 import supertest from 'supertest';
 
-import { AcAuth, AcAuthProvider, Application, Get, Router } from '../../main/index.js';
+import { AcAuth, Application, AuthContext, AuthProvider, Get, Router } from '../../main/index.js';
 
 describe('Mocking AcAuth', () => {
 
     class MyRouter extends Router {
 
-        @dep() protected auth!: AcAuth;
+        @dep() protected auth!: AuthContext<AcAuth>;
 
         @Get({
             path: '/foo'
         })
         foo() {
-            return { ...this.auth };
+            return { ...this.auth.getAuthToken() };
         }
 
     }
 
     class App extends Application {
 
-        override createHttpRequestScope() {
-            const mesh = super.createHttpRequestScope();
-            mesh.service(MyRouter);
-            mesh.constant(AcAuthProvider, {
+        override createGlobalScope() {
+            const mesh = super.createGlobalScope();
+            mesh.constant(AuthProvider, {
                 async provide() {
-                    return new AcAuth({
+                    return new AuthContext(new AcAuth({
                         jwtContext: {
                             organisation_id: 'foo',
                             service_account_id: 'service-account-worker',
                             service_account_name: 'Bot',
                         }
-                    });
+                    }));
                 }
             });
+            return mesh;
+        }
+
+        override createHttpRequestScope() {
+            const mesh = super.createHttpRequestScope();
+            mesh.service(MyRouter);
             return mesh;
         }
 

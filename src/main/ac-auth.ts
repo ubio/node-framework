@@ -58,16 +58,6 @@ export class AcAuth {
         this.actor = spec.jwtContext == null ? null : this.parseActor(spec.jwtContext);
     }
 
-    isAuthenticated() {
-        return this.actor != null;
-    }
-
-    checkAuthenticated(): void {
-        if (!this.isAuthenticated()) {
-            throw new AuthenticationError();
-        }
-    }
-
     getOrganisationId(): string | null {
         return this.actor?.organisationId ?? null;
     }
@@ -166,11 +156,6 @@ export class AcAuth {
         }
         return null;
     }
-}
-
-export class AuthenticationError extends ClientError {
-    override status = 401;
-    override message = 'Authentication is required';
 }
 
 export class AccessForbidden extends ClientError {

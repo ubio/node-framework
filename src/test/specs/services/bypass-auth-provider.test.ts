@@ -2,8 +2,8 @@ import assert from 'assert';
 import supertest from 'supertest';
 
 import {
-    AcAuthProvider,
     Application,
+    AuthProvider,
     BypassAcAuthProvider,
 } from '../../../main/index.js';
 import { AccessRouter } from '../../routes/access.js';
@@ -12,9 +12,14 @@ describe('BypassAuthProvider', () => {
 
     class App extends Application {
 
+        override createGlobalScope() {
+            const mesh = super.createGlobalScope();
+            mesh.service(AuthProvider, BypassAcAuthProvider);
+            return mesh;
+        }
+
         override createHttpRequestScope() {
             const mesh = super.createHttpRequestScope();
-            mesh.service(AcAuthProvider, BypassAcAuthProvider);
             mesh.service(AccessRouter);
             return mesh;
         }

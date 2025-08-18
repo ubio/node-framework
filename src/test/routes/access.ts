@@ -1,10 +1,10 @@
 import { dep } from 'mesh-ioc';
 
-import { AcAuth, Get, Router } from '../../main/index.js';
+import { AcAuth, AuthContext, Get, Router } from '../../main/index.js';
 
 export class AccessRouter extends Router {
 
-    @dep() protected auth!: AcAuth;
+    @dep() protected auth!: AuthContext<AcAuth>;
 
     @Get({
         path: '/public',

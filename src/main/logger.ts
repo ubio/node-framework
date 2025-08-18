@@ -1,7 +1,8 @@
 import { ConsoleLogger, DefaultLogFormatter, LOG_LEVELS, LogfmtFormatter, Logger, LogLevel, LogPayload, StructuredLogFormatter } from '@nodescript/logger';
 import { config } from 'mesh-config';
+import { dep } from 'mesh-ioc';
 
-import { getGlobalMetrics } from './metrics/global.js';
+import { GlobalMetrics } from './metrics/global.js';
 
 export {
     LOG_LEVELS,
@@ -19,6 +20,8 @@ export class StandardLogger extends ConsoleLogger {
     @config({ default: false })
     LOG_LOGFMT!: boolean;
 
+    @dep() protected globalMetrics!: GlobalMetrics;
+
     constructor() {
         super();
         this.formatter = this.LOG_PRETTY ? new DefaultLogFormatter() :
@@ -27,7 +30,7 @@ export class StandardLogger extends ConsoleLogger {
     }
 
     override write(payload: LogPayload) {
-        getGlobalMetrics().appLogsTotal.incr(1, { severity: payload.level });
+        this.globalMetrics.appLogsTotal.incr(1, { severity: payload.level });
         super.write(payload);
     }
 

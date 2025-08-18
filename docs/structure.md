@@ -53,7 +53,7 @@ export class App extends Application {
         await this.mongoDb.client.connect();
         // Add other code to execute on application startup
         await this.httpServer.startServer();
-    });
+    };
 
     override async afterStop() {
         await this.httpServer.stopServer();
