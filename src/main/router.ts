@@ -7,7 +7,7 @@ import { config } from 'mesh-config';
 import { dep } from 'mesh-ioc';
 
 import { ClientError, Exception } from './exception.js';
-import { getGlobalMetrics } from './metrics/global.js';
+import { GlobalMetrics } from './metrics/global.js';
 import { ajvErrorToMessage, AnyConstructor, Constructor, deepClone } from './util.js';
 
 const ROUTES_KEY = Symbol('Route');
@@ -134,6 +134,7 @@ export class Router {
 
     @dep() protected logger!: Logger;
     @dep({ key: 'KoaContext' }) protected ctx!: koa.Context;
+    @dep() protected globalMetrics!: GlobalMetrics;
 
     @config({ default: false }) HTTP_VALIDATE_RESPONSES!: boolean;
 
@@ -152,7 +153,7 @@ export class Router {
                 route,
                 ...getAfterHookRoutes(this.constructor as Constructor<Router>),
             ];
-            await getGlobalMetrics().handlerDuration.measure(async () => {
+            await this.globalMetrics.handlerDuration.measure(async () => {
                 // Route matched, now execute all middleware first, then execute the route itself
                 const response = await this.handleRoutes(routes);
                 this.ctx.body = response ?? this.ctx.body ?? {};

@@ -4,7 +4,7 @@ import { Config, config, ConfigError, getMeshConfigs } from 'mesh-config';
 import { dep, Mesh } from 'mesh-ioc';
 
 import { HttpRequestLogger, HttpServer } from './http.js';
-import { getGlobalMetrics } from './metrics/global.js';
+import { GlobalMetrics } from './metrics/global.js';
 
 
 /**
@@ -28,7 +28,7 @@ export class Application extends BaseApp {
         this.mesh.constant('httpRequestScope', () => this.createHttpRequestScope());
         this.mesh.alias('AppLogger', Logger);
         this.mesh.service(HttpServer);
-        this.mesh.constant('GlobalMetrics', getGlobalMetrics());
+        this.mesh.service(GlobalMetrics);
         return this.mesh;
     }
 

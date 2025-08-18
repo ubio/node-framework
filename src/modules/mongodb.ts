@@ -3,7 +3,7 @@ import { config } from 'mesh-config';
 import { dep } from 'mesh-ioc';
 import { Db, MongoClient } from 'mongodb';
 
-import { getGlobalMetrics } from '../main/index.js';
+import { GlobalMetrics } from '../main/index.js';
 
 export class MongoDb {
     client: MongoClient;
@@ -15,6 +15,7 @@ export class MongoDb {
     @config({ default: 10000 }) MONGO_METRICS_REFRESH_INTERVAL!: number;
 
     @dep() protected logger!: Logger;
+    @dep() protected globalMetrics!: GlobalMetrics;
 
     constructor() {
         this.client = new MongoClient(this.MONGO_URL, {
@@ -52,12 +53,11 @@ export class MongoDb {
     protected async refreshMetricsLoop() {
         while (this.refreshingMetrics) {
             try {
-                const metrics = getGlobalMetrics();
                 const collections = await this.db.listCollections().toArray();
                 const counts = await Promise.all(
                     collections.map(col => this.db.collection(col.name).estimatedDocumentCount()));
                 for (const [i, col] of collections.entries()) {
-                    metrics.mongoDocumentsTotal.set(counts[i], {
+                    this.globalMetrics.mongoDocumentsTotal.set(counts[i], {
                         collection: col.name,
                         db: this.db.databaseName,
                     });
