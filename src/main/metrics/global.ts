@@ -1,17 +1,15 @@
-import { MetricsRegistry } from './registry.js';
+import { CounterMetric, GaugeMetric, HistogramMetric, metric } from '@nodescript/metrics';
 
 const METRICS_GLOBAL_KEY = Symbol.for('@ubio/framework:globalMetrics');
 
-export class GlobalMetricsRegistry extends MetricsRegistry {
-    methodDuration = this.histogram('app_method_duration_seconds',
+export class GlobalMetricsRegistry {
+    @metric() methodDuration = new HistogramMetric('app_method_duration_seconds',
         'Performance measurements taken for a particular class method');
-    handlerDuration = this.histogram('app_handler_duration_seconds',
+    @metric() handlerDuration = new HistogramMetric('app_handler_duration_seconds',
         'Application performance measurements');
-
-    mongoDocumentsTotal = this.gauge('mongo_documents_total',
+    @metric() mongoDocumentsTotal = new GaugeMetric('mongo_documents_total',
         'Estimated count of MongoDB documents, per collection');
-
-    appLogsTotal = this.counter('app_logs_total',
+    @metric() appLogsTotal = new CounterMetric('app_logs_total',
         'Total count of log lines by severity');
 }
 
