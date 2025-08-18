@@ -1,3 +1,17 @@
+## 16.0.0
+
+- feat: New `AuthProvider` service to handle app auth. It's a generic and optional (not set by default) service
+- feat: Endpoint `GET /status` is exposed from framework by default (this can be removed from apps)
+- feat: `GlobalMetrics` is a now service (previously available in the `global` object)
+- BREAKING CHANGES:
+  - AcAuthProvider (and its dependencies) must be explicity setup (default implementation is available in the framework)
+  - Auth object (previously `AcAuth`) has new format (check [Auth docs](./docs/auth.md#automation-cloud-authentication--authorisation))
+  - `GlobalMetrics` removed from `global` object, now available as a service in mesh container
+
+## 15.12.0
+
+- feat: New `@AfterHook()` decorator to handle after request flows
+
 ## 15.8.0
 
 - It is no longer necessary to inherit from ClientError to have error in response; any error with numeric `status` field will be presented as is.
