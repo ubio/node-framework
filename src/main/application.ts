@@ -55,6 +55,9 @@ export class Application extends BaseApp {
 
     override async stop() {
         await super.stop();
+        if (this.START_AUX_HTTP_SERVER_ON_START) {
+            await this.auxHttpServer.stop();
+        }
         await this.afterStop();
     }
 
