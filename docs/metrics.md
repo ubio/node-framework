@@ -69,7 +69,7 @@ In this example, `app_method_latencies_seconds{class="MyClass",method="doWork"}`
 
 ### Metrics endpoint
 
-By default, the application will run a http server (in a different port) that handles requests to `GET /metrics` endpoint, unless configured otherwise (i.e. `START_AUX_HTTP_SERVER_ON_START=false` is set). So, you don't have to do anything to expose the metrics reports.
+By default, the application will run a http server (in a different port) that handles requests to `GET /metrics` endpoint, unless configured otherwise (i.e. `START_AUX_HTTP_ON_START=false` is set). So, you don't have to do anything to expose the metrics reports.
 
 This endpoint reports metrics from all registered ones, which are:
 
