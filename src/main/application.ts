@@ -14,7 +14,7 @@ import { GlobalMetrics } from './metrics/global.js';
 export class Application extends BaseApp {
 
     @config({ default: false }) ASSERT_CONFIGS_ON_START!: boolean;
-    @config({ default: true }) START_AUX_HTTP_SERVER_ON_START!: boolean;
+    @config({ default: true }) START_AUX_HTTP_ON_START!: boolean;
 
     @dep() httpServer!: HttpServer;
     @dep() auxHttpServer!: AuxHttpServer;
@@ -47,7 +47,7 @@ export class Application extends BaseApp {
         if (this.ASSERT_CONFIGS_ON_START) {
             this.assertConfigs();
         }
-        if (this.START_AUX_HTTP_SERVER_ON_START) {
+        if (this.START_AUX_HTTP_ON_START) {
             await this.auxHttpServer.start();
         }
         await this.beforeStart();
@@ -55,7 +55,7 @@ export class Application extends BaseApp {
 
     override async stop() {
         await super.stop();
-        if (this.START_AUX_HTTP_SERVER_ON_START) {
+        if (this.START_AUX_HTTP_ON_START) {
             await this.auxHttpServer.stop();
         }
         await this.afterStop();
