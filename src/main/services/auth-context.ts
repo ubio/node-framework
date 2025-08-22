@@ -1,13 +1,15 @@
 import { ClientError } from '@nodescript/errors';
 
-export type AuthToken = object;
+export interface AuthToken {
+    isValid(): boolean;
+}
 
 export class AuthContext<T extends AuthToken | null> {
 
     constructor(private authToken: T) {}
 
     isAuthenticated() {
-        return this.authToken != null;
+        return this.authToken != null && this.authToken.isValid();
     }
 
     checkAuthenticated(): void {

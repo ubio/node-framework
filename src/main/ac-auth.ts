@@ -1,6 +1,7 @@
 /* eslint-disable camelcase */
 
 import { ClientError } from './exception.js';
+import { AuthToken } from './services/auth-context.js';
 
 export interface AcAuthSpec {
     jwtContext?: AcJwtContext;
@@ -51,11 +52,15 @@ export interface AcJobAccessToken {
     clientName: string;
 }
 
-export class AcAuth {
+export class AcAuth implements AuthToken {
     actor: AcActor | null = null;
 
     constructor(spec: AcAuthSpec = {}) {
         this.actor = spec.jwtContext == null ? null : this.parseActor(spec.jwtContext);
+    }
+
+    isValid(): boolean {
+        return this.actor != null;
     }
 
     getOrganisationId(): string | null {
