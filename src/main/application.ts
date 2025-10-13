@@ -82,4 +82,15 @@ export class Application extends BaseApp {
         }
     }
 
+    /**
+     * Expose configureEnv from BaseApp for direct invocation.
+     *
+     * @example
+     * const app = new App();
+     * app.configureEnv(); // Load .env files without calling app.start()
+     */
+    override configureEnv(): void {
+        super.configureEnv();
+    }
+
 }
