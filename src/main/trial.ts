@@ -22,10 +22,11 @@ export interface TokenServiceRestriction {
 export class TrialClient {
 
     @config() private REDIS_URL!: string;
-    @config({ default: 'cache:framework:trialClient' }) private TRIAL_KEY_PREFIX!: string;
     @dep() private logger!: Logger;
 
     private isRunning = false;
+    private trialKeyPrefix = 'cache:framework:trialClient';
+
     redisClient: Redis;
 
     constructor() {
@@ -69,7 +70,7 @@ export class TrialClient {
         return trial;
     }
 
-    async requireServiceRestriction(trial: Trial, token: Record<string, any>, serviceName: string) {
+    async requireValidServiceRestriction(trial: Trial, token: Record<string, any>, serviceName: string) {
         const serviceRestriction = trial.serviceRestrictions.find((service: TrialServiceRestriction) => service.serviceName === serviceName);
         const tokenServiceRestriction = token.serviceRestrictions.find((service: TokenServiceRestriction) => service.serviceName === serviceName);
 
@@ -79,13 +80,13 @@ export class TrialClient {
         if (serviceRestriction.requestCount > tokenServiceRestriction.requestLimit) {
             throw new AccessForbidden('Trial token has exceeded request limit for service');
         }
-        return serviceRestriction;
     }
 
     async incrementRequests(token: Record<string, any>, serviceName: string) {
         const trial = await this.assertTrial(token);
-        const serviceRestriction = await this.requireServiceRestriction(trial, token, serviceName);
-        serviceRestriction.requestCount++;
+        await this.requireValidServiceRestriction(trial, token, serviceName);
+        const index = trial.serviceRestrictions.findIndex((service: TrialServiceRestriction) => service.serviceName === serviceName);
+        trial.serviceRestrictions[index].requestCount++;
         await this.update(token.clientId, trial);
     }
 
@@ -94,11 +95,11 @@ export class TrialClient {
         if (existing) {
             throw new Error('Trial data already exists for key');
         }
-        await this.redisClient.setex(`${this.TRIAL_KEY_PREFIX}:${key}`, expirySeconds, JSON.stringify(value));
+        await this.redisClient.setex(`${this.trialKeyPrefix}:${key}`, expirySeconds, JSON.stringify(value));
     }
 
     async read(key: string): Promise<Trial | null> {
-        const existing = await this.redisClient.get(`${this.TRIAL_KEY_PREFIX}:${key}`);
+        const existing = await this.redisClient.get(`${this.trialKeyPrefix}:${key}`);
         if (existing) {
             return JSON.parse(existing);
         }
@@ -106,10 +107,10 @@ export class TrialClient {
     }
 
     async update(key: string, value: Trial) {
-        await this.redisClient.set(`${this.TRIAL_KEY_PREFIX}:${key}`, JSON.stringify(value), 'KEEPTTL');
+        await this.redisClient.set(`${this.trialKeyPrefix}:${key}`, JSON.stringify(value), 'KEEPTTL');
     }
 
     async delete(key: string): Promise<void> {
-        await this.redisClient.del(`${this.TRIAL_KEY_PREFIX}:${key}`);
+        await this.redisClient.del(`${this.trialKeyPrefix}:${key}`);
     }
 }
