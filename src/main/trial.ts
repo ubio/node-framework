@@ -5,15 +5,6 @@ import { dep } from 'mesh-ioc';
 
 import { AccessForbidden } from './ac-auth.js';
 
-export interface TrialServiceRestriction {
-    serviceName: string;
-    requestCount: number;
-}
-
-export interface Trial {
-    serviceRestrictions: Array<TrialServiceRestriction>;
-}
-
 export interface TokenServiceRestriction {
     serviceName: string;
     requestLimit: number;
@@ -51,6 +42,35 @@ export class TrialClient {
         }
     }
 
+    isTrialToken(token: Record<string, any>) {
+        return !!token.serviceRestrictions;
+    }
+
+    async requireValidServiceRestriction(token: Record<string, any>, serviceName: string) {
+        const serviceRestriction = token.serviceRestrictions.find((s: TokenServiceRestriction) => s.serviceName === serviceName);
+        if (!serviceRestriction) {
+            throw new AccessForbidden('Service access not configured on token');
+        }
+        const requestCount = await this.getRequestCount(token.clientId, serviceName);
+        if (requestCount >= serviceRestriction.requestLimit) {
+            throw new AccessForbidden('Trial token has exceeded request limit for service');
+        }
+    }
+
+    async incrementRequests(token: Record<string, any>, serviceName: string) {
+        const redisKey = this.getServiceKey(token.clientId, serviceName);
+        await this.redisClient.hincrby(redisKey, 'requestCount', 1);
+    }
+
+    async getRequestCount(clientId: string, serviceName: string) {
+        const redisKey = this.getServiceKey(clientId, serviceName);
+        const requestCountStr = await this.redisClient.hget(redisKey, 'requestCount');
+        if (requestCountStr == null) {
+            throw new AccessForbidden('Service access for token not configured');
+        }
+        return Number(requestCountStr);
+    }
+
     private createRedisClient() {
         return new Redis(this.REDIS_URL, {
             lazyConnect: true,
@@ -58,59 +78,7 @@ export class TrialClient {
         });
     }
 
-    isTrialToken(token: Record<string, any>) {
-        return !!token.serviceRestrictions;
-    }
-
-    async assertTrial(token: Record<string, any>) {
-        const trial = await this.read(token.clientId);
-        if (!trial) {
-            throw new AccessForbidden('Trial access for token not configured');
-        }
-        return trial;
-    }
-
-    async requireValidServiceRestriction(trial: Trial, token: Record<string, any>, serviceName: string) {
-        const serviceRestriction = trial.serviceRestrictions.find((service: TrialServiceRestriction) => service.serviceName === serviceName);
-        const tokenServiceRestriction = token.serviceRestrictions.find((service: TokenServiceRestriction) => service.serviceName === serviceName);
-
-        if (!serviceRestriction || !tokenServiceRestriction) {
-            throw new AccessForbidden('Service access for token not configured');
-        }
-        if (serviceRestriction.requestCount > tokenServiceRestriction.requestLimit) {
-            throw new AccessForbidden('Trial token has exceeded request limit for service');
-        }
-    }
-
-    async incrementRequests(token: Record<string, any>, serviceName: string) {
-        const trial = await this.assertTrial(token);
-        await this.requireValidServiceRestriction(trial, token, serviceName);
-        const index = trial.serviceRestrictions.findIndex((service: TrialServiceRestriction) => service.serviceName === serviceName);
-        trial.serviceRestrictions[index].requestCount++;
-        await this.update(token.clientId, trial);
-    }
-
-    async create(key: string, value: Trial, expirySeconds: number) {
-        const existing = await this.read(key);
-        if (existing) {
-            throw new Error('Trial data already exists for key');
-        }
-        await this.redisClient.setex(`${this.trialKeyPrefix}:${key}`, expirySeconds, JSON.stringify(value));
-    }
-
-    async read(key: string): Promise<Trial | null> {
-        const existing = await this.redisClient.get(`${this.trialKeyPrefix}:${key}`);
-        if (existing) {
-            return JSON.parse(existing);
-        }
-        return null;
-    }
-
-    async update(key: string, value: Trial) {
-        await this.redisClient.set(`${this.trialKeyPrefix}:${key}`, JSON.stringify(value), 'KEEPTTL');
-    }
-
-    async delete(key: string): Promise<void> {
-        await this.redisClient.del(`${this.trialKeyPrefix}:${key}`);
+    private getServiceKey(clientId: string, serviceName: string) {
+        return `${this.trialKeyPrefix}:${clientId}:${serviceName}`;
     }
 }
