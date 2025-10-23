@@ -11,6 +11,7 @@ export * from './openapi.js';
 export * from './router.js';
 export * from './schema.js';
 export * from './services/index.js';
+export * from './trial.js';
 export * from './util.js';
 
 export * from '@nodescript/logger';
