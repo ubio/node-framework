@@ -10,13 +10,18 @@ export interface TokenServiceRestriction {
     requestLimit: number;
 }
 
+export interface TrialToken {
+    serviceRestrictions: Array<TokenServiceRestriction>;
+    [key: string]: any;
+}
+
 export class TrialClient {
 
     @config() private REDIS_URL!: string;
     @dep() private logger!: Logger;
 
     private isRunning = false;
-    private trialKeyPrefix = 'cache:framework:trialClient';
+    private trialKeyPrefix = 'cache:trialClient';
 
     redisClient: Redis;
 
@@ -42,11 +47,11 @@ export class TrialClient {
         }
     }
 
-    isTrialToken(token: Record<string, any>) {
+    isTrialToken(token: Record<string, any>): token is TrialToken {
         return !!token.serviceRestrictions;
     }
 
-    async requireValidServiceRestriction(token: Record<string, any>, serviceName: string) {
+    async requireValidServiceRestriction(token: TrialToken, serviceName: string) {
         const serviceRestriction = token.serviceRestrictions.find((s: TokenServiceRestriction) => s.serviceName === serviceName);
         if (!serviceRestriction) {
             throw new AccessForbidden('Service access not configured on token');
