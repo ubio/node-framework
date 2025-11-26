@@ -40,6 +40,10 @@ export function Delete(spec: RouteSpec = {}) {
     return routeDecorator('delete', spec);
 }
 
+export function All(spec: RouteSpec = {}) {
+    return routeDecorator('*', spec);
+}
+
 export function Middleware(spec: RouteSpec = {}) {
     return routeDecorator('*', spec, RouteRole.MIDDLEWARE);
 }
