@@ -1,3 +1,11 @@
+## 16.2.0
+
+- feat: New route type decorator `@All()` to allow any HTTP method requests to be routed to handler
+
+## 16.1.0
+
+- feat: New `TrialClient` service to track client's trial usage of services (eg.: Recruitment, Hotel Universe, etc.)
+
 ## 16.0.0
 
 - feat: New `AuthProvider` service to handle app auth. It's a generic and optional (not set by default) service
